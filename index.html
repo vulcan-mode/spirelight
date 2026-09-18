@@ -1,8 +1,9 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" translate="no">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google" content="notranslate">
 <title>Referidos Spirelight</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;600;700&display=swap">
 <style>
@@ -159,13 +160,34 @@
         <label for="referrerName">Tu nombre completo</label>
         <input id="referrerName" name="referrerName" type="text" required autocomplete="name">
 
+        <label for="referrerCountry">Tu país</label>
+        <select id="referrerCountry" name="referrerCountry" required>
+          <option value="" disabled selected>Selecciona un país</option>
+          <option>Argentina</option>
+          <option>Puerto Rico</option>
+          <option>República Dominicana</option>
+          <option>Panamá</option>
+          <option>Cuba</option>
+          <option>Honduras</option>
+          <option>Paraguay</option>
+          <option>Nicaragua</option>
+          <option>El Salvador</option>
+          <option>Costa Rica</option>
+          <option>Uruguay</option>
+          <option>Ecuador</option>
+          <option>Perú</option>
+          <option>Venezuela</option>
+          <option>Chile</option>
+          <option>Guatemala</option>
+        </select>
+
         <label for="referrerWhatsapp">Tu número de WhatsApp</label>
         <input id="referrerWhatsapp" name="referrerWhatsapp" type="tel" required autocomplete="tel" placeholder="+507 6000 0000">
 
-        <label for="referredName">Nombre completo de la persona que refieres</label>
+        <label for="referredName">Nombre completo de la persona que estás refiriendo</label>
         <input id="referredName" name="referredName" type="text" required>
 
-        <label for="referredCountry">País de la persona referida</label>
+        <label for="referredCountry">País de la persona que estás refiriendo</label>
         <select id="referredCountry" name="referredCountry" required>
           <option value="" disabled selected>Selecciona un país</option>
           <option>Argentina</option>

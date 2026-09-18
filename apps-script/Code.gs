@@ -26,6 +26,7 @@ function doPost(e) {
     sheet.appendRow([
       'Fecha',
       'Nombre del referente',
+      'País del referente',
       'WhatsApp del referente',
       'Nombre del referido',
       'País del referido',
@@ -38,6 +39,7 @@ function doPost(e) {
   sheet.appendRow([
     new Date(),
     p.referrerName || '',
+    p.referrerCountry || '',
     p.referrerWhatsapp || '',
     p.referredName || '',
     p.referredCountry || '',
