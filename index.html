@@ -245,7 +245,7 @@
 
         <label class="checkbox-row" for="confirmMember">
           <input id="confirmMember" name="confirmMember" type="checkbox" required>
-          <span>Confirmo que soy miembro del grupo de WhatsApp</span>
+          <span>Confirmo que soy miembro del grupo de WhatsApp de Monólogos en Español</span>
         </label>
 
         <button type="submit" id="submitBtn">Enviar referido</button>
@@ -290,7 +290,7 @@
 
     const greeting = referredName ? `¡Hola ${referredName}!` : '¡Hola!';
     const message = `${greeting} Te recomendé para el programa de grabación de voz de Monólogos en Español. `
-      + `Únete a nuestro grupo de WhatsApp para más información: ${WHATSAPP_GROUP_LINK}`;
+      + `Únete al grupo de WhatsApp de Monólogos en Español para más información: ${WHATSAPP_GROUP_LINK}`;
 
     return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
   }
