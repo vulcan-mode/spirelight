@@ -87,6 +87,21 @@
     outline-offset: 1px;
   }
   textarea { resize: vertical; min-height: 72px; }
+  .checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 20px 0 0;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .checkbox-row input {
+    width: auto;
+    margin-top: 2px;
+    accent-color: var(--blue);
+  }
   button {
     width: 100%;
     margin-top: 26px;
@@ -227,6 +242,11 @@
 
         <label for="comments">¿Algún comentario adicional? (opcional)</label>
         <textarea id="comments" name="comments"></textarea>
+
+        <label class="checkbox-row" for="confirmMember">
+          <input id="confirmMember" name="confirmMember" type="checkbox" required>
+          <span>Confirmo que soy miembro del grupo de WhatsApp</span>
+        </label>
 
         <button type="submit" id="submitBtn">Enviar referido</button>
         <p class="error" id="errorMsg">Algo salió mal. Por favor intenta de nuevo.</p>
