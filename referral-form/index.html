@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="es" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google" content="notranslate">
+<title>Referidos Spirelight</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;600;700&display=swap">
+<style>
+  :root {
+    --navy: #0d3a66;
+    --blue: #1e88e5;
+    --blue-deep: #0d5aa7;
+    --bg-a: #eaf7ff;
+    --bg-b: #cfeafe;
+    --amber-bg: #fff4d6;
+    --amber-text: #8a5a00;
+    --ink: #10314f;
+    --card: #ffffff;
+    --border: #d7e8f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Manrope', system-ui, sans-serif;
+    background: linear-gradient(160deg, var(--bg-a) 0%, var(--bg-b) 100%);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px;
+  }
+  .site-nav {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 11.5px;
+    text-decoration: none;
+    border: 1.5px solid var(--border);
+    background: #ffffff;
+    color: var(--navy);
+    white-space: nowrap;
+  }
+  .nav-btn.active {
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    border-color: transparent;
+  }
+  .nav-btn.whatsapp {
+    background: #25d366;
+    color: #fff;
+    border-color: transparent;
+  }
+  .nav-caption {
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #4a6580;
+    margin: -8px 0 20px;
+  }
+  .status-card {
+    width: 100%;
+    max-width: 640px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 22px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(13, 58, 102, 0.08);
+    box-sizing: border-box;
+  }
+  .status-group { margin-bottom: 16px; }
+  .status-group:last-of-type { margin-bottom: 0; }
+  .status-label {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .status-label.live { color: #0d5a2f; }
+  .status-label.soon { color: var(--amber-text); }
+  .status-label.later { color: #4a6580; }
+  .status-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 999px;
+    padding: 6px 14px;
+    white-space: nowrap;
+  }
+  .chip.live { background: linear-gradient(135deg, var(--blue), var(--blue-deep)); color: #fff; }
+  .chip.soon { background: var(--amber-bg); color: var(--amber-text); }
+  .chip.later { background: #eef3f8; color: #4a6580; }
+  .status-note {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    line-height: 1.55;
+    color: #4a6580;
+  }
+  .card {
+    width: 100%;
+    max-width: 560px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px 32px;
+    box-shadow: 0 20px 50px rgba(13, 58, 102, 0.12);
+  }
+  h1 {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    color: var(--navy);
+    margin: 0 0 8px;
+  }
+  p.intro {
+    margin: 0 0 24px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #4a6580;
+  }
+  .bonus-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--amber-bg);
+    color: var(--amber-text);
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 999px;
+    padding: 8px 16px;
+    margin-bottom: 24px;
+  }
+  label {
+    display: block;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--navy);
+    margin: 18px 0 6px;
+  }
+  input, select, textarea {
+    width: 100%;
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 15px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: #fbfdff;
+    color: var(--ink);
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: 2px solid var(--blue);
+    outline-offset: 1px;
+  }
+  textarea { resize: vertical; min-height: 72px; }
+  .checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 20px 0 0;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .checkbox-row input {
+    width: auto;
+    margin-top: 2px;
+    accent-color: var(--blue);
+  }
+  button {
+    width: 100%;
+    margin-top: 26px;
+    padding: 15px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: default; }
+  .error {
+    margin-top: 14px;
+    font-size: 14px;
+    color: #b3261e;
+    display: none;
+  }
+  .success {
+    text-align: center;
+    padding: 20px 0;
+  }
+  .success h2 {
+    font-family: 'Sora', system-ui, sans-serif;
+    color: var(--navy);
+    font-size: 24px;
+    margin: 0 0 10px;
+  }
+  .success p { color: #4a6580; font-size: 15px; line-height: 1.5; }
+  .whatsapp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+    padding: 14px 24px;
+    background: #25d366;
+    color: #ffffff;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    border-radius: 999px;
+    text-decoration: none;
+  }
+  .logo {
+    display: block;
+    width: 176px;
+    height: 176px;
+    border-radius: 32px;
+    margin: 0 auto 24px;
+    box-shadow: 0 14px 32px rgba(13, 58, 102, 0.22);
+  }
+  .brand-footer {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    font-size: 13px;
+    color: #7793ad;
+  }
+  .brand-footer img {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+  }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+  <nav class="site-nav">
+    <a class="nav-btn active" href="index.html">📋 Formulario de referidos</a>
+    <a class="nav-btn" href="como-funciona.html">ℹ️ Cómo funciona</a>
+    <a class="nav-btn whatsapp" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">📲 Grupo de WhatsApp</a>
+    <a class="nav-btn" href="privacidad.html">🔒 Privacidad</a>
+  </nav>
+  <p class="nav-caption">¿Aún no eres miembro? En el grupo de WhatsApp encontrarás el video explicativo, las preguntas frecuentes y el enlace para registrarte y empezar a grabar.</p>
+
+  <div class="status-card">
+    <div class="status-group">
+      <div class="status-label live">✅ Activo ahora</div>
+      <div class="status-chips">
+        <span class="chip live">Panamá</span>
+        <span class="chip live">Puerto Rico</span>
+      </div>
+    </div>
+    <div class="status-group">
+      <div class="status-label soon">🕐 En unos días</div>
+      <div class="status-chips">
+        <span class="chip soon">Argentina</span>
+        <span class="chip soon">República Dominicana</span>
+      </div>
+    </div>
+    <div class="status-group">
+      <div class="status-label later">📅 En octubre</div>
+      <div class="status-chips">
+        <span class="chip later">Cuba</span>
+        <span class="chip later">Honduras</span>
+        <span class="chip later">Paraguay</span>
+        <span class="chip later">Nicaragua</span>
+        <span class="chip later">El Salvador</span>
+        <span class="chip later">Costa Rica</span>
+        <span class="chip later">Uruguay</span>
+        <span class="chip later">Ecuador</span>
+        <span class="chip later">Perú</span>
+        <span class="chip later">Venezuela</span>
+        <span class="chip later">Chile</span>
+        <span class="chip later">Guatemala</span>
+      </div>
+    </div>
+    <p class="status-note">📲 Los anuncios de apertura de cada país se publican primero en el grupo de WhatsApp. Únete para enterarte en cuanto tu país esté activo y recibir la información específica que necesitas para empezar a grabar.</p>
+  </div>
+
+  <div class="card">
+    <div id="formView">
+      <img class="logo" src="assets/logo-monologos.png?v=2" alt="Monólogos en Español">
+      <h1>Refiere a alguien 🎙️</h1>
+      <p class="intro">
+        ¿Conoces a alguien con buena voz que quiera grabar para Spirelight?
+        Cuéntanos quién es y te avisaremos cuando complete el proceso.
+      </p>
+      <div class="bonus-pill">🎁 Ganas un bono cuando tu referido complete su primera grabación</div>
+
+      <form id="referralForm">
+        <label for="referrerName">Tu nombre completo</label>
+        <input id="referrerName" name="referrerName" type="text" required autocomplete="name">
+
+        <label for="referrerCountry">Tu país</label>
+        <select id="referrerCountry" name="referrerCountry" required>
+          <option value="" disabled selected>Selecciona un país</option>
+          <option>Argentina</option>
+          <option>Puerto Rico</option>
+          <option>República Dominicana</option>
+          <option>Panamá</option>
+          <option>Cuba</option>
+          <option>Honduras</option>
+          <option>Paraguay</option>
+          <option>Nicaragua</option>
+          <option>El Salvador</option>
+          <option>Costa Rica</option>
+          <option>Uruguay</option>
+          <option>Ecuador</option>
+          <option>Perú</option>
+          <option>Venezuela</option>
+          <option>Chile</option>
+          <option>Guatemala</option>
+        </select>
+
+        <label for="referrerWhatsapp">Tu número de WhatsApp</label>
+        <input id="referrerWhatsapp" name="referrerWhatsapp" type="tel" required autocomplete="tel" placeholder="+507 6000 0000">
+
+        <label for="referredName">Nombre completo de la persona que estás refiriendo</label>
+        <input id="referredName" name="referredName" type="text" required>
+
+        <label for="referredCountry">País de la persona que estás refiriendo</label>
+        <select id="referredCountry" name="referredCountry" required>
+          <option value="" disabled selected>Selecciona un país</option>
+          <option>Argentina</option>
+          <option>Puerto Rico</option>
+          <option>República Dominicana</option>
+          <option>Panamá</option>
+          <option>Cuba</option>
+          <option>Honduras</option>
+          <option>Paraguay</option>
+          <option>Nicaragua</option>
+          <option>El Salvador</option>
+          <option>Costa Rica</option>
+          <option>Uruguay</option>
+          <option>Ecuador</option>
+          <option>Perú</option>
+          <option>Venezuela</option>
+          <option>Chile</option>
+          <option>Guatemala</option>
+        </select>
+
+        <label for="referredWhatsapp">Número de WhatsApp de la persona referida</label>
+        <input id="referredWhatsapp" name="referredWhatsapp" type="tel" required placeholder="+507 6000 0000">
+
+        <label for="comments">¿Algún comentario adicional? (opcional)</label>
+        <textarea id="comments" name="comments"></textarea>
+
+        <label class="checkbox-row" for="confirmMember">
+          <input id="confirmMember" name="confirmMember" type="checkbox" required>
+          <span>Confirmo que soy miembro del grupo de WhatsApp de Monólogos en Español</span>
+        </label>
+
+        <button type="submit" id="submitBtn">Enviar referido</button>
+        <p class="error" id="errorMsg">Algo salió mal. Por favor intenta de nuevo.</p>
+      </form>
+    </div>
+
+    <div id="successView" class="success" hidden>
+      <img class="logo" src="assets/logo-monologos.png?v=2" alt="Monólogos en Español">
+      <h2>¡Gracias! ✅</h2>
+      <p>Registramos tu referido. Te avisaremos por WhatsApp cuando complete el proceso y se acredite tu bono.</p>
+      <a id="whatsappInviteBtn" class="whatsapp-btn" href="#" target="_blank" rel="noopener" hidden>
+        📲 Enviarle la invitación por WhatsApp
+      </a>
+    </div>
+  </div>
+
+  <footer class="brand-footer">
+    <img src="assets/logo-spirelight.webp?v=1" alt="">
+    <span>Programa de referidos para Spirelight</span>
+  </footer>
+
+<script>
+  // Paste the Apps Script "Web app" URL here after deploying apps-script/Code.gs
+  // (see README.md for the exact steps).
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWxLdQ70YBFIkZWu5xfobhYUA5s-bcrf081pDL6W9-9-s0rXwGWkRDxNoOz83GswRD/exec";
+
+  // Current WhatsApp group invite link — update here if it's ever
+  // revoked/regenerated from the group's own "Invite via Link" menu.
+  const WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG";
+
+  const form = document.getElementById('referralForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const errorMsg = document.getElementById('errorMsg');
+  const whatsappInviteBtn = document.getElementById('whatsappInviteBtn');
+
+  function buildWhatsappInviteLink() {
+    const referredName = (document.getElementById('referredName').value || '').trim();
+    const rawNumber = document.getElementById('referredWhatsapp').value || '';
+    const digits = rawNumber.replace(/[^0-9]/g, '');
+    if (!digits) return null;
+
+    const greeting = referredName ? `¡Hola ${referredName}!` : '¡Hola!';
+    const message = `${greeting} Te recomendé para el programa de grabación de voz de Monólogos en Español. `
+      + `Únete al grupo de WhatsApp de Monólogos en Español para más información: ${WHATSAPP_GROUP_LINK}`;
+
+    return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    errorMsg.style.display = 'none';
+
+    if (SCRIPT_URL.indexOf('REPLACE_WITH') === 0) {
+      errorMsg.textContent = 'El formulario aún no está conectado. Revisa SCRIPT_URL en index.html.';
+      errorMsg.style.display = 'block';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+
+    const data = new FormData(form);
+
+    try {
+      // Apps Script web apps don't return readable CORS headers, so we
+      // fire the request in no-cors mode and treat a non-throwing fetch
+      // as success (the request still reaches the script and appends
+      // the row even though we can't read the response body here).
+      const inviteLink = buildWhatsappInviteLink();
+
+      await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: data });
+
+      if (inviteLink) {
+        whatsappInviteBtn.href = inviteLink;
+        whatsappInviteBtn.hidden = false;
+      }
+      document.getElementById('formView').hidden = true;
+      document.getElementById('successView').hidden = false;
+    } catch (err) {
+      errorMsg.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enviar referido';
+    }
+  });
+</script>
+</body>
+</html>
