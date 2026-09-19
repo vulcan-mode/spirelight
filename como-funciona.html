@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="es" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google" content="notranslate">
+<title>Cómo funciona — Spirelight</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;600;700&display=swap">
+<style>
+  :root {
+    --navy: #0d3a66;
+    --blue: #1e88e5;
+    --blue-deep: #0d5aa7;
+    --bg-a: #eaf7ff;
+    --bg-b: #cfeafe;
+    --amber-bg: #fff4d6;
+    --amber-text: #8a5a00;
+    --ink: #10314f;
+    --card: #ffffff;
+    --border: #d7e8f7;
+    --muted: #4a6580;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Manrope', system-ui, sans-serif;
+    background: linear-gradient(160deg, var(--bg-a) 0%, var(--bg-b) 100%);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px;
+  }
+  .site-nav {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 11.5px;
+    text-decoration: none;
+    border: 1.5px solid var(--border);
+    background: #ffffff;
+    color: var(--navy);
+    white-space: nowrap;
+  }
+  .nav-btn.active {
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    border-color: transparent;
+  }
+  .nav-btn.whatsapp {
+    background: #25d366;
+    color: #fff;
+    border-color: transparent;
+  }
+  .nav-caption {
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #4a6580;
+    margin: -8px 0 20px;
+  }
+  .status-card {
+    width: 100%;
+    max-width: 640px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 22px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(13, 58, 102, 0.08);
+    box-sizing: border-box;
+  }
+  .status-group { margin-bottom: 16px; }
+  .status-group:last-of-type { margin-bottom: 0; }
+  .status-label {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .status-label.live { color: #0d5a2f; }
+  .status-label.soon { color: var(--amber-text); }
+  .status-label.later { color: var(--muted); }
+  .status-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 999px;
+    padding: 6px 14px;
+    white-space: nowrap;
+  }
+  .chip.live { background: linear-gradient(135deg, var(--blue), var(--blue-deep)); color: #fff; }
+  .chip.soon { background: var(--amber-bg); color: var(--amber-text); }
+  .chip.later { background: #eef3f8; color: var(--muted); }
+  .status-note {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--muted);
+  }
+  .card {
+    width: 100%;
+    max-width: 680px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px 32px;
+    box-shadow: 0 20px 50px rgba(13, 58, 102, 0.12);
+  }
+  .logo {
+    display: block;
+    width: 92px;
+    height: 92px;
+    border-radius: 20px;
+    margin: 0 auto 20px;
+    box-shadow: 0 10px 24px rgba(13, 58, 102, 0.2);
+  }
+  h1 {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 30px;
+    color: var(--navy);
+    margin: 0 0 10px;
+    text-align: center;
+  }
+  p.intro {
+    margin: 0 0 32px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--muted);
+    text-align: center;
+  }
+  h2 {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    color: var(--navy);
+    margin: 40px 0 6px;
+  }
+  h2 + p.section-sub {
+    margin: 0 0 20px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step-title {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--navy);
+    margin: 0 0 4px;
+  }
+  .step-desc {
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--muted);
+    margin: 0;
+  }
+  .req-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 20px;
+  }
+  @media (max-width: 480px) {
+    .req-grid { grid-template-columns: 1fr; }
+  }
+  .req-item {
+    background: #fbfdff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+  .req-label {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--navy);
+    margin: 0 0 4px;
+  }
+  .req-desc {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--muted);
+    margin: 0;
+  }
+  p.body-text {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--ink);
+    margin: 0 0 14px;
+  }
+  .privacy-note {
+    background: var(--amber-bg);
+    border-radius: 14px;
+    padding: 16px 18px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--amber-text);
+    margin-top: 16px;
+  }
+  a.privacy-link {
+    display: inline-block;
+    margin-top: 16px;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--blue);
+    text-decoration: none;
+  }
+  a.privacy-link:hover { text-decoration: underline; }
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--muted);
+    text-decoration: none;
+  }
+  .back-link:hover { color: var(--navy); }
+  .brand-footer {
+    width: 100%;
+    max-width: 680px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    font-size: 13px;
+    color: #7793ad;
+  }
+  .brand-footer img {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+  }
+</style>
+</head>
+<body>
+  <nav class="site-nav">
+    <a class="nav-btn" href="index.html">📋 Formulario de referidos</a>
+    <a class="nav-btn active" href="como-funciona.html">ℹ️ Cómo funciona</a>
+    <a class="nav-btn whatsapp" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">📲 Grupo de WhatsApp</a>
+    <a class="nav-btn" href="privacidad.html">🔒 Privacidad</a>
+  </nav>
+  <p class="nav-caption">¿Aún no eres miembro? En el grupo de WhatsApp encontrarás el video explicativo, las preguntas frecuentes y el enlace para registrarte y empezar a grabar.</p>
+
+  <div class="status-card">
+    <div class="status-group">
+      <div class="status-label live">✅ Activo ahora</div>
+      <div class="status-chips">
+        <span class="chip live">Panamá</span>
+        <span class="chip live">Puerto Rico</span>
+      </div>
+    </div>
+    <div class="status-group">
+      <div class="status-label soon">🕐 En unos días</div>
+      <div class="status-chips">
+        <span class="chip soon">Argentina</span>
+        <span class="chip soon">República Dominicana</span>
+      </div>
+    </div>
+    <div class="status-group">
+      <div class="status-label later">📅 En octubre</div>
+      <div class="status-chips">
+        <span class="chip later">Cuba</span>
+        <span class="chip later">Honduras</span>
+        <span class="chip later">Paraguay</span>
+        <span class="chip later">Nicaragua</span>
+        <span class="chip later">El Salvador</span>
+        <span class="chip later">Costa Rica</span>
+        <span class="chip later">Uruguay</span>
+        <span class="chip later">Ecuador</span>
+        <span class="chip later">Perú</span>
+        <span class="chip later">Venezuela</span>
+        <span class="chip later">Chile</span>
+        <span class="chip later">Guatemala</span>
+      </div>
+    </div>
+    <p class="status-note">📲 Los anuncios de apertura de cada país se publican primero en el grupo de WhatsApp. Únete para enterarte en cuanto tu país esté activo y recibir la información específica que necesitas para empezar a grabar.</p>
+  </div>
+
+  <div class="card">
+    <img class="logo" src="assets/logo-monologos.png?v=2" alt="Monólogos en Español">
+    <h1>Cómo funciona</h1>
+    <p class="intro">
+      Primero una prueba corta y, si encaja, el proyecto completo. Te escribimos por correo cada vez que haya novedades.
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div>
+          <div class="step-title">Crea tu cuenta con tu correo</div>
+          <p class="step-desc">Te enviamos un código de 6 dígitos para entrar. No necesitas contraseña.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div>
+          <div class="step-title">Cuéntanos sobre ti y firma el acuerdo</div>
+          <p class="step-desc">Unas preguntas rápidas sobre ti y tu forma de hablar. Después lees el acuerdo y lo firmas en la pantalla.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div>
+          <div class="step-title">Habla entre 30 y 35 segundos de lo que quieras</div>
+          <p class="step-desc">No hay nada que leer: tú eliges el tema. Antes de empezar comprobamos que tu micrófono se oye bien.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div>
+          <div class="step-title">Escuchamos tu muestra</div>
+          <p class="step-desc">Una persona del equipo la revisa. Nuestro objetivo es responderte por correo en un plazo de 24 horas.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">05</div>
+        <div>
+          <div class="step-title">Verifica tu identidad</div>
+          <p class="step-desc">Si tu muestra encaja, confirmas tu identidad con un documento y una selfie. La verificación la hace Stripe.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">06</div>
+        <div>
+          <div class="step-title">Graba el guion completo</div>
+          <p class="step-desc">Lo grabas en esta plataforma, desde casa y a tu ritmo, y puedes seguir donde lo dejaste. Cada vez que empiezas, una prueba corta comprueba tu micrófono y el ruido del lugar.</p>
+        </div>
+      </div>
+    </div>
+
+    <h2>Qué necesitas</h2>
+    <p class="section-sub">Nada especial, pero sí un poco de calma.</p>
+    <div class="req-grid">
+      <div class="req-item">
+        <div class="req-label">Edad</div>
+        <p class="req-desc">Tener 18 años o más.</p>
+      </div>
+      <div class="req-item">
+        <div class="req-label">Idioma</div>
+        <p class="req-desc">El español como lengua materna.</p>
+      </div>
+      <div class="req-item">
+        <div class="req-label">Lugar</div>
+        <p class="req-desc">Una habitación tranquila, sin ruido de fondo.</p>
+      </div>
+      <div class="req-item">
+        <div class="req-label">Equipo</div>
+        <p class="req-desc">Un teléfono u otro dispositivo con micrófono.</p>
+      </div>
+      <div class="req-item">
+        <div class="req-label">Documento</div>
+        <p class="req-desc">Un documento de identidad válido.</p>
+      </div>
+    </div>
+
+    <h2>Tus datos</h2>
+    <p class="section-sub">Qué te pedimos y quién lo recibe.</p>
+    <p class="body-text">
+      Solo te pedimos lo que necesita el proyecto. Tus grabaciones y los datos de tu perfil se entregan al cliente del proyecto para crear y mejorar voces con IA. Te lo explicamos todo en el acuerdo que firmas antes de grabar.
+    </p>
+    <div class="privacy-note">
+      La verificación de identidad la hace Stripe, que guarda las imágenes de tu documento en sus propios sistemas. Spirelight no las almacena. Participar es voluntario.
+    </div>
+    <a class="privacy-link" href="privacidad.html">Lee el aviso de privacidad completo →</a>
+
+    <a class="back-link" href="index.html">← Volver al formulario de referidos</a>
+  </div>
+
+  <footer class="brand-footer">
+    <img src="assets/logo-spirelight.webp?v=1" alt="">
+    <span>Programa de referidos para Spirelight</span>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="es" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google" content="notranslate">
+<title>Privacidad — Spirelight</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;600;700&display=swap">
+<style>
+  :root {
+    --navy: #0d3a66;
+    --blue: #1e88e5;
+    --blue-deep: #0d5aa7;
+    --bg-a: #eaf7ff;
+    --bg-b: #cfeafe;
+    --amber-bg: #fff4d6;
+    --amber-text: #8a5a00;
+    --ink: #10314f;
+    --card: #ffffff;
+    --border: #d7e8f7;
+    --muted: #4a6580;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Manrope', system-ui, sans-serif;
+    background: linear-gradient(160deg, var(--bg-a) 0%, var(--bg-b) 100%);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px;
+  }
+  .site-nav {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 11.5px;
+    text-decoration: none;
+    border: 1.5px solid var(--border);
+    background: #ffffff;
+    color: var(--navy);
+    white-space: nowrap;
+  }
+  .nav-btn.active {
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    border-color: transparent;
+  }
+  .nav-btn.whatsapp {
+    background: #25d366;
+    color: #fff;
+    border-color: transparent;
+  }
+  .nav-caption {
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #4a6580;
+    margin: -8px 0 20px;
+  }
+  .status-card {
+    width: 100%;
+    max-width: 640px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 22px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(13, 58, 102, 0.08);
+    box-sizing: border-box;
+  }
+  .status-group { margin-bottom: 16px; }
+  .status-group:last-of-type { margin-bottom: 0; }
+  .status-label {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .status-label.live { color: #0d5a2f; }
+  .status-label.soon { color: var(--amber-text); }
+  .status-label.later { color: var(--muted); }
+  .status-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 999px;
+    padding: 6px 14px;
+    white-space: nowrap;
+  }
+  .chip.live { background: linear-gradient(135deg, var(--blue), var(--blue-deep)); color: #fff; }
+  .chip.soon { background: var(--amber-bg); color: var(--amber-text); }
+  .chip.later { background: #eef3f8; color: var(--muted); }
+  .status-note {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--muted);
+  }
+  .card {
+    width: 100%;
+    max-width: 680px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px 32px;
+    box-shadow: 0 20px 50px rgba(13, 58, 102, 0.12);
+  }
+  .logo {
+    display: block;
+    width: 92px;
+    height: 92px;
+    border-radius: 20px;
+    margin: 0 auto 20px;
+    box-shadow: 0 10px 24px rgba(13, 58, 102, 0.2);
+  }
+  h1 {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 30px;
+    color: var(--navy);
+    margin: 0 0 4px;
+    text-align: center;
+  }
+  p.updated {
+    margin: 0 0 28px;
+    font-size: 13.5px;
+    color: var(--muted);
+    text-align: center;
+  }
+  p.intro {
+    margin: 0 0 14px;
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+  h2 {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    color: var(--navy);
+    margin: 36px 0 14px;
+  }
+  p.body-text {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--ink);
+    margin: 0 0 12px;
+  }
+  ul.plain-list {
+    margin: 0 0 12px;
+    padding-left: 22px;
+  }
+  ul.plain-list li {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .data-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .data-item {
+    background: #fbfdff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+  .data-label {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--navy);
+    margin: 0 0 4px;
+  }
+  .data-desc {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--muted);
+    margin: 0;
+  }
+  .contact-note {
+    background: var(--amber-bg);
+    border-radius: 14px;
+    padding: 16px 18px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--amber-text);
+    margin: 14px 0;
+  }
+  a.inline-link {
+    color: var(--blue);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  a.inline-link:hover { text-decoration: underline; }
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 24px;
+    font-size: 14px;
+    color: var(--muted);
+    text-decoration: none;
+  }
+  .back-link:hover { color: var(--navy); }
+  .brand-footer {
+    width: 100%;
+    max-width: 680px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    font-size: 13px;
+    color: #7793ad;
+  }
+  .brand-footer img {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+  }
+</style>
+</head>
+<body>
+  <nav class="site-nav">
+    <a class="nav-btn" href="index.html">📋 Formulario de referidos</a>
+    <a class="nav-btn" href="como-funciona.html">ℹ️ Cómo funciona</a>
+    <a class="nav-btn whatsapp" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">📲 Grupo de WhatsApp</a>
+    <a class="nav-btn active" href="privacidad.html">🔒 Privacidad</a>
+  </nav>
+  <p class="nav-caption">¿Aún no eres miembro? En el grupo de WhatsApp encontrarás el video explicativo, las preguntas frecuentes y el enlace para registrarte y empezar a grabar.</p>
+
+  <div class="status-card">
+    <div class="status-group">
+      <div class="status-label live">✅ Activo ahora</div>
+      <div class="status-chips">
+        <span class="chip live">Panamá</span>
+        <span class="chip live">Puerto Rico</span>
+      </div>
+    </div>
+    <div class="status-group">
+      <div class="status-label soon">🕐 En unos días</div>
+      <div class="status-chips">
+        <span class="chip soon">Argentina</span>
+        <span class="chip soon">República Dominicana</span>
+      </div>
+    </div>
+    <div class="status-group">
+      <div class="status-label later">📅 En octubre</div>
+      <div class="status-chips">
+        <span class="chip later">Cuba</span>
+        <span class="chip later">Honduras</span>
+        <span class="chip later">Paraguay</span>
+        <span class="chip later">Nicaragua</span>
+        <span class="chip later">El Salvador</span>
+        <span class="chip later">Costa Rica</span>
+        <span class="chip later">Uruguay</span>
+        <span class="chip later">Ecuador</span>
+        <span class="chip later">Perú</span>
+        <span class="chip later">Venezuela</span>
+        <span class="chip later">Chile</span>
+        <span class="chip later">Guatemala</span>
+      </div>
+    </div>
+    <p class="status-note">📲 Los anuncios de apertura de cada país se publican primero en el grupo de WhatsApp. Únete para enterarte en cuanto tu país esté activo y recibir la información específica que necesitas para empezar a grabar.</p>
+  </div>
+
+  <div class="card">
+    <img class="logo" src="assets/logo-monologos.png?v=2" alt="Monólogos en Español">
+    <h1>Aviso de privacidad</h1>
+    <p class="updated">Última actualización: 18 de septiembre de 2026</p>
+
+    <p class="intro">Spirelight gestiona esta plataforma para el cliente del proyecto, una empresa que desarrolla voces con inteligencia artificial. Aquí te contamos con palabras sencillas qué datos tuyos recogemos, para qué los usamos y quién los recibe.</p>
+    <p class="intro">Lo mismo se explica en la nota de privacidad del acuerdo que firmas antes de grabar.</p>
+
+    <h2>Qué datos recogemos</h2>
+    <div class="data-items">
+      <div class="data-item">
+        <div class="data-label">Tu cuenta</div>
+        <p class="data-desc">Tu correo electrónico y algunos datos técnicos que registramos cada vez que entras, como la dirección IP y el navegador.</p>
+      </div>
+      <div class="data-item">
+        <div class="data-label">Tu perfil</div>
+        <p class="data-desc">Tu nombre, tu edad, tu género, el país y la región donde creciste, la variante del español que hablas y si el español es tu lengua materna. También tu ciudad, si decides darla.</p>
+      </div>
+      <div class="data-item">
+        <div class="data-label">Tus grabaciones</div>
+        <p class="data-desc">Tu muestra de voz y las grabaciones que haces después para el proyecto, todas en esta plataforma. Con cada una guardamos mediciones de la calidad del sonido y, en cada frase del guion, el texto que un servicio de transcripción automática entendió en ella. También las grabaciones de prueba cortas que haces cada vez que empiezas a grabar (una frase y unos diez segundos del ruido de fondo del lugar donde grabas) y el nombre del micrófono con el que grabas.</p>
+      </div>
+      <div class="data-item">
+        <div class="data-label">Tu consentimiento</div>
+        <p class="data-desc">El nombre que escribes, la firma que dibujas, la fecha, la versión y el idioma del acuerdo, tu dirección IP y datos sobre tu dispositivo y tu navegador.</p>
+      </div>
+      <div class="data-item">
+        <div class="data-label">Tu verificación</div>
+        <p class="data-desc">El resultado de la verificación de identidad: si se completó, si el nombre del documento coincide con el que firmaste y si eres mayor de edad.</p>
+      </div>
+      <div class="data-item">
+        <div class="data-label">Revisiones y correos</div>
+        <p class="data-desc">Las valoraciones de quienes revisan tus grabaciones y un registro de los correos que te enviamos.</p>
+      </div>
+      <div class="data-item">
+        <div class="data-label">La verificación de identidad</div>
+        <p class="data-desc">La verificación de identidad la hace Stripe. Stripe guarda en sus propios sistemas las imágenes de tu documento y tu selfie. Spirelight no almacena esas imágenes y solo guarda el resultado que se describe arriba.</p>
+      </div>
+    </div>
+
+    <h2>Para qué los usamos</h2>
+    <ul class="plain-list">
+      <li>Para valorar tu participación en el proyecto, por ejemplo al escuchar tu muestra de voz, y comprobar que cada grabación cumple los requisitos de calidad y que cada frase del guion se leyó tal como está escrita.</li>
+      <li>Para entregar tus grabaciones y los datos asociados al cliente del proyecto, incluido el entrenamiento de modelos de inteligencia artificial.</li>
+      <li>Para prevenir el fraude, por ejemplo comprobando que quien graba es la misma persona que firmó.</li>
+      <li>Para escribirte sobre tu participación: el código para entrar, el resultado de las revisiones y los pasos siguientes.</li>
+    </ul>
+    <p class="body-text">Tratamos estos datos sobre la base de tu consentimiento y del acuerdo que firmas.</p>
+
+    <h2>Quién los recibe</h2>
+    <div class="data-items">
+      <div class="data-item">
+        <div class="data-label">Spirelight</div>
+        <p class="data-desc">Gestiona esta plataforma, donde se hacen todas las grabaciones.</p>
+      </div>
+      <div class="data-item">
+        <div class="data-label">El cliente del proyecto</div>
+        <p class="data-desc">Una empresa que desarrolla voces con inteligencia artificial. Revisa las muestras y las grabaciones y recibe las que se entregan, junto con los datos asociados. Su nombre figura en el acuerdo que firmas antes de grabar.</p>
+      </div>
+      <div class="data-item">
+        <div class="data-label">Quien te invitó</div>
+        <p class="data-desc">Si te registraste con un enlace de referido, la empresa que lo compartió puede ver tu nombre, tu correo, la fecha en que te registraste y en qué paso del proceso vas. No ve tus grabaciones, tu perfil, tu verificación de identidad ni tu consentimiento.</p>
+      </div>
+      <div class="data-item">
+        <div class="data-label">Proveedores</div>
+        <p class="data-desc">Empresas que nos ayudan a hacer funcionar la plataforma, como Stripe, para la verificación de identidad, un servicio de transcripción automática como AssemblyAI u OpenAI, que convierte en texto cada frase del guion que grabas para comprobar que la leíste, y los proveedores de alojamiento, almacenamiento y envío de correo.</p>
+      </div>
+    </div>
+
+    <h2>Participar es voluntario</h2>
+    <p class="body-text">No tienes que participar ni firmar el acuerdo. Si no lo firmas, no recogemos ninguna grabación de tu voz.</p>
+    <p class="body-text">Ten en cuenta que los datos de tu perfil se guardan en cuanto los envías, aunque después decidas no seguir.</p>
+
+    <h2>Tus preguntas y tus datos</h2>
+    <p class="body-text">Puedes preguntarnos qué datos tenemos sobre ti y pedirnos que los corrijamos o que los borremos.</p>
+    <div class="contact-note">
+      Escríbenos a <a class="inline-link" href="mailto:team-contact@spirelight.net">team-contact@spirelight.net</a> desde el correo con el que te registraste, así podremos confirmar que eres tú.
+    </div>
+    <p class="body-text">Te responderemos y te explicaremos qué podemos hacer en tu caso. Si tus grabaciones ya se entregaron al cliente, su uso se rige por el acuerdo que firmaste.</p>
+
+    <h2>Cambios en este aviso</h2>
+    <p class="body-text">Si cambiamos este aviso, actualizaremos la fecha que aparece al principio de la página.</p>
+
+    <a class="back-link" href="como-funciona.html">← Volver a Cómo funciona</a>
+  </div>
+
+  <footer class="brand-footer">
+    <img src="assets/logo-spirelight.webp?v=1" alt="">
+    <span>Programa de referidos para Spirelight</span>
+  </footer>
+</body>
+</html>

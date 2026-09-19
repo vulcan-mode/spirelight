@@ -31,6 +31,91 @@
     align-items: center;
     padding: 40px 16px;
   }
+  .site-nav {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 11.5px;
+    text-decoration: none;
+    border: 1.5px solid var(--border);
+    background: #ffffff;
+    color: var(--navy);
+    white-space: nowrap;
+  }
+  .nav-btn.active {
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    border-color: transparent;
+  }
+  .nav-btn.whatsapp {
+    background: #25d366;
+    color: #fff;
+    border-color: transparent;
+  }
+  .nav-caption {
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #4a6580;
+    margin: -8px 0 20px;
+  }
+  .status-card {
+    width: 100%;
+    max-width: 640px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 22px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(13, 58, 102, 0.08);
+    box-sizing: border-box;
+  }
+  .status-group { margin-bottom: 16px; }
+  .status-group:last-of-type { margin-bottom: 0; }
+  .status-label {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .status-label.live { color: #0d5a2f; }
+  .status-label.soon { color: var(--amber-text); }
+  .status-label.later { color: #4a6580; }
+  .status-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 999px;
+    padding: 6px 14px;
+    white-space: nowrap;
+  }
+  .chip.live { background: linear-gradient(135deg, var(--blue), var(--blue-deep)); color: #fff; }
+  .chip.soon { background: var(--amber-bg); color: var(--amber-text); }
+  .chip.later { background: #eef3f8; color: #4a6580; }
+  .status-note {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    line-height: 1.55;
+    color: #4a6580;
+  }
   .card {
     width: 100%;
     max-width: 560px;
@@ -175,6 +260,49 @@
 </style>
 </head>
 <body>
+  <nav class="site-nav">
+    <a class="nav-btn active" href="index.html">📋 Formulario de referidos</a>
+    <a class="nav-btn" href="como-funciona.html">ℹ️ Cómo funciona</a>
+    <a class="nav-btn whatsapp" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">📲 Grupo de WhatsApp</a>
+    <a class="nav-btn" href="privacidad.html">🔒 Privacidad</a>
+  </nav>
+  <p class="nav-caption">¿Aún no eres miembro? En el grupo de WhatsApp encontrarás el video explicativo, las preguntas frecuentes y el enlace para registrarte y empezar a grabar.</p>
+
+  <div class="status-card">
+    <div class="status-group">
+      <div class="status-label live">✅ Activo ahora</div>
+      <div class="status-chips">
+        <span class="chip live">Panamá</span>
+        <span class="chip live">Puerto Rico</span>
+      </div>
+    </div>
+    <div class="status-group">
+      <div class="status-label soon">🕐 En unos días</div>
+      <div class="status-chips">
+        <span class="chip soon">Argentina</span>
+        <span class="chip soon">República Dominicana</span>
+      </div>
+    </div>
+    <div class="status-group">
+      <div class="status-label later">📅 En octubre</div>
+      <div class="status-chips">
+        <span class="chip later">Cuba</span>
+        <span class="chip later">Honduras</span>
+        <span class="chip later">Paraguay</span>
+        <span class="chip later">Nicaragua</span>
+        <span class="chip later">El Salvador</span>
+        <span class="chip later">Costa Rica</span>
+        <span class="chip later">Uruguay</span>
+        <span class="chip later">Ecuador</span>
+        <span class="chip later">Perú</span>
+        <span class="chip later">Venezuela</span>
+        <span class="chip later">Chile</span>
+        <span class="chip later">Guatemala</span>
+      </div>
+    </div>
+    <p class="status-note">📲 Los anuncios de apertura de cada país se publican primero en el grupo de WhatsApp. Únete para enterarte en cuanto tu país esté activo y recibir la información específica que necesitas para empezar a grabar.</p>
+  </div>
+
   <div class="card">
     <div id="formView">
       <img class="logo" src="assets/logo-monologos.png?v=2" alt="Monólogos en Español">
