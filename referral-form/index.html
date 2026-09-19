@@ -139,15 +139,16 @@
     color: #4a6580;
   }
   .bonus-pill {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 8px;
     background: var(--amber-bg);
     color: var(--amber-text);
     font-weight: 700;
     font-size: 14px;
-    border-radius: 999px;
-    padding: 8px 16px;
+    line-height: 1.4;
+    border-radius: 16px;
+    padding: 10px 16px;
     margin-bottom: 24px;
   }
   label {
@@ -263,7 +264,7 @@
   <nav class="site-nav">
     <a class="nav-btn active" href="../referral-form/">📋 Formulario de referidos</a>
     <a class="nav-btn" href="../como-funciona/">ℹ️ Cómo funciona</a>
-    <a class="nav-btn whatsapp" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">📲 Grupo de WhatsApp</a>
+    <a class="nav-btn whatsapp" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">📲 Empezar</a>
     <a class="nav-btn" href="../privacidad/">🔒 Privacidad</a>
   </nav>
   <p class="nav-caption">¿Aún no eres miembro? En el grupo de WhatsApp encontrarás el video explicativo, las preguntas frecuentes y el enlace para registrarte y empezar a grabar.</p>
@@ -311,7 +312,7 @@
         ¿Conoces a alguien con buena voz que quiera grabar para Spirelight?
         Cuéntanos quién es y te avisaremos cuando complete el proceso.
       </p>
-      <div class="bonus-pill">🎁 Ganas un bono cuando tu referido complete su primera grabación</div>
+      <div class="bonus-pill">🎁 Ganas $15 ($20 si es de Puerto Rico) cuando tu referido complete su primera grabación</div>
 
       <form id="referralForm">
         <label for="referrerName">Tu nombre completo</label>
@@ -404,6 +405,7 @@
   // Current WhatsApp group invite link — update here if it's ever
   // revoked/regenerated from the group's own "Invite via Link" menu.
   const WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG";
+  const COMO_FUNCIONA_LINK = "https://vulcan-mode.github.io/spirelight/como-funciona/";
 
   const form = document.getElementById('referralForm');
   const submitBtn = document.getElementById('submitBtn');
@@ -418,6 +420,7 @@
 
     const greeting = referredName ? `¡Hola ${referredName}!` : '¡Hola!';
     const message = `${greeting} Te recomendé para el programa de grabación de voz de Monólogos en Español. `
+      + `Mira cómo funciona aquí: ${COMO_FUNCIONA_LINK} `
       + `Únete al grupo de WhatsApp de Monólogos en Español para más información: ${WHATSAPP_GROUP_LINK}`;
 
     return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
