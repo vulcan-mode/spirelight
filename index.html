@@ -1,12 +1,359 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" translate="no">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="refresh" content="0; url=referral-form/">
-<link rel="canonical" href="referral-form/">
-<title>Redirigiendo…</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google" content="notranslate">
+<title>Monólogos en Español — Programa de referidos Spirelight</title>
+<meta name="description" content="Gana dinero grabando tu voz para Spirelight. Pago por sesión, bono por referidos, y proceso rápido de menos de una hora.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;600;700&display=swap">
+<style>
+  :root {
+    --navy: #0d3a66;
+    --blue: #1e88e5;
+    --blue-deep: #0d5aa7;
+    --bg-a: #eaf7ff;
+    --bg-b: #cfeafe;
+    --amber-bg: #fff4d6;
+    --amber-text: #8a5a00;
+    --green-bg: #e3f7ea;
+    --green-text: #0d5a2f;
+    --ink: #10314f;
+    --card: #ffffff;
+    --border: #d7e8f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Manrope', system-ui, sans-serif;
+    background: linear-gradient(160deg, var(--bg-a) 0%, var(--bg-b) 100%);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px;
+  }
+  .site-nav {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 11.5px;
+    text-decoration: none;
+    border: 1.5px solid var(--border);
+    background: #ffffff;
+    color: var(--navy);
+    white-space: nowrap;
+  }
+  .nav-btn.active {
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    border-color: transparent;
+  }
+  .nav-btn.whatsapp {
+    background: #25d366;
+    color: #fff;
+    border-color: transparent;
+  }
+  .card {
+    width: 100%;
+    max-width: 560px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px 32px;
+    box-shadow: 0 20px 50px rgba(13, 58, 102, 0.12);
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .logo {
+    display: block;
+    width: 152px;
+    height: 152px;
+    border-radius: 32px;
+    margin: 0 auto 20px;
+    box-shadow: 0 14px 32px rgba(13, 58, 102, 0.22);
+  }
+  h1 {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 26px;
+    color: var(--navy);
+    margin: 0 0 10px;
+    line-height: 1.25;
+  }
+  p.intro {
+    margin: 0 auto 24px;
+    max-width: 440px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: #4a6580;
+  }
+  .pay-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .pay-pill {
+    background: var(--green-bg);
+    color: var(--green-text);
+    border-radius: 16px;
+    padding: 14px 12px;
+  }
+  .pay-pill .amount {
+    display: block;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    margin-bottom: 2px;
+  }
+  .pay-pill .label {
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .bonus-pill {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--amber-bg);
+    color: var(--amber-text);
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.4;
+    border-radius: 16px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    text-align: left;
+  }
+  .whatsapp-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 22px;
+    padding: 16px 24px;
+    background: #25d366;
+    color: #ffffff;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    border-radius: 999px;
+    text-decoration: none;
+    box-shadow: 0 10px 24px rgba(37, 211, 102, 0.35);
+  }
+  .cta-caption {
+    margin: 10px 0 0;
+    font-size: 12.5px;
+    color: #7793ad;
+  }
+  .steps-card {
+    width: 100%;
+    max-width: 560px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 28px 32px;
+    box-shadow: 0 20px 50px rgba(13, 58, 102, 0.08);
+    margin-bottom: 24px;
+  }
+  .steps-card h2 {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 17px;
+    color: var(--navy);
+    margin: 0 0 16px;
+  }
+  .steps-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .steps-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 14.5px;
+    line-height: 1.45;
+    color: var(--ink);
+  }
+  .step-num {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .steps-more {
+    display: inline-block;
+    margin-top: 18px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--blue-deep);
+    text-decoration: none;
+  }
+  .status-card {
+    width: 100%;
+    max-width: 640px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 22px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(13, 58, 102, 0.08);
+    box-sizing: border-box;
+  }
+  .status-group { margin-bottom: 16px; }
+  .status-group:last-of-type { margin-bottom: 0; }
+  .status-label {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .status-label.live { color: #0d5a2f; }
+  .status-label.later { color: #4a6580; }
+  .status-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 999px;
+    padding: 6px 14px;
+    white-space: nowrap;
+  }
+  .chip.live { background: linear-gradient(135deg, var(--blue), var(--blue-deep)); color: #fff; }
+  .chip.later { background: #eef3f8; color: #4a6580; }
+  .status-note {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    line-height: 1.55;
+    color: #4a6580;
+  }
+  .brand-footer {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 4px;
+    font-size: 13px;
+    color: #7793ad;
+  }
+  .brand-footer img {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+  }
+</style>
 </head>
 <body>
-  <p>Redirigiendo a <a href="referral-form/">el formulario de referidos</a>…</p>
+  <nav class="site-nav">
+    <a class="nav-btn active" href="./">🏠 Inicio</a>
+    <a class="nav-btn" href="referral-form/">📋 Formulario de referidos</a>
+    <a class="nav-btn" href="como-funciona/">ℹ️ Cómo funciona</a>
+    <a class="nav-btn whatsapp" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">📲 Empezar</a>
+    <a class="nav-btn" href="privacidad/">🔒 Privacidad</a>
+  </nav>
+
+  <div class="card">
+    <img class="logo" src="assets/logo-monologos.png?v=2" alt="Monólogos en Español">
+    <h1>Gana dinero grabando tu voz 🎙️</h1>
+    <p class="intro">
+      Spirelight busca hispanohablantes para grabar audio — un proceso rápido,
+      pago el mismo día, y un bono extra por cada persona que refieras.
+    </p>
+
+    <div class="pay-grid">
+      <div class="pay-pill">
+        <span class="amount">$45</span>
+        <span class="label">por sesión (~1 hora)</span>
+      </div>
+      <div class="pay-pill">
+        <span class="amount">$50</span>
+        <span class="label">por sesión si eres de Puerto Rico</span>
+      </div>
+    </div>
+    <div class="bonus-pill">🎁 Gana $15 ($20 si eres de Puerto Rico) por cada persona que refieras y complete su grabación</div>
+
+    <a class="whatsapp-btn" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">
+      📲 Únete al grupo de WhatsApp para empezar
+    </a>
+    <p class="cta-caption">En el grupo encontrarás el video explicativo, las preguntas frecuentes y el enlace para registrarte.</p>
+  </div>
+
+  <div class="steps-card">
+    <h2>¿Cómo funciona?</h2>
+    <ul class="steps-list">
+      <li><span class="step-num">1</span> Te registras y grabas una muestra corta de 30 segundos.</li>
+      <li><span class="step-num">2</span> El cliente acepta tu muestra y verificas tu identidad.</li>
+      <li><span class="step-num">3</span> Firmas el acuerdo y grabas tu sesión principal (~30 min de habla libre).</li>
+      <li><span class="step-num">4</span> Recibes tu pago por Payoneer, Wise o PayPal.</li>
+    </ul>
+    <a class="steps-more" href="como-funciona/">Ver el proceso completo →</a>
+  </div>
+
+  <div class="status-card">
+    <div class="status-group">
+      <div class="status-label live">✅ Activo ahora</div>
+      <div class="status-chips">
+        <span class="chip live">Panamá</span>
+        <span class="chip live">Puerto Rico</span>
+        <span class="chip live">Argentina</span>
+        <span class="chip live">República Dominicana</span>
+      </div>
+    </div>
+    <div class="status-group">
+      <div class="status-label later">📅 En octubre</div>
+      <div class="status-chips">
+        <span class="chip later">Cuba</span>
+        <span class="chip later">Honduras</span>
+        <span class="chip later">Paraguay</span>
+        <span class="chip later">Nicaragua</span>
+        <span class="chip later">El Salvador</span>
+        <span class="chip later">Costa Rica</span>
+        <span class="chip later">Uruguay</span>
+        <span class="chip later">Ecuador</span>
+        <span class="chip later">Perú</span>
+        <span class="chip later">Venezuela</span>
+        <span class="chip later">Chile</span>
+        <span class="chip later">Guatemala</span>
+      </div>
+    </div>
+    <p class="status-note">📲 Los anuncios de apertura de cada país se publican primero en el grupo de WhatsApp. Únete para enterarte en cuanto tu país esté activo.</p>
+  </div>
+
+  <footer class="brand-footer">
+    <img src="assets/logo-spirelight.webp?v=1" alt="">
+    <span>Programa de referidos para Spirelight</span>
+  </footer>
 </body>
 </html>
