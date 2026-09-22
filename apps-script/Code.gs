@@ -1,49 +1,59 @@
 /**
  * Spirelight intake — Apps Script backend.
  *
- * Handles TWO things from one Web app deployment:
- *  1. The existing "referrer refers someone" form (referral-form/index.html)
- *     — unchanged behavior, still writes to the "Referidos" tab.
- *  2. NEW: general lead intake (website form and/or Facebook Instant Form
- *     via Make.com) — writes to "Leads Sitio", checks country against the
- *     "Config" tab, dedupes by email, and (via a time trigger) emails
- *     anyone whose country later goes active.
+ * This is the SAME project that already powers the existing referrer-
+ * refers-someone form (referral-form/index.html) — you may have renamed
+ * the project itself, but it's still the one bound to the "Spirelight
+ * Referral Tracker" Sheet. This file now handles TWO things from that
+ * one Web app deployment:
+ *  1. The existing referral form — unchanged behavior, still writes to
+ *     the "Referidos" tab.
+ *  2. NEW: general lead intake (website form and/or Facebook Instant
+ *     Form via Make.com) — writes to "Leads Sitio", checks country
+ *     against the "Config" tab, dedupes by email, and (via a time
+ *     trigger) emails anyone whose country later goes active.
  *
  * Setup:
- * 1. Open the "Spirelight Referral Tracker" Google Sheet.
- * 2. Extensions > Apps Script.
- * 3. Paste this file's contents in (replacing what's there), save.
- * 4. Run `setupSheetsOnce` once from the editor (▶ button, pick that
- *    function first) — creates the "Config" and "Leads Sitio" tabs.
- *    Authorize when prompted (it's your own script — click through
- *    Google's "unsafe" warning, that's standard for any unpublished script).
- * 5. Run `installHourlyTrigger` once — schedules the waiting-list email
- *    sweep to run automatically every hour. (Safe to run twice; delete
- *    duplicate triggers from the editor's clock icon on the left if you
- *    ever do.)
- * 6. Deploy > Manage deployments > edit (pencil) the existing deployment
- *    > Version: New version > Deploy. The Web app URL stays the SAME as
- *    what's already in referral-form/index.html — no need to change it
- *    there. Use that same URL for the new confirmation page's JSONP call
- *    and for any new lead-intake form.
- * 7. Check the "Config" tab after setup — it's seeded with the current
- *    active/waiting status per country. Flip a country's second column
- *    to "activo" whenever it goes live; that's the only manual step from
- *    here on. Everyone already waiting for it gets emailed within the
- *    hour, automatically.
+ * 1. In this Apps Script project (the one already bound to the Sheet),
+ *    paste this file's contents in (replacing what's there), save.
+ * 2. Run `setupSheetsOnce` once from the editor (▶ button — pick that
+ *    function from the dropdown next to it first). Authorize when
+ *    prompted: Review permissions > pick your account > Advanced > Go to
+ *    (project name) (unsafe) > Allow. That's Google's standard warning
+ *    for any script you haven't published to the store — it's your own
+ *    code running on your own Sheet, not an actual problem.
+ * 3. Run `installHourlyTrigger` once — schedules the waiting-list email
+ *    sweep to run automatically every hour.
+ * 4. Deploy > Manage deployments > edit (pencil icon) the existing
+ *    deployment > Version: New version > Deploy. The Web app URL stays
+ *    the SAME as what's already in referral-form/index.html — nothing
+ *    to change there. gracias/index.html already uses that same URL too.
+ * 5. Check the "Config" tab in the Sheet after setup — it's seeded with
+ *    the current active/waiting status per country. Flip a country's
+ *    second column to "activo" whenever it goes live; that's the only
+ *    manual step from here on. Everyone already waiting for it gets
+ *    emailed within the hour, automatically.
  */
 
+var SHEET_ID = '1IN1iv6X-isl2grAIG3f_LXHk1KrgUleqGXWmd3fdAdI'; // "Spirelight Referral Tracker"
 var SIGNUP_LINK = 'https://voice.spirelight.ai/login?ref=QU2R4Y55';
 var WHATSAPP_GROUP_LINK = 'https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG';
 var CONFIG_SHEET_NAME = 'Config';
 var LEADS_SHEET_NAME = 'Leads Sitio';
+
+// Opens the Sheet explicitly by ID rather than relying on
+// getActiveSpreadsheet() — works the same whether this project is
+// container-bound or not, so it's one less thing to get wrong.
+function getSheet_() {
+  return SpreadsheetApp.openById(SHEET_ID);
+}
 
 // ---------------------------------------------------------------------
 // One-time setup
 // ---------------------------------------------------------------------
 
 function setupSheetsOnce() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getSheet_();
 
   var configSheet = ss.getSheetByName(CONFIG_SHEET_NAME);
   if (!configSheet) {
@@ -89,8 +99,7 @@ function installHourlyTrigger() {
 // ---------------------------------------------------------------------
 
 function getActiveCountries_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var configSheet = ss.getSheetByName(CONFIG_SHEET_NAME);
+  var configSheet = getSheet_().getSheetByName(CONFIG_SHEET_NAME);
   var active = {};
   if (!configSheet) return active;
   var data = configSheet.getDataRange().getValues();
@@ -138,7 +147,7 @@ function doPost(e) {
 }
 
 function handleReferralSubmission_(p) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getSheet_();
   var sheet = ss.getSheetByName('Referidos') || ss.insertSheet('Referidos');
 
   if (sheet.getLastRow() === 0) {
@@ -171,7 +180,7 @@ function handleReferralSubmission_(p) {
 }
 
 function handleLeadSubmission_(p) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getSheet_();
   var leadsSheet = ss.getSheetByName(LEADS_SHEET_NAME) || ss.insertSheet(LEADS_SHEET_NAME);
 
   if (leadsSheet.getLastRow() === 0) {
@@ -208,8 +217,7 @@ function handleLeadSubmission_(p) {
 // ---------------------------------------------------------------------
 
 function sendWaitingListEmails() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var leadsSheet = ss.getSheetByName(LEADS_SHEET_NAME);
+  var leadsSheet = getSheet_().getSheetByName(LEADS_SHEET_NAME);
   if (!leadsSheet) return;
 
   var data = leadsSheet.getDataRange().getValues();
