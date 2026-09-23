@@ -172,6 +172,18 @@
     text-decoration: none;
   }
   .loading { color: #7793ad; font-size: 14px; }
+  select {
+    width: 100%;
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 15px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: #fbfdff;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+  select:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -221,6 +233,31 @@
       </p>
     </div>
 
+    <div id="pickView" hidden>
+      <h1>¿De qué país eres? 🌎</h1>
+      <p class="intro">Selecciona tu país para ver si ya está activo.</p>
+      <select id="countrySelect">
+        <option value="" disabled selected>Selecciona un país</option>
+        <option>Argentina</option>
+        <option>Chile</option>
+        <option>Costa Rica</option>
+        <option>Cuba</option>
+        <option>Ecuador</option>
+        <option>El Salvador</option>
+        <option>Guatemala</option>
+        <option>Honduras</option>
+        <option>Nicaragua</option>
+        <option>Panamá</option>
+        <option>Paraguay</option>
+        <option>Perú</option>
+        <option>Puerto Rico</option>
+        <option>República Dominicana</option>
+        <option>Uruguay</option>
+        <option>Venezuela</option>
+      </select>
+      <button class="apply-btn" id="pickContinueBtn" type="button">Continuar →</button>
+    </div>
+
     <div id="unknownView" hidden>
       <h1>No encontramos tu país</h1>
       <p class="intro">Únete al grupo de WhatsApp y te ayudamos directamente.</p>
@@ -236,10 +273,11 @@
   var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWxLdQ70YBFIkZWu5xfobhYUA5s-bcrf081pDL6W9-9-s0rXwGWkRDxNoOz83GswRD/exec";
 
   var params = new URLSearchParams(window.location.search);
-  var country = (params.get('country') || '').trim();
+  var countryFromUrl = (params.get('country') || '').trim();
+  var currentCountry = '';
 
   function show(viewId) {
-    ['loadingView', 'activeView', 'waitingView', 'unknownView'].forEach(function (id) {
+    ['loadingView', 'activeView', 'waitingView', 'unknownView', 'pickView'].forEach(function (id) {
       document.getElementById(id).hidden = (id !== viewId);
     });
   }
@@ -249,9 +287,7 @@
   }
 
   window.handleCountryCheck = function (data) {
-    if (!country) { show('unknownView'); return; }
-
-    setCountryLabels(country);
+    setCountryLabels(currentCountry);
 
     if (data && data.active) {
       show('activeView');
@@ -270,13 +306,30 @@
     }
   };
 
-  if (!country) {
-    show('unknownView');
-  } else {
+  function checkCountry(country) {
+    currentCountry = country;
+    show('loadingView');
     var script = document.createElement('script');
     script.src = SCRIPT_URL + '?country=' + encodeURIComponent(country) + '&callback=handleCountryCheck';
     script.onerror = function () { show('unknownView'); };
     document.body.appendChild(script);
+  }
+
+  document.getElementById('pickContinueBtn').addEventListener('click', function () {
+    var value = document.getElementById('countrySelect').value;
+    if (!value) return;
+    checkCountry(value);
+  });
+
+  // Facebook's Instant Form "Thank You" screen link can't insert a
+  // dynamic answer into the URL in the simplified form builder, so most
+  // visitors land here with no ?country= param — they pick it themselves
+  // via pickView. The ?country= param still works as a shortcut for any
+  // link that CAN pass it reliably (e.g. a future on-site form).
+  if (countryFromUrl) {
+    checkCountry(countryFromUrl);
+  } else {
+    show('pickView');
   }
 </script>
 </body>
