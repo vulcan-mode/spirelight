@@ -172,6 +172,53 @@
     text-decoration: none;
   }
   .loading { color: #7793ad; font-size: 14px; }
+  .step-block {
+    text-align: left;
+    margin-bottom: 18px;
+    transition: opacity 0.2s;
+  }
+  .step-block[data-locked] { opacity: 0.4; }
+  .step-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .step-num {
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step-title {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 14.5px;
+    color: var(--navy);
+  }
+  .step-link {
+    display: block;
+    text-align: center;
+    padding: 13px 18px;
+    border-radius: 999px;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 14.5px;
+    text-decoration: none;
+    margin-bottom: 10px;
+  }
+  .step-link.video { background: var(--blue-deep); color: #fff; }
+  .step-link.info { background: #eef3f8; color: var(--navy); }
+  .step-block[data-locked] .step-link,
+  .step-block[data-locked] .whatsapp-btn { pointer-events: none; }
   select {
     width: 100%;
     font-family: 'Manrope', system-ui, sans-serif;
@@ -202,17 +249,37 @@
 
     <div id="activeView" hidden>
       <div class="status-pill active">✅ ¡<span class="country-name"></span> está activo!</div>
-      <h1>Ya casi terminas 🎙️</h1>
-      <p class="intro">Antes de aplicar, únete al grupo de WhatsApp — ahí está el video explicativo y las preguntas frecuentes.</p>
+      <h1>3 pasos antes de aplicar 🎙️</h1>
+      <p class="intro">Completa esto en orden — cada paso se desbloquea cuando confirmas el anterior.</p>
 
-      <a class="whatsapp-btn" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">
-        📲 Únete al grupo de WhatsApp
-      </a>
+      <div class="step-block" id="stepVideo">
+        <div class="step-head"><span class="step-num">1</span><span class="step-title">Mira el video explicativo</span></div>
+        <a class="step-link video" href="https://drive.google.com/file/d/1JIuzLS2OoziuW9J1ApTpB_48aWx20lIG/view" target="_blank" rel="noopener">▶️ Ver el video</a>
+        <label class="checkbox-row" for="checkVideo">
+          <input type="checkbox" id="checkVideo">
+          <span>Ya vi el video</span>
+        </label>
+      </div>
 
-      <label class="checkbox-row" for="confirmWhatsapp">
-        <input type="checkbox" id="confirmWhatsapp">
-        <span>Confirmo que ya me uní al grupo de WhatsApp</span>
-      </label>
+      <div class="step-block" id="stepInfo" data-locked>
+        <div class="step-head"><span class="step-num">2</span><span class="step-title">Lee cómo funciona</span></div>
+        <a class="step-link info" href="../como-funciona/" target="_blank" rel="noopener">📖 Ver "Cómo funciona"</a>
+        <label class="checkbox-row" for="checkInfo">
+          <input type="checkbox" id="checkInfo" disabled>
+          <span>Ya lo leí</span>
+        </label>
+      </div>
+
+      <div class="step-block" id="stepWhatsapp" data-locked>
+        <div class="step-head"><span class="step-num">3</span><span class="step-title">Únete al grupo de WhatsApp</span></div>
+        <a class="whatsapp-btn" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">
+          📲 Únete al grupo de WhatsApp
+        </a>
+        <label class="checkbox-row" for="checkWhatsapp">
+          <input type="checkbox" id="checkWhatsapp" disabled>
+          <span>Ya me uní al grupo</span>
+        </label>
+      </div>
 
       <a class="apply-btn" id="applyBtn" href="#" target="_blank" rel="noopener" aria-disabled="true">
         Aplicar en Spirelight →
@@ -291,15 +358,44 @@
 
     if (data && data.active) {
       show('activeView');
-      var checkbox = document.getElementById('confirmWhatsapp');
       var applyBtn = document.getElementById('applyBtn');
       applyBtn.href = data.link;
-      checkbox.addEventListener('change', function () {
-        if (checkbox.checked) {
-          applyBtn.removeAttribute('aria-disabled');
-        } else {
-          applyBtn.setAttribute('aria-disabled', 'true');
+
+      // Chain: each checkbox unlocks the next step's block + checkbox.
+      // Unchecking re-locks everything after it, so re-checking an
+      // earlier box doesn't silently leave later ones enabled.
+      var chain = [
+        { checkbox: document.getElementById('checkVideo'), unlocks: document.getElementById('stepInfo') },
+        { checkbox: document.getElementById('checkInfo'), unlocks: document.getElementById('stepWhatsapp') },
+        { checkbox: document.getElementById('checkWhatsapp'), unlocks: applyBtn }
+      ];
+
+      function relock(fromIndex) {
+        for (var i = fromIndex; i < chain.length; i++) {
+          var step = chain[i];
+          if (step.checkbox) { step.checkbox.checked = false; step.checkbox.disabled = true; }
+          if (step.unlocks === applyBtn) {
+            applyBtn.setAttribute('aria-disabled', 'true');
+          } else {
+            step.unlocks.setAttribute('data-locked', '');
+          }
         }
+      }
+
+      chain.forEach(function (step, index) {
+        step.checkbox.addEventListener('change', function () {
+          if (step.checkbox.checked) {
+            if (step.unlocks === applyBtn) {
+              applyBtn.removeAttribute('aria-disabled');
+            } else {
+              step.unlocks.removeAttribute('data-locked');
+              var nextCheckbox = chain[index + 1].checkbox;
+              nextCheckbox.disabled = false;
+            }
+          } else {
+            relock(index);
+          }
+        });
       });
     } else {
       show('waitingView');
