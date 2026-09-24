@@ -257,6 +257,7 @@
     </div>
 
     <div id="activeView" hidden>
+      <p class="greeting" hidden></p>
       <div class="status-pill active">✅ ¡<span class="country-name"></span> está activo!</div>
       <h1>3 pasos antes de aplicar 🎙️</h1>
       <p class="intro">Completa esto en orden — cada paso se desbloquea cuando confirmas el anterior.</p>
@@ -344,9 +345,13 @@
   </div>
 
 <script>
-  // Same Web app URL already used by referral-form/index.html — this page
-  // reuses the one deployment (doGet added alongside the existing doPost).
-  var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWxLdQ70YBFIkZWu5xfobhYUA5s-bcrf081pDL6W9-9-s0rXwGWkRDxNoOz83GswRD/exec";
+  // Cloudflare Worker, not Apps Script's exec URL -- that redirect hop
+  // was the actual source of the 1-to-60-second inconsistent latency
+  // (confirmed via Apps Script's own Executions log: the script logic
+  // itself always finished in ~1-2s). The Worker calls the real Sheets
+  // API directly via a service account, with normal REST latency and
+  // real CORS headers, so this is a plain fetch(), no JSONP needed.
+  var WORKER_URL = "https://spirelight-leads.domlebo1.workers.dev";
 
   var params = new URLSearchParams(window.location.search);
   var countryFromUrl = (params.get('country') || '').trim();
@@ -395,11 +400,8 @@
     }
   }
 
-  // Apps Script Web App calls occasionally hang for tens of seconds on a
-  // slow redirect hop (Google's own infra, not our code) rather than
-  // failing outright. requestToken lets a stale, slow response from an
-  // earlier attempt get silently ignored once we've already retried or
-  // given up, instead of clobbering whatever's on screen by then.
+  // requestToken guards against a stale response from an abandoned
+  // attempt landing after we've already moved on (e.g. retried).
   var requestToken = 0;
 
   function checkCountry(country, attempt) {
@@ -408,38 +410,25 @@
     show('loadingView');
 
     var myToken = ++requestToken;
-    var callbackName = 'handleCountryCheck_' + myToken;
-    var settled = false;
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function () { controller.abort(); }, 6000);
 
-    function cleanup() {
-      clearTimeout(timeoutId);
-      delete window[callbackName];
-    }
-
-    window[callbackName] = function (data) {
-      if (myToken !== requestToken || settled) return;
-      settled = true;
-      cleanup();
-      handleCountryCheckImpl(data);
-    };
-
-    function retryOrFail() {
-      if (myToken !== requestToken || settled) return;
-      settled = true;
-      cleanup();
-      if (attempt < 2) {
-        checkCountry(country, attempt + 1);
-      } else {
-        show('unknownView');
-      }
-    }
-
-    var timeoutId = setTimeout(retryOrFail, 8000);
-
-    var script = document.createElement('script');
-    script.src = SCRIPT_URL + '?country=' + encodeURIComponent(country) + '&callback=' + callbackName;
-    script.onerror = retryOrFail;
-    document.body.appendChild(script);
+    fetch(WORKER_URL + '?country=' + encodeURIComponent(country), { signal: controller.signal })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (myToken !== requestToken) return;
+        clearTimeout(timeoutId);
+        handleCountryCheckImpl(data);
+      })
+      .catch(function () {
+        if (myToken !== requestToken) return;
+        clearTimeout(timeoutId);
+        if (attempt < 2) {
+          checkCountry(country, attempt + 1);
+        } else {
+          show('unknownView');
+        }
+      });
   }
 
   document.getElementById('pickContinueBtn').addEventListener('click', function () {
