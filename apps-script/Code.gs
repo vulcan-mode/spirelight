@@ -222,25 +222,91 @@ function handleLeadSubmission_(p) {
 // active since they submitted, and marks them as sent.
 // ---------------------------------------------------------------------
 
+// Meta's native Google Sheets lead delivery writes its OWN columns
+// (id, created_time, ad_id, ..., the question text as a raw header,
+// email, full_name, phone_number, lead_status) and does NOT respect
+// whatever header row already existed on the sheet -- it just writes
+// its own data regardless of what the original columns meant. So this
+// reads everything by HEADER NAME (never a fixed column index), and
+// only adds "Estado"/"CorreoEnviado" as new columns it fully owns.
+var META_COUNTRY_HEADER = '¿de_qué_país_eres?';
+var META_EMAIL_HEADER = 'email';
+var META_NAME_HEADER = 'full_name';
+var STATUS_HEADER = 'Estado';
+var EMAIL_SENT_HEADER = 'CorreoEnviado';
+
+function getHeaderIndexMap_(sheet) {
+  var lastCol = sheet.getLastColumn();
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  var map = {};
+  headers.forEach(function (h, i) {
+    var key = String(h || '').trim();
+    if (key) map[key] = i + 1; // 1-based column index
+  });
+  return map;
+}
+
+function ensureColumn_(sheet, map, headerName) {
+  if (map[headerName]) return map[headerName];
+  var col = sheet.getLastColumn() + 1;
+  sheet.getRange(1, col).setValue(headerName);
+  map[headerName] = col;
+  return col;
+}
+
+// Meta stores multiple-choice answers lowercased ("argentina"), while
+// the Config tab uses proper capitalization ("Argentina") -- an exact
+// string match would silently fail for every single lead.
+function matchCountryCaseInsensitive_(raw, activeCountriesMap) {
+  var rawLower = String(raw || '').trim().toLowerCase();
+  for (var country in activeCountriesMap) {
+    if (country.toLowerCase() === rawLower) return true;
+  }
+  return false;
+}
+
 function sendWaitingListEmails() {
   var leadsSheet = getSheet_().getSheetByName(LEADS_SHEET_NAME);
   if (!leadsSheet) return;
 
-  var data = leadsSheet.getDataRange().getValues();
+  var lastRow = leadsSheet.getLastRow();
+  if (lastRow < 2) return;
+
+  var map = getHeaderIndexMap_(leadsSheet);
+  var countryCol = map[META_COUNTRY_HEADER];
+  var emailCol = map[META_EMAIL_HEADER];
+  if (!countryCol || !emailCol) return; // Meta hasn't delivered any leads yet
+
+  var nameCol = map[META_NAME_HEADER] || null;
+  var estadoCol = ensureColumn_(leadsSheet, map, STATUS_HEADER);
+  var sentCol = ensureColumn_(leadsSheet, map, EMAIL_SENT_HEADER);
+
+  var numRows = lastRow - 1;
+  var countryValues = leadsSheet.getRange(2, countryCol, numRows, 1).getValues();
+  var emailValues = leadsSheet.getRange(2, emailCol, numRows, 1).getValues();
+  var nameValues = nameCol ? leadsSheet.getRange(2, nameCol, numRows, 1).getValues() : null;
+  var estadoValues = leadsSheet.getRange(2, estadoCol, numRows, 1).getValues();
+  var sentValues = leadsSheet.getRange(2, sentCol, numRows, 1).getValues();
+
   var activeCountries = getActiveCountries_();
 
-  for (var i = 1; i < data.length; i++) {
-    var row = data[i];
-    var name = row[2];
-    var email = row[3];
-    var country = String(row[5] || '').trim();
-    var status = row[6];
-    var sent = row[7];
+  for (var i = 0; i < numRows; i++) {
+    var rowNum = i + 2;
+    var isActive = matchCountryCaseInsensitive_(countryValues[i][0], activeCountries);
+    var newEstado = isActive ? 'activo' : 'esperando';
 
-    if (status === 'esperando' && sent !== true && activeCountries[country]) {
-      sendActivationEmail_(name, email);
-      leadsSheet.getRange(i + 1, 8).setValue(true);   // CorreoEnviado
-      leadsSheet.getRange(i + 1, 7).setValue('activo'); // Estado
+    if (String(estadoValues[i][0] || '').trim() !== newEstado) {
+      leadsSheet.getRange(rowNum, estadoCol).setValue(newEstado);
+    }
+
+    var alreadySent = sentValues[i][0] === true;
+    if (isActive && !alreadySent) {
+      var email = String(emailValues[i][0] || '').trim();
+      var name = nameValues ? String(nameValues[i][0] || '').trim() : '';
+      if (email) {
+        sendActivationEmail_(name, email);
+        leadsSheet.getRange(rowNum, sentCol).setValue(true);
+      }
     }
   }
 }
