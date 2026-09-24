@@ -86,10 +86,17 @@ function setupSheetsOnce() {
     countries.forEach(function (row) { configSheet.appendRow(row); });
   }
 
+  // Deliberately created BLANK, no header row at all. Meta's native
+  // Sheets connector writes its own header + columns the moment it's
+  // configured, positionally, and does not respect/merge with any
+  // pre-existing header row -- pre-seeding one (as this used to do)
+  // is exactly what caused the whole column-misalignment mess
+  // tonight. "Estado"/"CorreoEnviado" get added later by
+  // sendWaitingListEmails via ensureColumn_, once Meta's real headers
+  // already exist to append alongside.
   var leadsSheet = ss.getSheetByName(LEADS_SHEET_NAME);
   if (!leadsSheet) {
-    leadsSheet = ss.insertSheet(LEADS_SHEET_NAME);
-    leadsSheet.appendRow(['Fecha', 'Fuente', 'Nombre', 'Email', 'WhatsApp', 'País', 'Estado', 'CorreoEnviado']);
+    ss.insertSheet(LEADS_SHEET_NAME);
   }
 }
 
@@ -122,15 +129,94 @@ function isCountryActive_(country) {
 }
 
 // ---------------------------------------------------------------------
-// doGet — JSONP country-check for the /gracias/ confirmation page.
-// Usage: <script src=".../exec?country=Panamá&callback=xyz"></script>
+// Phone lookup — the real anti-abuse gate. Rather than letting a
+// visitor freely self-select any country on /gracias/, they type the
+// phone number they already gave Meta's form, we look it up in Leads
+// Sitio, and pull back the country (and name) THEY submitted. Someone
+// who never actually filled out the real form has no matching row and
+// gets nothing -- they can't just claim to be from an active country.
+// ---------------------------------------------------------------------
+
+var META_PHONE_HEADER = 'phone_number';
+
+// Meta stores this as e.g. "p:+18352273236"; strip everything but
+// digits so formatting differences (spaces, dashes, the "p:" prefix,
+// a leading "+") never cause a false negative.
+function normalizePhone_(raw) {
+  return String(raw || '').replace(/\D/g, '');
+}
+
+function findLeadByPhone_(rawPhone) {
+  var target = normalizePhone_(rawPhone);
+  if (!target) return { found: false };
+
+  var sheet = getSheet_().getSheetByName(LEADS_SHEET_NAME);
+  if (!sheet) return { found: false };
+
+  var map = getHeaderIndexMap_(sheet);
+  var phoneCol = map[META_PHONE_HEADER];
+  var countryCol = map[META_COUNTRY_HEADER];
+  var nameCol = map[META_NAME_HEADER];
+  if (!phoneCol || !countryCol) return { found: false };
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { found: false };
+
+  var numRows = lastRow - 1;
+  var phoneValues = sheet.getRange(2, phoneCol, numRows, 1).getValues();
+  var countryValues = sheet.getRange(2, countryCol, numRows, 1).getValues();
+  var nameValues = nameCol ? sheet.getRange(2, nameCol, numRows, 1).getValues() : null;
+
+  for (var i = 0; i < numRows; i++) {
+    // Compare on a suffix match too (last 10 digits) so a stored
+    // number with/without a country code still matches what someone
+    // types without one.
+    var stored = normalizePhone_(phoneValues[i][0]);
+    if (stored && (stored === target || stored.slice(-10) === target.slice(-10))) {
+      return {
+        found: true,
+        country: String(countryValues[i][0] || '').trim(),
+        name: nameValues ? String(nameValues[i][0] || '').trim() : ''
+      };
+    }
+  }
+  return { found: false };
+}
+
+// ---------------------------------------------------------------------
+// doGet — JSONP check for the /gracias/ confirmation page.
+// Country mode:  ...?country=Panamá&callback=xyz
+// Phone mode:    ...?phone=+18352273236&callback=xyz
+//   (looks up the actual submitted record instead of trusting a
+//   freely self-selected country)
 // ---------------------------------------------------------------------
 
 function doGet(e) {
-  var country = (e.parameter && e.parameter.country) || '';
   var callback = (e.parameter && e.parameter.callback) || 'callback';
-  var active = isCountryActive_(country);
-  var payload = { active: active, link: active ? SIGNUP_LINK : null, whatsapp: WHATSAPP_GROUP_LINK };
+  var phone = (e.parameter && e.parameter.phone) || '';
+  var payload;
+
+  if (phone) {
+    var lead = findLeadByPhone_(phone);
+    if (!lead.found) {
+      payload = { found: false };
+    } else {
+      var active = isCountryActive_(lead.country);
+      payload = {
+        found: true,
+        name: lead.name,
+        country: lead.country,
+        active: active,
+        link: active ? SIGNUP_LINK : null,
+        whatsapp: WHATSAPP_GROUP_LINK
+      };
+    }
+  } else {
+    var country = (e.parameter && e.parameter.country) || '';
+    var isActive = isCountryActive_(country);
+    payload = { found: true, active: isActive, link: isActive ? SIGNUP_LINK : null, whatsapp: WHATSAPP_GROUP_LINK };
+  }
+
   var body = callback + '(' + JSON.stringify(payload) + ');';
   return ContentService.createTextOutput(body).setMimeType(ContentService.MimeType.JAVASCRIPT);
 }
