@@ -35,7 +35,13 @@
  *    emailed within the hour, automatically.
  */
 
-var SHEET_ID = '1IN1iv6X-isl2grAIG3f_LXHk1KrgUleqGXWmd3fdAdI'; // "Spirelight Referral Tracker"
+// Separate sheets on purpose: the referral-form (Referidos tab) keeps
+// writing to the ORIGINAL sheet, unaffected by anything below. Only
+// the lead-intake side (Config, Leads Sitio, doGet, the email sweep)
+// points at the new sheet -- these must never be merged into one
+// constant again, or referral submissions would silently split.
+var REFERRAL_SHEET_ID = '1IN1iv6X-isl2grAIG3f_LXHk1KrgUleqGXWmd3fdAdI'; // "Spirelight Referral Tracker" -- Referidos tab only
+var SHEET_ID = '13z3HtJpO7TPl67JVUPyrRxqrLhsMqcsSYz3iccqbRM4'; // new leads sheet, after the original ad/form was deleted
 var SIGNUP_LINK = 'https://voice.spirelight.ai/login?ref=QU2R4Y55';
 var WHATSAPP_GROUP_LINK = 'https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG';
 var CONFIG_SHEET_NAME = 'Config';
@@ -147,7 +153,7 @@ function doPost(e) {
 }
 
 function handleReferralSubmission_(p) {
-  var ss = getSheet_();
+  var ss = SpreadsheetApp.openById(REFERRAL_SHEET_ID);
   var sheet = ss.getSheetByName('Referidos') || ss.insertSheet('Referidos');
 
   if (sheet.getLastRow() === 0) {
