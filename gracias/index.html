@@ -362,7 +362,7 @@
     document.querySelectorAll('.country-name').forEach(function (el) { el.textContent = text; });
   }
 
-  window.handleCountryCheck = function (data) {
+  function handleCountryCheckImpl(data) {
     setCountryLabels(currentCountry);
 
     if (data && data.active) {
@@ -409,14 +409,52 @@
     } else {
       show('waitingView');
     }
-  };
+  }
 
-  function checkCountry(country) {
+  // Apps Script Web App calls occasionally hang for tens of seconds on a
+  // slow redirect hop (Google's own infra, not our code) rather than
+  // failing outright. requestToken lets a stale, slow response from an
+  // earlier attempt get silently ignored once we've already retried or
+  // given up, instead of clobbering whatever's on screen by then.
+  var requestToken = 0;
+
+  function checkCountry(country, attempt) {
+    attempt = attempt || 1;
     currentCountry = country;
     show('loadingView');
+
+    var myToken = ++requestToken;
+    var callbackName = 'handleCountryCheck_' + myToken;
+    var settled = false;
+
+    function cleanup() {
+      clearTimeout(timeoutId);
+      delete window[callbackName];
+    }
+
+    window[callbackName] = function (data) {
+      if (myToken !== requestToken || settled) return;
+      settled = true;
+      cleanup();
+      handleCountryCheckImpl(data);
+    };
+
+    function retryOrFail() {
+      if (myToken !== requestToken || settled) return;
+      settled = true;
+      cleanup();
+      if (attempt < 2) {
+        checkCountry(country, attempt + 1);
+      } else {
+        show('unknownView');
+      }
+    }
+
+    var timeoutId = setTimeout(retryOrFail, 8000);
+
     var script = document.createElement('script');
-    script.src = SCRIPT_URL + '?country=' + encodeURIComponent(country) + '&callback=handleCountryCheck';
-    script.onerror = function () { show('unknownView'); };
+    script.src = SCRIPT_URL + '?country=' + encodeURIComponent(country) + '&callback=' + callbackName;
+    script.onerror = retryOrFail;
     document.body.appendChild(script);
   }
 
