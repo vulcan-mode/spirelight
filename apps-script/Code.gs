@@ -325,32 +325,75 @@ function handleReferralSubmission_(p) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+// 2026-09-25: rewritten to be header-name-based, matching every other
+// writer of this sheet. The old version wrote its own fixed column
+// order (Fecha/Fuente/Nombre/Email/WhatsApp/País/Estado/CorreoEnviado)
+// which no longer matches Meta's actual layout -- using it as-is would
+// have silently misaligned data exactly like the bug fixed earlier
+// tonight. Backs /registro/index.html, the website intake form for
+// people who never went through the Facebook ad.
+var ID_QUESTION_HEADER = '¿tienes_una_identificación_oficial_válida_de_ese_país_(o_pasaporte_estadounidense_si_eres_de_puerto_rico)?';
+var FUENTE_HEADER = 'Fuente';
+
 function handleLeadSubmission_(p) {
-  var ss = getSheet_();
-  var leadsSheet = ss.getSheetByName(LEADS_SHEET_NAME) || ss.insertSheet(LEADS_SHEET_NAME);
+  var leadsSheet = getSheet_().getSheetByName(LEADS_SHEET_NAME) || getSheet_().insertSheet(LEADS_SHEET_NAME);
 
-  if (leadsSheet.getLastRow() === 0) {
-    leadsSheet.appendRow(['Fecha', 'Fuente', 'Nombre', 'Email', 'WhatsApp', 'País', 'Estado', 'CorreoEnviado']);
-  }
-
-  var name = p.name || '';
+  var name = String(p.name || '').trim();
+  var phone = String(p.whatsapp || '').trim();
+  var country = String(p.country || '').trim();
   var email = String(p.email || '').trim().toLowerCase();
-  var whatsapp = p.whatsapp || '';
-  var country = p.country || '';
-  var source = p.source || 'Website';
+  var idAnswer = String(p.idAnswer || '').trim();
 
-  // Dedup by email.
-  var data = leadsSheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) {
-    if (email && String(data[i][3] || '').trim().toLowerCase() === email) {
-      return ContentService
-        .createTextOutput(JSON.stringify({ result: 'duplicate' }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
+  if (!phone) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: 'error', message: 'missing phone' }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 
-  var status = isCountryActive_(country) ? 'activo' : 'esperando';
-  leadsSheet.appendRow([new Date(), source, name, email, whatsapp, country, status, false]);
+  // Dedup by phone -- the identifier used everywhere else in this
+  // system (not email: plenty of people submitting this way won't
+  // give one). Also the actual enforcement of "if they already did
+  // the Facebook thing, don't make them do it again" -- the FRONT END
+  // already checks this before ever showing the form, this is the
+  // server-side backstop.
+  var existing = findLeadByPhone_(phone);
+  if (existing.found) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: 'duplicate' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var map = getHeaderIndexMap_(leadsSheet);
+  if (Object.keys(map).length === 0) {
+    // Sheet has never received a single lead from anywhere yet --
+    // bootstrap with the SAME header names Meta itself uses, so a
+    // real Meta lead arriving later lines up instead of colliding.
+    leadsSheet.appendRow([META_COUNTRY_HEADER, META_EMAIL_HEADER, META_NAME_HEADER, META_PHONE_HEADER]);
+    map = getHeaderIndexMap_(leadsSheet);
+  }
+
+  var countryCol = ensureColumn_(leadsSheet, map, META_COUNTRY_HEADER);
+  var nameCol = ensureColumn_(leadsSheet, map, META_NAME_HEADER);
+  var phoneCol = ensureColumn_(leadsSheet, map, META_PHONE_HEADER);
+  var emailCol = ensureColumn_(leadsSheet, map, META_EMAIL_HEADER);
+  var idQuestionCol = ensureColumn_(leadsSheet, map, ID_QUESTION_HEADER);
+  var fuenteCol = ensureColumn_(leadsSheet, map, FUENTE_HEADER);
+  var estadoCol = ensureColumn_(leadsSheet, map, STATUS_HEADER);
+  var sentCol = ensureColumn_(leadsSheet, map, EMAIL_SENT_HEADER);
+  ensureColumn_(leadsSheet, map, UNLOCK_HEADER);
+
+  var rowNum = leadsSheet.getLastRow() + 1;
+  leadsSheet.getRange(rowNum, countryCol).setValue(country);
+  leadsSheet.getRange(rowNum, nameCol).setValue(name);
+  leadsSheet.getRange(rowNum, phoneCol).setValue(phone);
+  if (email) leadsSheet.getRange(rowNum, emailCol).setValue(email);
+  leadsSheet.getRange(rowNum, idQuestionCol).setValue(idAnswer);
+  leadsSheet.getRange(rowNum, fuenteCol).setValue('Sitio web');
+  // Set immediately (not just left for the hourly sweep) so a fresh
+  // submission redirecting straight to /gracias/ sees the right state
+  // right away instead of a stale "esperando" for up to an hour.
+  leadsSheet.getRange(rowNum, estadoCol).setValue(isCountryActive_(country) ? 'activo' : 'esperando');
+  leadsSheet.getRange(rowNum, sentCol).setValue(false);
 
   return ContentService
     .createTextOutput(JSON.stringify({ result: 'success' }))
