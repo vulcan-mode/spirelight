@@ -113,6 +113,12 @@
     box-sizing: border-box;
   }
   input:focus, select:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+  .phone-row {
+    display: flex;
+    gap: 8px;
+  }
+  .phone-row select { flex: 0 0 128px; }
+  .phone-row input { flex: 1; min-width: 0; }
   .radio-row {
     display: flex;
     gap: 14px;
@@ -195,7 +201,27 @@
     <div id="phoneView" hidden>
       <h1>Regístrate 🎙️</h1>
       <p class="intro">Escribe tu número de WhatsApp para empezar.</p>
-      <input type="tel" id="phoneInput" placeholder="+507 6000 0000" autocomplete="tel">
+      <div class="phone-row">
+        <select id="phoneCode" aria-label="Código de país">
+          <option value="507">🇵🇦 +507</option>
+          <option value="1">🇵🇷 +1 (Puerto Rico)</option>
+          <option value="54">🇦🇷 +54</option>
+          <option value="1">🇩🇴 +1 (República Dominicana)</option>
+          <option value="53">🇨🇺 +53</option>
+          <option value="504">🇭🇳 +504</option>
+          <option value="595">🇵🇾 +595</option>
+          <option value="505">🇳🇮 +505</option>
+          <option value="503">🇸🇻 +503</option>
+          <option value="506">🇨🇷 +506</option>
+          <option value="598">🇺🇾 +598</option>
+          <option value="593">🇪🇨 +593</option>
+          <option value="51">🇵🇪 +51</option>
+          <option value="58">🇻🇪 +58</option>
+          <option value="56">🇨🇱 +56</option>
+          <option value="502">🇬🇹 +502</option>
+        </select>
+        <input type="tel" id="phoneInput" placeholder="6000 0000" autocomplete="tel">
+      </div>
       <button type="button" id="phoneContinueBtn">Continuar →</button>
       <p class="error" id="phoneErrorMsg">Escribe un número válido.</p>
     </div>
@@ -298,13 +324,15 @@
   }
 
   document.getElementById('phoneContinueBtn').addEventListener('click', function () {
-    var value = document.getElementById('phoneInput').value.trim();
+    var code = document.getElementById('phoneCode').value;
+    var numberDigits = document.getElementById('phoneInput').value.replace(/\D/g, '');
     var errorEl = document.getElementById('phoneErrorMsg');
-    if (!value) {
+    if (!numberDigits) {
       errorEl.style.display = 'block';
       return;
     }
     errorEl.style.display = 'none';
+    var value = '+' + code + numberDigits;
     currentPhone = value;
     checkExistingPhone(value);
   });
