@@ -319,6 +319,17 @@
       </p>
     </div>
 
+    <div id="otroView" hidden>
+      <p class="greeting" hidden></p>
+      <div class="status-pill waiting">🙏 Tu país no está en nuestra lista</div>
+      <h1>Por ahora no podemos aceptarte</h1>
+      <p class="intro">Gracias por tu interés. No tenemos planes de expandir a tu país por el momento, así que no podremos avisarte de nada nuevo.</p>
+
+      <p class="referral-note">
+        💰 Pero puedes seguir ganando: si conoces a alguien de Panamá, Puerto Rico, Argentina o República Dominicana, <a href="../referral-form/">refiérelo aquí</a> y gana un bono cuando complete su grabación.
+      </p>
+    </div>
+
     <div id="pickView" hidden>
       <h1>Confirma tu número 📱</h1>
       <p class="intro">Escribe el mismo número de teléfono que usaste en el formulario para ver tu estado.</p>
@@ -358,7 +369,7 @@
   var currentCountry = '';
 
   function show(viewId) {
-    ['loadingView', 'activeView', 'waitingView', 'unknownView', 'pickView', 'notFoundView'].forEach(function (id) {
+    ['loadingView', 'activeView', 'waitingView', 'unknownView', 'pickView', 'notFoundView', 'otroView'].forEach(function (id) {
       document.getElementById(id).hidden = (id !== viewId);
     });
   }
@@ -387,6 +398,11 @@
     currentCountry = data.country || currentCountry;
     setCountryLabels(currentCountry);
     setGreeting(data.name);
+
+    if (data.otro) {
+      show('otroView');
+      return;
+    }
 
     if (data && data.active) {
       show('activeView');
