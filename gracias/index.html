@@ -228,7 +228,14 @@
   .step-link.info { background: #eef3f8; color: var(--navy); }
   .step-block[data-locked] .step-link,
   .step-block[data-locked] .whatsapp-btn { pointer-events: none; }
-  select {
+  .greeting {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--blue-deep);
+    margin: 0 0 10px;
+  }
+  select, input[type="tel"] {
     width: 100%;
     font-family: 'Manrope', system-ui, sans-serif;
     font-size: 15px;
@@ -238,8 +245,9 @@
     background: #fbfdff;
     color: var(--ink);
     margin-bottom: 16px;
+    box-sizing: border-box;
   }
-  select:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+  select:focus, input[type="tel"]:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -297,6 +305,7 @@
     </div>
 
     <div id="waitingView" hidden>
+      <p class="greeting" hidden></p>
       <div class="status-pill waiting">🕐 <span class="country-name"></span> — próximamente</div>
       <h1>Todavía no, pero ya casi 🕐</h1>
       <p class="intro">Guardamos tu información. En cuanto tu país esté activo, te avisamos por correo con el enlace para empezar.</p>
@@ -311,32 +320,23 @@
     </div>
 
     <div id="pickView" hidden>
-      <h1>¿De qué país eres? 🌎</h1>
-      <p class="intro">Selecciona tu país para ver si ya está activo.</p>
-      <select id="countrySelect">
-        <option value="" disabled selected>Selecciona un país</option>
-        <option>Argentina</option>
-        <option>Chile</option>
-        <option>Costa Rica</option>
-        <option>Cuba</option>
-        <option>Ecuador</option>
-        <option>El Salvador</option>
-        <option>Guatemala</option>
-        <option>Honduras</option>
-        <option>Nicaragua</option>
-        <option>Panamá</option>
-        <option>Paraguay</option>
-        <option>Perú</option>
-        <option>Puerto Rico</option>
-        <option>República Dominicana</option>
-        <option>Uruguay</option>
-        <option>Venezuela</option>
-      </select>
+      <h1>Confirma tu número 📱</h1>
+      <p class="intro">Escribe el mismo número de teléfono que usaste en el formulario para ver tu estado.</p>
+      <input type="tel" id="phoneInput" placeholder="+507 6000 0000" autocomplete="tel">
       <button class="apply-btn" id="pickContinueBtn" type="button">Continuar →</button>
     </div>
 
+    <div id="notFoundView" hidden>
+      <h1>No encontramos tu registro</h1>
+      <p class="intro">Verifica que escribiste el mismo número que usaste en el formulario, o únete al grupo de WhatsApp y te ayudamos directamente.</p>
+      <button class="apply-btn" id="tryAgainBtn" type="button">Intentar de nuevo</button>
+      <a class="whatsapp-btn" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">
+        📲 Únete al grupo de WhatsApp
+      </a>
+    </div>
+
     <div id="unknownView" hidden>
-      <h1>No encontramos tu país</h1>
+      <h1>Algo salió mal</h1>
       <p class="intro">Únete al grupo de WhatsApp y te ayudamos directamente.</p>
       <a class="whatsapp-btn" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">
         📲 Únete al grupo de WhatsApp
@@ -358,7 +358,7 @@
   var currentCountry = '';
 
   function show(viewId) {
-    ['loadingView', 'activeView', 'waitingView', 'unknownView', 'pickView'].forEach(function (id) {
+    ['loadingView', 'activeView', 'waitingView', 'unknownView', 'pickView', 'notFoundView'].forEach(function (id) {
       document.getElementById(id).hidden = (id !== viewId);
     });
   }
@@ -367,8 +367,26 @@
     document.querySelectorAll('.country-name').forEach(function (el) { el.textContent = text; });
   }
 
+  function setGreeting(name) {
+    document.querySelectorAll('.greeting').forEach(function (el) {
+      if (name) {
+        el.textContent = '¡Hola, ' + name + '! 👋';
+        el.hidden = false;
+      } else {
+        el.hidden = true;
+      }
+    });
+  }
+
   function handleCountryCheckImpl(data) {
+    if (!data || data.found === false) {
+      show('notFoundView');
+      return;
+    }
+
+    currentCountry = data.country || currentCountry;
     setCountryLabels(currentCountry);
+    setGreeting(data.name);
 
     if (data && data.active) {
       show('activeView');
@@ -404,16 +422,15 @@
   // attempt landing after we've already moved on (e.g. retried).
   var requestToken = 0;
 
-  function checkCountry(country, attempt) {
+  function runLookup(queryString, attempt) {
     attempt = attempt || 1;
-    currentCountry = country;
     show('loadingView');
 
     var myToken = ++requestToken;
     var controller = new AbortController();
     var timeoutId = setTimeout(function () { controller.abort(); }, 6000);
 
-    fetch(WORKER_URL + '?country=' + encodeURIComponent(country), { signal: controller.signal })
+    fetch(WORKER_URL + '?' + queryString, { signal: controller.signal })
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (myToken !== requestToken) return;
@@ -424,24 +441,42 @@
         if (myToken !== requestToken) return;
         clearTimeout(timeoutId);
         if (attempt < 2) {
-          checkCountry(country, attempt + 1);
+          runLookup(queryString, attempt + 1);
         } else {
           show('unknownView');
         }
       });
   }
 
+  // Primary path: cross-reference the phone number they type against
+  // what they actually submitted on the real form (Leads Sitio) --
+  // this is the real anti-abuse gate, not a free self-select.
+  function checkPhone(phone) {
+    runLookup('phone=' + encodeURIComponent(phone));
+  }
+
+  // Legacy/shortcut path: still supported for any link that can pass a
+  // country directly (kept working, but no longer the primary flow).
+  function checkCountry(country) {
+    currentCountry = country;
+    runLookup('country=' + encodeURIComponent(country));
+  }
+
   document.getElementById('pickContinueBtn').addEventListener('click', function () {
-    var value = document.getElementById('countrySelect').value;
+    var value = document.getElementById('phoneInput').value.trim();
     if (!value) return;
-    checkCountry(value);
+    checkPhone(value);
+  });
+
+  document.getElementById('tryAgainBtn').addEventListener('click', function () {
+    show('pickView');
   });
 
   // Facebook's Instant Form "Thank You" screen link can't insert a
   // dynamic answer into the URL in the simplified form builder, so most
-  // visitors land here with no ?country= param — they pick it themselves
-  // via pickView. The ?country= param still works as a shortcut for any
-  // link that CAN pass it reliably (e.g. a future on-site form).
+  // visitors land here with no params at all — they confirm their phone
+  // number themselves via pickView. ?country= still works as a legacy
+  // shortcut for anything that CAN pass it reliably.
   if (countryFromUrl) {
     checkCountry(countryFromUrl);
   } else {
