@@ -326,6 +326,17 @@
       </p>
     </div>
 
+    <div id="noIdView" hidden>
+      <p class="greeting" hidden></p>
+      <div class="status-pill waiting">🪪 Identificación requerida</div>
+      <h1>No podemos continuar sin identificación válida</h1>
+      <p class="intro">Spirelight requiere una identificación oficial válida de tu país (o pasaporte estadounidense si eres de Puerto Rico) para poder aceptarte en el programa. Según tu respuesta, no cuentas con una en este momento.</p>
+      <p class="intro">Si esto fue un error, únete al grupo de WhatsApp y te ayudamos directamente.</p>
+      <a class="whatsapp-btn" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">
+        📲 Únete al grupo de WhatsApp
+      </a>
+    </div>
+
     <div id="pickView" hidden>
       <h1>Confirma tu número 📱</h1>
       <p class="intro">Escribe el mismo número de teléfono que usaste en el formulario para ver tu estado.</p>
@@ -386,7 +397,7 @@
   }
 
   function show(viewId) {
-    ['loadingView', 'activeView', 'waitingView', 'unknownView', 'pickView', 'notFoundView', 'otroView'].forEach(function (id) {
+    ['loadingView', 'activeView', 'waitingView', 'unknownView', 'pickView', 'notFoundView', 'otroView', 'noIdView'].forEach(function (id) {
       document.getElementById(id).hidden = (id !== viewId);
     });
   }
@@ -417,9 +428,17 @@
     // on this device from here on, regardless of which view it lands in.
     if (currentPhone) cachePhone(currentPhone);
 
+    setGreeting(data.name);
+
+    // Takes priority over country/active checks entirely -- lacking
+    // valid ID disqualifies regardless of country.
+    if (data.noValidId) {
+      show('noIdView');
+      return;
+    }
+
     currentCountry = data.country || currentCountry;
     setCountryLabels(currentCountry);
-    setGreeting(data.name);
 
     if (data.otro) {
       show('otroView');
