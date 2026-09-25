@@ -152,6 +152,26 @@
     display: none;
     text-align: center;
   }
+  .stop-banner {
+    margin-top: 14px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: #fdeceb;
+    border: 2px solid #b3261e;
+  }
+  .stop-banner-title {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    color: #b3261e;
+    margin: 0 0 6px;
+  }
+  .stop-banner p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #7a2119;
+  }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -218,6 +238,11 @@
           <label class="radio-option" for="idNo">
             <input type="radio" id="idNo" name="idAnswer" value="No" required> No
           </label>
+        </div>
+
+        <div class="stop-banner" id="noIdWarning" hidden>
+          <p class="stop-banner-title">🛑 ALTO</p>
+          <p>Sin una identificación oficial válida no podemos aceptarte en el programa, sin excepciones. Por favor no continúes el registro ni te unas al grupo de WhatsApp — nos ayuda a no perder tu tiempo ni el nuestro. Si más adelante obtienes tu identificación, puedes volver a registrarte.</p>
         </div>
 
         <label for="email">Correo electrónico (opcional)</label>
@@ -287,6 +312,10 @@
   var form = document.getElementById('intakeForm');
   var submitBtn = document.getElementById('submitBtn');
   var formErrorMsg = document.getElementById('formErrorMsg');
+  var noIdWarning = document.getElementById('noIdWarning');
+
+  document.getElementById('idSi').addEventListener('change', function () { noIdWarning.hidden = true; });
+  document.getElementById('idNo').addEventListener('change', function () { noIdWarning.hidden = false; });
 
   form.addEventListener('submit', function (event) {
     event.preventDefault();

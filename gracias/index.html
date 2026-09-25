@@ -114,6 +114,24 @@
   }
   .status-pill.active { background: var(--green-bg); color: var(--green-text); }
   .status-pill.waiting { background: var(--amber-bg); color: var(--amber-text); }
+  .status-pill.stop { background: #fdeceb; color: #b3261e; }
+  .warning-strict {
+    margin: 0 0 18px;
+    padding: 14px 16px;
+    background: #fdeceb;
+    border: 1.5px solid #f3b3ac;
+    border-radius: 12px;
+    color: #b3261e;
+    font-weight: 800;
+    font-size: 15px;
+    line-height: 1.5;
+    text-align: center;
+  }
+  .stop-sign {
+    font-size: 52px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
   .whatsapp-btn {
     display: flex;
     align-items: center;
@@ -328,12 +346,14 @@
 
     <div id="noIdView" hidden>
       <p class="greeting" hidden></p>
-      <div class="status-pill waiting">🪪 Identificación requerida</div>
-      <h1>No podemos continuar sin identificación válida</h1>
-      <p class="intro">Spirelight requiere una identificación oficial válida de tu país (o pasaporte estadounidense si eres de Puerto Rico) para poder aceptarte en el programa. Según tu respuesta, no cuentas con una en este momento.</p>
-      <p class="intro">Si esto fue un error, únete al grupo de WhatsApp y te ayudamos directamente.</p>
-      <a class="whatsapp-btn" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">
-        📲 Únete al grupo de WhatsApp
+      <div class="stop-sign">🛑</div>
+      <div class="status-pill stop">🪪 Identificación requerida</div>
+      <h1>No podemos aceptarte sin identificación</h1>
+      <p class="intro"><strong>Spirelight exige una identificación oficial válida de tu país</strong> (o pasaporte estadounidense si eres de Puerto Rico) para participar, sin excepciones. Según tu respuesta, no cuentas con una en este momento.</p>
+      <p class="warning-strict">Si realmente no tienes una identificación oficial válida, no vas a poder completar el trabajo. No hay excepciones a esto.</p>
+      <p class="intro">Por favor no continúes el proceso ni te unas al grupo de WhatsApp mientras esto no esté resuelto — solo se pierde tu tiempo y el nuestro.</p>
+      <a class="apply-btn" id="contactDomingoBtn" href="#" target="_blank" rel="noopener">
+        Sí tengo una identificación válida →
       </a>
     </div>
 
@@ -370,6 +390,7 @@
   // API directly via a service account, with normal REST latency and
   // real CORS headers, so this is a plain fetch(), no JSONP needed.
   var WORKER_URL = "https://spirelight-leads.domlebo1.workers.dev";
+  var DOMINGO_WHATSAPP = "51926092155";
 
   var params = new URLSearchParams(window.location.search);
   var countryFromUrl = (params.get('country') || '').trim();
@@ -434,6 +455,10 @@
     // valid ID disqualifies regardless of country.
     if (data.noValidId) {
       show('noIdView');
+      var greetingName = data.name ? data.name.trim() : '';
+      var message = (greetingName ? ('Hola Domingo, soy ' + greetingName + '. ') : 'Hola Domingo. ')
+        + 'Contesté que no tenía una identificación oficial válida por error -- sí cuento con una.';
+      document.getElementById('contactDomingoBtn').href = 'https://wa.me/' + DOMINGO_WHATSAPP + '?text=' + encodeURIComponent(message);
       return;
     }
 
