@@ -519,6 +519,81 @@ function sendWaitingListEmails() {
   }
 }
 
+// One-off, 2026-09-25: apology + real signup path for the 28 people
+// confirmed to have been incorrectly told their (actually active)
+// country wasn't ready yet, due to the country-matching bug fixed
+// today (see normalizeCountryKey_). Deliberately NOT part of the
+// regular EMAILS_PAUSED-gated flow above -- this is a separate,
+// one-time send, run manually once from the editor. Reuses the same
+// "CorreoEnviado" flag, so the regular sweep won't double-email these
+// people once EMAILS_PAUSED is turned back off.
+var BUG_FIX_AFFECTED_PHONES_ = [
+  '18094916856', '8295024380', '18292460820', '18498486944', '18494983218', '18292128512',
+  '18096984394', '18293744670', '18098765699', '18493983392', '18493903513', '18299349529',
+  '18293633479', '18094793495', '18298185625', '18092058182', '18498813991', '18297580403',
+  '18099387585', '8098044174', '18092035182', '18293127125', '18492088611', '18092309958',
+  '18498599793', '50760961503', '50765111986', '50767379844'
+];
+
+function sendBugFixApologyEmails() {
+  var leadsSheet = getSheet_().getSheetByName(LEADS_SHEET_NAME);
+  if (!leadsSheet) return;
+
+  var map = getHeaderIndexMap_(leadsSheet);
+  var phoneCol = map[META_PHONE_HEADER];
+  var emailCol = map[META_EMAIL_HEADER];
+  var nameCol = map[META_NAME_HEADER];
+  var sentCol = ensureColumn_(leadsSheet, map, EMAIL_SENT_HEADER);
+  if (!phoneCol || !emailCol) return;
+
+  var lastRow = leadsSheet.getLastRow();
+  if (lastRow < 2) return;
+  var numRows = lastRow - 1;
+
+  var phoneValues = leadsSheet.getRange(2, phoneCol, numRows, 1).getValues();
+  var emailValues = leadsSheet.getRange(2, emailCol, numRows, 1).getValues();
+  var nameValues = nameCol ? leadsSheet.getRange(2, nameCol, numRows, 1).getValues() : null;
+  var sentValues = leadsSheet.getRange(2, sentCol, numRows, 1).getValues();
+
+  var targetSet = {};
+  BUG_FIX_AFFECTED_PHONES_.forEach(function (p) { targetSet[p] = true; });
+
+  var sentCount = 0, skippedNoEmail = 0;
+  for (var i = 0; i < numRows; i++) {
+    var normalized = normalizePhone_(phoneValues[i][0]);
+    if (!targetSet[normalized]) continue;
+    if (sentValues[i][0] === true) continue;
+
+    var email = String(emailValues[i][0] || '').trim();
+    if (!email) { skippedNoEmail++; continue; }
+
+    var name = nameValues ? String(nameValues[i][0] || '').trim() : '';
+    sendBugFixApologyEmail_(name, email);
+    leadsSheet.getRange(i + 2, sentCol).setValue(true);
+    sentCount++;
+  }
+  Logger.log('Sent apology emails to ' + sentCount + ' people. ' + skippedNoEmail + ' had no email on file.');
+}
+
+function sendBugFixApologyEmail_(name, email) {
+  if (!email) return;
+  var greeting = name ? ('¡Hola ' + name + '!') : '¡Hola!';
+  // No emoji in the subject -- see sendActivationEmail_'s note below on
+  // the encoding bug that mangled it there.
+  var subject = 'Error de mi parte -- tu país SÍ está activo';
+  var body = greeting + '\n\n'
+    + 'Quiero ser directo contigo: cometí un error.\n\n'
+    + 'Un problema técnico en mi sistema estaba marcando incorrectamente tu país como "todavía no activo", cuando en realidad ya está activo ahora mismo. '
+    + 'Esto fue un error mío, y quiero que lo sepas de mi parte -- yo soy el único responsable de este proyecto de referidos y de este sitio, y esta vez me equivoqué.\n\n'
+    + 'La buena noticia: ya está corregido, y puedes aplicar a Spirelight hoy mismo.\n\n'
+    + 'Esto es dinero sobre la mesa ahora mismo -- no hay razón para esperar ni un día más.\n\n'
+    + 'Entra aquí con el mismo número de WhatsApp que usaste antes: https://vulcan-mode.github.io/spirelight/gracias/\n\n'
+    + 'Ahí vas a ver el video explicativo, cómo funciona todo, y el enlace directo para aplicar a Spirelight.\n\n'
+    + 'De nuevo, lamento mucho el error. Gracias por tu paciencia, y espero verte grabando pronto 🎙️\n\n'
+    + '-- Domingo';
+  GmailApp.sendEmail(email, subject, body);
+}
+
 function sendActivationEmail_(name, email) {
   if (!email) return;
   var greeting = name ? ('¡Hola ' + name + '!') : '¡Hola!';
