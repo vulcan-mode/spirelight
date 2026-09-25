@@ -170,6 +170,22 @@ function installReferralSyncTrigger() {
 // Shared helpers
 // ---------------------------------------------------------------------
 
+// Meta stores multi-word / accented multiple-choice answers as
+// lowercased, underscore-slugged, ACCENT-STRIPPED text -- e.g.
+// "República Dominicana" comes back as "republica_dominicana", and
+// "Panamá" comes back as "panama" (accent dropped entirely, not just
+// re-cased). Confirmed live 2026-09-25: this silently broke 3 of 4
+// active countries (everything except single-word, unaccented
+// Argentina) -- matchCountryCaseInsensitive_'s plain .toLowerCase()
+// never caught it. Mirrors the same fix in spirelight-worker/src/index.js.
+function normalizeCountryKey_(raw) {
+  return String(raw || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/_/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
 function getActiveCountries_() {
   var configSheet = getSheet_().getSheetByName(CONFIG_SHEET_NAME);
   var active = {};
@@ -178,13 +194,13 @@ function getActiveCountries_() {
   for (var i = 1; i < data.length; i++) {
     var country = String(data[i][0] || '').trim();
     var status = String(data[i][1] || '').trim().toLowerCase();
-    if (country && status === 'activo') active[country] = true;
+    if (country && status === 'activo') active[normalizeCountryKey_(country)] = true;
   }
   return active;
 }
 
 function isCountryActive_(country) {
-  return !!getActiveCountries_()[String(country || '').trim()];
+  return !!getActiveCountries_()[normalizeCountryKey_(country)];
 }
 
 // ---------------------------------------------------------------------
@@ -444,15 +460,10 @@ function ensureColumn_(sheet, map, headerName) {
   return col;
 }
 
-// Meta stores multiple-choice answers lowercased ("argentina"), while
-// the Config tab uses proper capitalization ("Argentina") -- an exact
-// string match would silently fail for every single lead.
+// activeCountriesMap keys are already normalizeCountryKey_'d (see
+// getActiveCountries_) -- normalize the raw side the same way.
 function matchCountryCaseInsensitive_(raw, activeCountriesMap) {
-  var rawLower = String(raw || '').trim().toLowerCase();
-  for (var country in activeCountriesMap) {
-    if (country.toLowerCase() === rawLower) return true;
-  }
-  return false;
+  return !!activeCountriesMap[normalizeCountryKey_(raw)];
 }
 
 // Paused 2026-09-25 at the user's request: rethinking email content and
