@@ -194,6 +194,20 @@
     display: none;
     text-align: center;
   }
+  .change-number-btn {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 12px 0 0;
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #7793ad;
+    text-decoration: underline;
+    cursor: pointer;
+    text-align: center;
+  }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -230,6 +244,7 @@
       <div id="referralList" class="referral-list"></div>
 
       <a class="apply-btn" href="../referral-form/">+ Referir a alguien</a>
+      <button class="change-number-btn" id="changeNumberBtn" type="button">Usar otro número</button>
     </div>
 
     <div id="unknownView" hidden>
@@ -371,6 +386,12 @@
         show('unknownView');
       });
   }
+
+  document.getElementById('changeNumberBtn').addEventListener('click', function () {
+    try { localStorage.removeItem(IDENTITY_KEY); } catch (e) { /* ignore */ }
+    document.getElementById('phoneInput').value = '';
+    show('pickView');
+  });
 
   document.getElementById('pickContinueBtn').addEventListener('click', function () {
     var value = document.getElementById('phoneInput').value.trim();
