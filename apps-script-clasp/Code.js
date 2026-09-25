@@ -50,6 +50,12 @@ var WHATSAPP_GROUP_LINK = 'https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG';
 var CONFIG_SHEET_NAME = 'Config';
 var LEADS_SHEET_NAME = 'Leads Sitio';
 var REFERRALS_SHEET_NAME = 'Referidos';
+// Separate from Referidos on purpose -- a payment method belongs to
+// the PERSON, not to any one referral, and not everyone who registers
+// on the site is even a referrer. Keyed by referrer phone, upserted
+// (not appended) so a later resubmission updates the same row instead
+// of leaving stale duplicates.
+var PAYMENT_METHODS_SHEET_NAME = 'MetodosPago';
 
 // Opens the Sheet explicitly by ID rather than relying on
 // getActiveSpreadsheet() — works the same whether this project is
@@ -126,7 +132,7 @@ function setupSheetsOnce() {
     referralsSheet.setFrozenRows(1);
 
     var resultadoRule = SpreadsheetApp.newDataValidation()
-      .requireValueInList(['Pendiente', 'Aprobado', 'Rechazado'], true)
+      .requireValueInList(['Pendiente', 'Aprobado', 'Rechazado', 'Inválido'], true)
       .setAllowInvalid(false)
       .build();
     referralsSheet.getRange(2, 9, referralsSheet.getMaxRows() - 1, 1).setDataValidation(resultadoRule);
@@ -136,6 +142,19 @@ function setupSheetsOnce() {
       .setAllowInvalid(false)
       .build();
     referralsSheet.getRange(2, 12, referralsSheet.getMaxRows() - 1, 1).setDataValidation(estadoPagoRule);
+  }
+
+  var paymentSheet = ss.getSheetByName(PAYMENT_METHODS_SHEET_NAME);
+  if (!paymentSheet) {
+    paymentSheet = ss.insertSheet(PAYMENT_METHODS_SHEET_NAME);
+    paymentSheet.appendRow(['Fecha', 'WhatsAppReferente', 'NombreReferente', 'PaisReferente', 'Metodo', 'Detalle', 'Comentario']);
+    paymentSheet.setFrozenRows(1);
+
+    var metodoRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['PayPal', 'Wise', 'Payoneer', 'Otro'], true)
+      .setAllowInvalid(false)
+      .build();
+    paymentSheet.getRange(2, 5, paymentSheet.getMaxRows() - 1, 1).setDataValidation(metodoRule);
   }
 }
 
@@ -321,6 +340,10 @@ function doPost(e) {
     return handleLeadSubmission_(p);
   }
 
+  if (formType === 'payment') {
+    return handlePaymentMethodSubmission_(p);
+  }
+
   return handleReferralSubmission_(p);
 }
 
@@ -350,6 +373,36 @@ function handleReferralSubmission_(p) {
   return ContentService
     .createTextOutput(JSON.stringify({ result: 'success' }))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// Upserts by phone (not a blind append) -- a payment method belongs to
+// the person, so resubmitting (e.g. switching from PayPal to Wise)
+// should update their one row, not pile up stale duplicates.
+function handlePaymentMethodSubmission_(p) {
+  var ss = getSheet_();
+  var sheet = ss.getSheetByName(PAYMENT_METHODS_SHEET_NAME);
+  if (!sheet) {
+    setupSheetsOnce();
+    sheet = ss.getSheetByName(PAYMENT_METHODS_SHEET_NAME);
+  }
+
+  var phone = String(p.referrerWhatsapp || '').trim();
+  var target = normalizePhone_(phone);
+  var row = [new Date(), phone, p.referrerName || '', p.referrerCountry || '', p.metodo || '', p.detalle || '', p.comentario || ''];
+
+  var lastRow = sheet.getLastRow();
+  if (target && lastRow >= 2) {
+    var phoneValues = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+    for (var i = 0; i < phoneValues.length; i++) {
+      if (normalizePhone_(phoneValues[i][0]) === target) {
+        sheet.getRange(i + 2, 1, 1, row.length).setValues([row]);
+        return ContentService.createTextOutput(JSON.stringify({ result: 'success' })).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+  }
+
+  sheet.appendRow(row);
+  return ContentService.createTextOutput(JSON.stringify({ result: 'success' })).setMimeType(ContentService.MimeType.JSON);
 }
 
 // 2026-09-25: rewritten to be header-name-based, matching every other
