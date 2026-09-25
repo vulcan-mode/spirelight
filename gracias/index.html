@@ -399,6 +399,47 @@
   // just in this cache.
   var PHONE_CACHE_KEY = 'spirelight_gracias_phone';
 
+  // Shared with referral-form/mis-referidos/metodo-pago: once someone's
+  // confirmed their phone here, referring someone shouldn't ask them to
+  // type it a second time on the same device.
+  var SHARED_IDENTITY_KEY = 'spirelight_referrer';
+
+  function updateSharedIdentity(phone, name, country) {
+    try {
+      var raw = localStorage.getItem(SHARED_IDENTITY_KEY);
+      var identity = raw ? JSON.parse(raw) : {};
+      identity.phone = phone;
+      if (name) identity.name = name;
+      if (country) identity.country = country;
+      localStorage.setItem(SHARED_IDENTITY_KEY, JSON.stringify(identity));
+    } catch (e) { /* ignore */ }
+  }
+
+  // Persists checklist progress (not just the phone), keyed to the
+  // phone it applies to -- so a page RELOAD (e.g. Facebook's or
+  // WhatsApp's in-app browser hijacking the video link's target="_blank"
+  // into an in-place navigation, then "back" reloading this page fresh)
+  // restores where they left off instead of resetting to fully locked,
+  // which otherwise looks exactly like "stuck on the video, can't
+  // move on."
+  var PROGRESS_CACHE_KEY = 'spirelight_gracias_progress';
+
+  function getCachedProgress(phone) {
+    try {
+      var raw = localStorage.getItem(PROGRESS_CACHE_KEY);
+      var progress = raw ? JSON.parse(raw) : null;
+      return (progress && progress.phone === phone) ? progress : null;
+    } catch (e) { return null; }
+  }
+
+  function setCachedProgress(phone, updates) {
+    try {
+      var current = getCachedProgress(phone) || { phone: phone };
+      Object.keys(updates).forEach(function (k) { current[k] = updates[k]; });
+      localStorage.setItem(PROGRESS_CACHE_KEY, JSON.stringify(current));
+    } catch (e) { /* ignore */ }
+  }
+
   function cachePhone(phone) {
     try { localStorage.setItem(PHONE_CACHE_KEY, phone); } catch (e) { /* private mode, etc -- fine to skip */ }
   }
@@ -445,7 +486,10 @@
 
     // A successful lookup means this phone is real -- safe to remember
     // on this device from here on, regardless of which view it lands in.
-    if (currentPhone) cachePhone(currentPhone);
+    if (currentPhone) {
+      cachePhone(currentPhone);
+      updateSharedIdentity(currentPhone, data.name, data.country);
+    }
 
     setGreeting(data.name);
 
@@ -478,13 +522,17 @@
       // click on that step's own link/button. Checking a box without
       // clicking through is no longer possible.
       var chain = [
-        { link: document.getElementById('linkVideo'), checkbox: document.getElementById('checkVideo'), unlocks: document.getElementById('stepInfo') },
-        { link: document.getElementById('linkInfo'), checkbox: document.getElementById('checkInfo'), unlocks: applyBtn }
+        { key: 'video', link: document.getElementById('linkVideo'), checkbox: document.getElementById('checkVideo'), unlocks: document.getElementById('stepInfo') },
+        { key: 'info', link: document.getElementById('linkInfo'), checkbox: document.getElementById('checkInfo'), unlocks: applyBtn }
       ];
 
       chain.forEach(function (step) {
         step.link.addEventListener('click', function () {
           step.checkbox.checked = true;
+          if (currentPhone) {
+            var update = {}; update[step.key] = true;
+            setCachedProgress(currentPhone, update);
+          }
           if (step.unlocks === applyBtn) {
             applyBtn.removeAttribute('aria-disabled');
           } else {
@@ -492,6 +540,23 @@
           }
         });
       });
+
+      // Restores checklist progress after a page reload that wasn't a
+      // real new visit -- most commonly Facebook's or WhatsApp's in-app
+      // browser hijacking a step link's target="_blank" into an in-place
+      // navigation, so hitting "back" reloads this page from scratch.
+      // Without this, that looks exactly like "stuck on the video, can't
+      // move on," even though they genuinely watched it.
+      var progress = currentPhone ? getCachedProgress(currentPhone) : null;
+      if (progress) {
+        chain.forEach(function (step) {
+          if (progress[step.key]) {
+            step.checkbox.checked = true;
+            if (step.unlocks === applyBtn) applyBtn.removeAttribute('aria-disabled');
+            else step.unlocks.removeAttribute('data-locked');
+          }
+        });
+      }
 
       // Server-side memory: once someone has actually clicked through to
       // Spirelight before (any device), "Desbloqueado" is set on their

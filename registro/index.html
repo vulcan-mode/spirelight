@@ -296,6 +296,22 @@
 
   var currentPhone = '';
 
+  // Shared with referral-form/mis-referidos/metodo-pago: once someone's
+  // registered here, referring someone shouldn't ask them to type their
+  // own phone a second time on the same device.
+  var SHARED_IDENTITY_KEY = 'spirelight_referrer';
+
+  function updateSharedIdentity(phone, name, country) {
+    try {
+      var raw = localStorage.getItem(SHARED_IDENTITY_KEY);
+      var identity = raw ? JSON.parse(raw) : {};
+      identity.phone = phone;
+      if (name) identity.name = name;
+      if (country) identity.country = country;
+      localStorage.setItem(SHARED_IDENTITY_KEY, JSON.stringify(identity));
+    } catch (e) { /* ignore */ }
+  }
+
   function goToGracias() {
     try { localStorage.setItem(GRACIAS_PHONE_CACHE_KEY, currentPhone); } catch (e) { /* ignore */ }
     window.location.href = '../gracias/';
@@ -307,6 +323,7 @@
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (data && data.found) {
+          updateSharedIdentity(phone, data.name, data.country);
           // Already did this (Facebook or a previous website visit) --
           // don't make them fill it out again, just take them straight
           // to their real status.
@@ -354,6 +371,8 @@
     var data = new FormData(form);
     data.append('formType', 'lead');
     data.append('whatsapp', currentPhone);
+
+    updateSharedIdentity(currentPhone, data.get('name'), data.get('country'));
 
     // Same no-cors fire-and-forget pattern as referral-form/index.html:
     // Apps Script web apps don't return readable CORS headers, so a
