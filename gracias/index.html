@@ -281,7 +281,7 @@
     <div id="activeView" hidden>
       <p class="greeting" hidden></p>
       <div class="status-pill active">✅ ¡<span class="country-name"></span> está activo!</div>
-      <h1>3 pasos antes de aplicar 🎙️</h1>
+      <h1>2 pasos antes de aplicar 🎙️</h1>
       <p class="intro">Completa esto en orden — cada paso se desbloquea cuando confirmas el anterior.</p>
 
       <div class="step-block" id="stepVideo">
@@ -302,19 +302,12 @@
         </label>
       </div>
 
-      <div class="step-block" id="stepWhatsapp" data-locked>
-        <div class="step-head"><span class="step-num">3</span><span class="step-title">Únete al grupo de WhatsApp</span></div>
-        <a class="whatsapp-btn" id="linkWhatsapp" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">
-          📲 Únete al grupo de WhatsApp
-        </a>
-        <label class="checkbox-row" for="checkWhatsapp">
-          <input type="checkbox" id="checkWhatsapp" disabled>
-          <span>Ya me uní al grupo</span>
-        </label>
-      </div>
-
       <a class="apply-btn" id="applyBtn" href="#" target="_blank" rel="noopener" aria-disabled="true">
         Aplicar en Spirelight →
+      </a>
+
+      <a class="whatsapp-btn" id="linkWhatsapp" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener" style="margin-top: 14px;">
+        🆘 Soporte
       </a>
     </div>
 
@@ -486,8 +479,7 @@
       // clicking through is no longer possible.
       var chain = [
         { link: document.getElementById('linkVideo'), checkbox: document.getElementById('checkVideo'), unlocks: document.getElementById('stepInfo') },
-        { link: document.getElementById('linkInfo'), checkbox: document.getElementById('checkInfo'), unlocks: document.getElementById('stepWhatsapp') },
-        { link: document.getElementById('linkWhatsapp'), checkbox: document.getElementById('checkWhatsapp'), unlocks: applyBtn }
+        { link: document.getElementById('linkInfo'), checkbox: document.getElementById('checkInfo'), unlocks: applyBtn }
       ];
 
       chain.forEach(function (step) {
@@ -508,7 +500,6 @@
       if (data.unlocked) {
         chain.forEach(function (step) { step.checkbox.checked = true; });
         document.getElementById('stepInfo').removeAttribute('data-locked');
-        document.getElementById('stepWhatsapp').removeAttribute('data-locked');
         applyBtn.removeAttribute('aria-disabled');
       }
 
