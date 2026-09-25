@@ -339,7 +339,15 @@
       });
   });
 
-  show('phoneView');
+  // Carried over from /gracias/'s notFoundView -- skip retyping the
+  // number a third time.
+  var phoneFromUrl = new URLSearchParams(window.location.search).get('phone');
+  if (phoneFromUrl) {
+    currentPhone = phoneFromUrl;
+    checkExistingPhone(phoneFromUrl);
+  } else {
+    show('phoneView');
+  }
 </script>
 </body>
 </html>

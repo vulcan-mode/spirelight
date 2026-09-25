@@ -366,11 +366,9 @@
 
     <div id="notFoundView" hidden>
       <h1>No encontramos tu registro</h1>
-      <p class="intro">Verifica que escribiste el mismo número que usaste en el formulario, o únete al grupo de WhatsApp y te ayudamos directamente.</p>
-      <button class="apply-btn" id="tryAgainBtn" type="button">Intentar de nuevo</button>
-      <a class="whatsapp-btn" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">
-        📲 Únete al grupo de WhatsApp
-      </a>
+      <p class="intro">Ese número no está en nuestro sistema todavía. Si nunca te has registrado, hazlo aquí — toma un minuto:</p>
+      <a class="apply-btn" id="registerLink" href="../registro/">Regístrate aquí →</a>
+      <button class="apply-btn" id="tryAgainBtn" type="button" style="background: none; color: var(--blue-deep); box-shadow: none; margin-top: 10px;">Ya me registré, intentar de nuevo</button>
     </div>
 
     <div id="unknownView" hidden>
@@ -441,6 +439,10 @@
   function handleCountryCheckImpl(data) {
     if (!data || data.found === false) {
       clearCachedPhone(); // don't keep re-trying a number that isn't on file
+      // Carry the phone they already typed over to /registro/ so they
+      // don't have to type it a third time (there, then here again).
+      var registerLink = document.getElementById('registerLink');
+      registerLink.href = currentPhone ? ('../registro/?phone=' + encodeURIComponent(currentPhone)) : '../registro/';
       show('notFoundView');
       return;
     }
