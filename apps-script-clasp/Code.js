@@ -166,6 +166,17 @@ function installReferralSyncTrigger() {
     .create();
 }
 
+// onChange fires near-instantly whenever the sheet's data changes --
+// including a new row from Meta's native connector, which never goes
+// through our own doPost -- unlike the hourly triggers above, which
+// only run once an hour regardless of when a lead actually arrives.
+function installWelcomeTrigger() {
+  ScriptApp.newTrigger('sendWelcomeEmails')
+    .forSpreadsheet(getSheet_())
+    .onChange()
+    .create();
+}
+
 // ---------------------------------------------------------------------
 // Shared helpers
 // ---------------------------------------------------------------------
@@ -440,6 +451,12 @@ var EMAIL_SENT_HEADER = 'CorreoEnviado';
 // here (not lazily by the Worker) so the column always exists before
 // any click needs to write to it.
 var UNLOCK_HEADER = 'Desbloqueado';
+// Tracks the one-time "confirm your info" welcome email (see
+// sendWelcomeEmails below) -- deliberately separate from
+// EMAIL_SENT_HEADER, which tracks the DIFFERENT "your country is now
+// active" email. A lead can (and normally will) get both, at
+// different times.
+var WELCOME_SENT_HEADER = 'BienvenidaEnviada';
 
 function getHeaderIndexMap_(sheet) {
   var lastCol = sheet.getLastColumn();
@@ -594,10 +611,83 @@ function sendBugFixApologyEmail_(name, email) {
   GmailApp.sendEmail(email, subject, body);
 }
 
+// ---------------------------------------------------------------------
+// Welcome / confirm-your-info email -- fires near-instantly (via the
+// onChange trigger from installWelcomeTrigger, not the hourly sweep)
+// the moment a NEW lead lands, from either source. Distinct from
+// sendActivationEmail_ below: this fires immediately regardless of
+// country status, with a personalized link that skips retyping a
+// phone number; the activation email fires later, only once the
+// country actually goes active.
+// ---------------------------------------------------------------------
+
+function sendWelcomeEmails() {
+  var leadsSheet = getSheet_().getSheetByName(LEADS_SHEET_NAME);
+  if (!leadsSheet) return;
+
+  var lastRow = leadsSheet.getLastRow();
+  if (lastRow < 2) return;
+
+  var map = getHeaderIndexMap_(leadsSheet);
+  var emailCol = map[META_EMAIL_HEADER];
+  var phoneCol = map[META_PHONE_HEADER];
+  if (!emailCol || !phoneCol) return; // Meta hasn't delivered any leads yet
+
+  var nameCol = map[META_NAME_HEADER] || null;
+  var isNewColumn = !map[WELCOME_SENT_HEADER];
+  var welcomeCol = ensureColumn_(leadsSheet, map, WELCOME_SENT_HEADER);
+  var numRows = lastRow - 1;
+
+  if (isNewColumn) {
+    // First run ever: don't send a "welcome, you're new here" email to
+    // everyone who already existed before this feature shipped. Mark
+    // them all as already-handled; only leads arriving from this point
+    // forward will see welcomeCol blank and actually get emailed.
+    var alreadyHandled = [];
+    for (var j = 0; j < numRows; j++) alreadyHandled.push([true]);
+    leadsSheet.getRange(2, welcomeCol, numRows, 1).setValues(alreadyHandled);
+    return;
+  }
+
+  var emailValues = leadsSheet.getRange(2, emailCol, numRows, 1).getValues();
+  var phoneValues = leadsSheet.getRange(2, phoneCol, numRows, 1).getValues();
+  var nameValues = nameCol ? leadsSheet.getRange(2, nameCol, numRows, 1).getValues() : null;
+  var welcomeValues = leadsSheet.getRange(2, welcomeCol, numRows, 1).getValues();
+
+  for (var i = 0; i < numRows; i++) {
+    if (welcomeValues[i][0] === true) continue;
+
+    var email = String(emailValues[i][0] || '').trim();
+    var phone = String(phoneValues[i][0] || '').trim();
+    if (!email || !phone) continue; // nothing to email, or nothing to build the link with
+
+    var name = nameValues ? String(nameValues[i][0] || '').trim() : '';
+    sendWelcomeEmail_(name, email, phone);
+    leadsSheet.getRange(i + 2, welcomeCol).setValue(true);
+  }
+}
+
+function sendWelcomeEmail_(name, email, phone) {
+  if (!email) return;
+  var greeting = name ? ('¡Hola ' + name + '!') : '¡Hola!';
+  var link = 'https://vulcan-mode.github.io/spirelight/gracias/?phone=' + encodeURIComponent(normalizePhone_(phone));
+  var subject = 'Confirma tu información -- Spirelight'; // no emoji, see the note on sendActivationEmail_'s subject
+  var body = greeting + '\n\n'
+    + 'Gracias por tu interés en el programa de grabación de voz de Spirelight.\n\n'
+    + 'Confirma tu información y mira el estado de tu país aquí: ' + link + '\n\n'
+    + 'Si no ves este correo, revisa tu carpeta de spam o de "Social"/"Promociones".\n\n'
+    + '-- Domingo';
+  GmailApp.sendEmail(email, subject, body);
+}
+
 function sendActivationEmail_(name, email) {
   if (!email) return;
   var greeting = name ? ('¡Hola ' + name + '!') : '¡Hola!';
-  var subject = '🎙️ ¡Tu país ya está activo en Spirelight!';
+  // No emoji in the subject -- Apps Script's GmailApp mangles certain
+  // supplementary-plane emoji (like 🎙️) in the SUBJECT line specifically
+  // into garbled "?????" characters; confirmed via a real sent email.
+  // The body's emoji render fine, this is a subject-only quirk.
+  var subject = '¡Tu país ya está activo en Spirelight!';
   var body = greeting + '\n\n'
     + 'Buenas noticias: tu país ya está activo en el programa de grabación de voz de Spirelight.\n\n'
     + 'Aplica aquí para comenzar: ' + SIGNUP_LINK + '\n\n'

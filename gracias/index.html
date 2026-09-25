@@ -579,12 +579,17 @@
 
   // Facebook's Instant Form "Thank You" screen link can't insert a
   // dynamic answer into the URL in the simplified form builder, so most
-  // visitors land here with no params at all — they confirm their phone
-  // number themselves via pickView. ?country= still works as a legacy
-  // shortcut for anything that CAN pass it reliably.
+  // Facebook-sourced visitors land here with no params at all — they
+  // confirm their phone number themselves via pickView. ?country=
+  // still works as a legacy shortcut for anything that CAN pass it
+  // reliably. ?phone= is for links WE generate ourselves (the welcome
+  // email, a referral invite) where we already know the number.
+  var phoneFromUrl = (params.get('phone') || '').trim();
   var cachedPhone = getCachedPhone();
   if (countryFromUrl) {
     checkCountry(countryFromUrl);
+  } else if (phoneFromUrl) {
+    checkPhone(phoneFromUrl);
   } else if (cachedPhone) {
     checkPhone(cachedPhone); // this device has been here before -- skip pickView entirely
   } else {
