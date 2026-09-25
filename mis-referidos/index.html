@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="es" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google" content="notranslate">
+<meta name="robots" content="noindex">
+<title>Mis referidos — Spirelight</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;600;700&display=swap">
+<style>
+  :root {
+    --navy: #0d3a66;
+    --blue: #1e88e5;
+    --blue-deep: #0d5aa7;
+    --bg-a: #eaf7ff;
+    --bg-b: #cfeafe;
+    --amber-bg: #fff4d6;
+    --amber-text: #8a5a00;
+    --green-bg: #e3f7ea;
+    --green-text: #0d5a2f;
+    --red-bg: #fde8e6;
+    --red-text: #a3231a;
+    --gray-bg: #eef3f8;
+    --gray-text: #4a6580;
+    --ink: #10314f;
+    --card: #ffffff;
+    --border: #d7e8f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Manrope', system-ui, sans-serif;
+    background: linear-gradient(160deg, var(--bg-a) 0%, var(--bg-b) 100%);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px;
+  }
+  .card {
+    width: 100%;
+    max-width: 560px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px 32px;
+    box-shadow: 0 20px 50px rgba(13, 58, 102, 0.12);
+  }
+  .logo {
+    display: block;
+    width: 132px;
+    height: 132px;
+    border-radius: 28px;
+    margin: 0 auto 20px;
+    box-shadow: 0 14px 32px rgba(13, 58, 102, 0.22);
+  }
+  h1 {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 23px;
+    color: var(--navy);
+    margin: 0 0 10px;
+    line-height: 1.3;
+    text-align: center;
+  }
+  p.intro {
+    margin: 0 auto 22px;
+    max-width: 420px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: #4a6580;
+    text-align: center;
+  }
+  .greeting {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--blue-deep);
+    margin: 0 0 10px;
+    text-align: center;
+  }
+  .loading { color: #7793ad; font-size: 14px; text-align: center; }
+  select, input[type="tel"] {
+    width: 100%;
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 15px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: #fbfdff;
+    color: var(--ink);
+    margin-bottom: 16px;
+    box-sizing: border-box;
+  }
+  select:focus, input[type="tel"]:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+  .apply-btn {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+  }
+  .whatsapp-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 15px 20px;
+    background: #25d366;
+    color: #ffffff;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    border-radius: 999px;
+    text-decoration: none;
+    box-shadow: 0 10px 24px rgba(37, 211, 102, 0.3);
+    margin-bottom: 16px;
+  }
+  .invite-banner {
+    background: var(--green-bg);
+    color: var(--green-text);
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .invite-banner p {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 14.5px;
+    margin: 0 0 12px;
+  }
+  .referral-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
+  .referral-card {
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 18px;
+  }
+  .referral-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .referral-name {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--navy);
+  }
+  .referral-country { font-size: 13px; color: #7793ad; margin-bottom: 10px; }
+  .badge-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .badge {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 12.5px;
+    border-radius: 999px;
+    padding: 5px 12px;
+    white-space: nowrap;
+  }
+  .badge.resultado-pendiente, .badge.pago-pendiente { background: var(--amber-bg); color: var(--amber-text); }
+  .badge.resultado-aprobado, .badge.pago-pagado { background: var(--green-bg); color: var(--green-text); }
+  .badge.resultado-rechazado { background: var(--red-bg); color: var(--red-text); }
+  .badge.pago-programado { background: var(--gray-bg); color: var(--navy); }
+  .bono-amount {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--blue-deep);
+  }
+  .fecha-note { font-size: 12.5px; color: #7793ad; margin-top: 8px; }
+  .empty-state {
+    text-align: center;
+    padding: 20px 0 8px;
+    color: #4a6580;
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+  .error {
+    margin-top: 14px;
+    font-size: 14px;
+    color: #b3261e;
+    display: none;
+    text-align: center;
+  }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+  <div class="card">
+    <img class="logo" src="../assets/logo-monologos.png?v=2" alt="Monólogos en Español">
+
+    <div id="loadingView">
+      <p class="loading">Un momento, estamos revisando tus referidos…</p>
+    </div>
+
+    <div id="pickView" hidden>
+      <h1>Tus referidos 🎁</h1>
+      <p class="intro">Escribe el mismo número de WhatsApp que usaste al referir a alguien.</p>
+      <input type="tel" id="phoneInput" placeholder="+507 6000 0000" autocomplete="tel">
+      <button class="apply-btn" id="pickContinueBtn" type="button">Ver mis referidos →</button>
+      <p class="error" id="pickErrorMsg">Escribe un número válido.</p>
+    </div>
+
+    <div id="listView" hidden>
+      <p class="greeting" id="referrerGreeting" hidden></p>
+      <h1>Tus referidos 🎁</h1>
+
+      <div class="invite-banner" id="inviteBanner" hidden>
+        <p>¡Referido registrado! 🎉 Envíale la invitación para que se una:</p>
+        <a class="whatsapp-btn" id="inviteBtn" href="#" target="_blank" rel="noopener">📲 Enviar invitación por WhatsApp</a>
+      </div>
+
+      <div id="emptyState" class="empty-state" hidden>
+        Todavía no tienes referidos registrados con este número.<br>¿Conoces a alguien con buena voz?
+      </div>
+
+      <div id="referralList" class="referral-list"></div>
+
+      <a class="apply-btn" href="../referral-form/">+ Referir a alguien</a>
+    </div>
+
+    <div id="unknownView" hidden>
+      <h1>Algo salió mal</h1>
+      <p class="intro">Únete al grupo de WhatsApp y te ayudamos directamente.</p>
+      <a class="whatsapp-btn" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">
+        📲 Únete al grupo de WhatsApp
+      </a>
+    </div>
+  </div>
+
+<script>
+  var WORKER_URL = "https://spirelight-leads.domlebo1.workers.dev";
+
+  // Shared with referral-form/index.html: once we know who someone is,
+  // both pages remember it, so referring a second (or third...) person
+  // never means retyping your own name/country/phone again.
+  var IDENTITY_KEY = 'spirelight_referrer';
+
+  function getStoredIdentity() {
+    try {
+      var raw = localStorage.getItem(IDENTITY_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function storeIdentity(identity) {
+    try { localStorage.setItem(IDENTITY_KEY, JSON.stringify(identity)); } catch (e) { /* ignore */ }
+  }
+
+  function show(viewId) {
+    ['loadingView', 'pickView', 'listView', 'unknownView'].forEach(function (id) {
+      document.getElementById(id).hidden = (id !== viewId);
+    });
+  }
+
+  var RESULTADO_LABELS = { Pendiente: '🕐 Pendiente', Aprobado: '✅ Aprobado', Rechazado: '❌ Rechazado' };
+  var PAGO_LABELS = { Pendiente: '🕐 Pago pendiente', Programado: '📅 Pago programado', Pagado: '💰 Pagado' };
+
+  function renderReferrals(data) {
+    document.getElementById('referrerGreeting').hidden = true;
+    if (data.referrerName) {
+      var greeting = document.getElementById('referrerGreeting');
+      greeting.textContent = '¡Hola, ' + data.referrerName + '! 👋';
+      greeting.hidden = false;
+    }
+
+    var listEl = document.getElementById('referralList');
+    listEl.innerHTML = '';
+
+    var referrals = data.referrals || [];
+    document.getElementById('emptyState').hidden = referrals.length > 0;
+
+    referrals.forEach(function (r) {
+      var card = document.createElement('div');
+      card.className = 'referral-card';
+
+      var top = document.createElement('div');
+      top.className = 'referral-card-top';
+      var nameEl = document.createElement('div');
+      nameEl.className = 'referral-name';
+      nameEl.textContent = r.referredName || '(sin nombre)';
+      top.appendChild(nameEl);
+      card.appendChild(top);
+
+      if (r.referredCountry) {
+        var countryEl = document.createElement('div');
+        countryEl.className = 'referral-country';
+        countryEl.textContent = r.referredCountry;
+        card.appendChild(countryEl);
+      }
+
+      var badgeRow = document.createElement('div');
+      badgeRow.className = 'badge-row';
+
+      var resultadoBadge = document.createElement('span');
+      resultadoBadge.className = 'badge resultado-' + (r.resultado || 'pendiente').toLowerCase();
+      resultadoBadge.textContent = RESULTADO_LABELS[r.resultado] || r.resultado;
+      badgeRow.appendChild(resultadoBadge);
+
+      if (r.resultado === 'Aprobado') {
+        var pagoBadge = document.createElement('span');
+        pagoBadge.className = 'badge pago-' + (r.estadoPago || 'pendiente').toLowerCase();
+        pagoBadge.textContent = PAGO_LABELS[r.estadoPago] || r.estadoPago;
+        badgeRow.appendChild(pagoBadge);
+
+        if (r.bono) {
+          var bonoEl = document.createElement('span');
+          bonoEl.className = 'bono-amount';
+          bonoEl.textContent = '🎁 $' + r.bono;
+          badgeRow.appendChild(bonoEl);
+        }
+      }
+
+      card.appendChild(badgeRow);
+
+      if (r.resultado === 'Aprobado') {
+        var fechaEl = document.createElement('div');
+        fechaEl.className = 'fecha-note';
+        fechaEl.textContent = r.fechaProgramada
+          ? ('Fecha estimada de pago: ' + r.fechaProgramada)
+          : 'Fecha de pago: por confirmar.';
+        card.appendChild(fechaEl);
+      }
+
+      listEl.appendChild(card);
+    });
+  }
+
+  function lookupReferrals(phone) {
+    show('loadingView');
+
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function () { controller.abort(); }, 6000);
+
+    fetch(WORKER_URL + '?referrer_phone=' + encodeURIComponent(phone), { signal: controller.signal })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        clearTimeout(timeoutId);
+
+        var identity = getStoredIdentity() || {};
+        identity.phone = phone;
+        if (data.referrerName) identity.name = data.referrerName;
+        if (data.referrerCountry) identity.country = data.referrerCountry;
+        storeIdentity(identity);
+
+        renderReferrals(data);
+
+        var invite = new URLSearchParams(window.location.search).get('invite');
+        if (invite) {
+          document.getElementById('inviteBanner').hidden = false;
+          document.getElementById('inviteBtn').href = invite;
+        }
+
+        show('listView');
+      })
+      .catch(function () {
+        clearTimeout(timeoutId);
+        show('unknownView');
+      });
+  }
+
+  document.getElementById('pickContinueBtn').addEventListener('click', function () {
+    var value = document.getElementById('phoneInput').value.trim();
+    var errorEl = document.getElementById('pickErrorMsg');
+    if (!value) {
+      errorEl.style.display = 'block';
+      return;
+    }
+    errorEl.style.display = 'none';
+    lookupReferrals(value);
+  });
+
+  var stored = getStoredIdentity();
+  if (stored && stored.phone) {
+    lookupReferrals(stored.phone);
+  } else {
+    show('pickView');
+  }
+</script>
+</body>
+</html>

@@ -363,6 +363,27 @@
   var params = new URLSearchParams(window.location.search);
   var countryFromUrl = (params.get('country') || '').trim();
   var currentCountry = '';
+  var currentPhone = '';
+
+  // Reduces friction on a return visit: once a phone number resolves
+  // successfully, remember it on THIS device so they never have to
+  // retype it. A different device has no local flag, so it falls back
+  // to typing the phone once -- which is also enough to serve them the
+  // right thing, since "unlocked" (see below) lives on the server, not
+  // just in this cache.
+  var PHONE_CACHE_KEY = 'spirelight_gracias_phone';
+
+  function cachePhone(phone) {
+    try { localStorage.setItem(PHONE_CACHE_KEY, phone); } catch (e) { /* private mode, etc -- fine to skip */ }
+  }
+
+  function getCachedPhone() {
+    try { return localStorage.getItem(PHONE_CACHE_KEY) || ''; } catch (e) { return ''; }
+  }
+
+  function clearCachedPhone() {
+    try { localStorage.removeItem(PHONE_CACHE_KEY); } catch (e) { /* ignore */ }
+  }
 
   function show(viewId) {
     ['loadingView', 'activeView', 'waitingView', 'unknownView', 'pickView', 'notFoundView', 'otroView'].forEach(function (id) {
@@ -387,9 +408,14 @@
 
   function handleCountryCheckImpl(data) {
     if (!data || data.found === false) {
+      clearCachedPhone(); // don't keep re-trying a number that isn't on file
       show('notFoundView');
       return;
     }
+
+    // A successful lookup means this phone is real -- safe to remember
+    // on this device from here on, regardless of which view it lands in.
+    if (currentPhone) cachePhone(currentPhone);
 
     currentCountry = data.country || currentCountry;
     setCountryLabels(currentCountry);
@@ -424,6 +450,26 @@
             step.unlocks.removeAttribute('data-locked');
           }
         });
+      });
+
+      // Server-side memory: once someone has actually clicked through to
+      // Spirelight before (any device), "Desbloqueado" is set on their
+      // lead row. On any later visit -- even a brand new browser -- skip
+      // the checklist entirely instead of making them repeat it.
+      if (data.unlocked) {
+        chain.forEach(function (step) { step.checkbox.checked = true; });
+        document.getElementById('stepInfo').removeAttribute('data-locked');
+        document.getElementById('stepWhatsapp').removeAttribute('data-locked');
+        applyBtn.removeAttribute('aria-disabled');
+      }
+
+      // Fire-and-forget: mark this lead unlocked the moment they actually
+      // click through, so a future visit (any device) can skip the
+      // checklist. applyBtn opens in a new tab, so this never blocks
+      // navigation.
+      applyBtn.addEventListener('click', function () {
+        if (!currentPhone) return;
+        fetch(WORKER_URL + '?unlock=1&phone=' + encodeURIComponent(currentPhone)).catch(function () {});
       });
     } else {
       show('waitingView');
@@ -464,6 +510,7 @@
   // what they actually submitted on the real form (Leads Sitio) --
   // this is the real anti-abuse gate, not a free self-select.
   function checkPhone(phone) {
+    currentPhone = phone;
     runLookup('phone=' + encodeURIComponent(phone));
   }
 
@@ -489,8 +536,11 @@
   // visitors land here with no params at all — they confirm their phone
   // number themselves via pickView. ?country= still works as a legacy
   // shortcut for anything that CAN pass it reliably.
+  var cachedPhone = getCachedPhone();
   if (countryFromUrl) {
     checkCountry(countryFromUrl);
+  } else if (cachedPhone) {
+    checkPhone(cachedPhone); // this device has been here before -- skip pickView entirely
   } else {
     show('pickView');
   }

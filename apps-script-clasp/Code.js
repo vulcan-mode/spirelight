@@ -1,17 +1,19 @@
 /**
  * Spirelight intake — Apps Script backend.
  *
- * This is the SAME project that already powers the existing referrer-
- * refers-someone form (referral-form/index.html) — you may have renamed
- * the project itself, but it's still the one bound to the "Spirelight
- * Referral Tracker" Sheet. This file now handles TWO things from that
- * one Web app deployment:
- *  1. The existing referral form — unchanged behavior, still writes to
- *     the "Referidos" tab.
- *  2. NEW: general lead intake (website form and/or Facebook Instant
- *     Form via Make.com) — writes to "Leads Sitio", checks country
- *     against the "Config" tab, dedupes by email, and (via a time
- *     trigger) emails anyone whose country later goes active.
+ * Bound to the "13z3Ht..." Sheet (SHEET_ID below), which now holds
+ * everything in one place: Config, Leads Sitio, and Referidos. This
+ * one Web app deployment handles:
+ *  1. The referral form (referral-form/index.html) — writes to the
+ *     "Referidos" tab (in THIS sheet, as of 2026-09-25 -- the old
+ *     standalone "Spirelight Referral Tracker" sheet is retired/archived,
+ *     nothing writes there anymore).
+ *  2. General lead intake (website form and/or Facebook Instant Form
+ *     via Make.com) — writes to "Leads Sitio", checks country against
+ *     the "Config" tab, dedupes by email, and (via a time trigger)
+ *     emails anyone whose country later goes active.
+ *  3. syncReferralBonuses — hourly, fills in the referral bonus amount
+ *     the moment a referral's "Resultado" is manually set to "Aprobado".
  *
  * Setup:
  * 1. In this Apps Script project (the one already bound to the Sheet),
@@ -22,8 +24,9 @@
  *    (project name) (unsafe) > Allow. That's Google's standard warning
  *    for any script you haven't published to the store — it's your own
  *    code running on your own Sheet, not an actual problem.
- * 3. Run `installHourlyTrigger` once — schedules the waiting-list email
- *    sweep to run automatically every hour.
+ * 3. Run `installHourlyTrigger` and `installReferralSyncTrigger` once
+ *    each — schedules the waiting-list email sweep and the referral
+ *    bonus sync to run automatically every hour.
  * 4. Deploy > Manage deployments > edit (pencil icon) the existing
  *    deployment > Version: New version > Deploy. The Web app URL stays
  *    the SAME as what's already in referral-form/index.html — nothing
@@ -35,17 +38,18 @@
  *    emailed within the hour, automatically.
  */
 
-// Separate sheets on purpose: the referral-form (Referidos tab) keeps
-// writing to the ORIGINAL sheet, unaffected by anything below. Only
-// the lead-intake side (Config, Leads Sitio, doGet, the email sweep)
-// points at the new sheet -- these must never be merged into one
-// constant again, or referral submissions would silently split.
-var REFERRAL_SHEET_ID = '1IN1iv6X-isl2grAIG3f_LXHk1KrgUleqGXWmd3fdAdI'; // "Spirelight Referral Tracker" -- Referidos tab only
+// 2026-09-25: the old standalone "Spirelight Referral Tracker" sheet
+// (REFERRAL_SHEET_ID) is retired -- kept only as a historical archive,
+// nothing writes to it anymore. Referral tracking now lives as its own
+// "Referidos" tab inside the SAME sheet as everything else (SHEET_ID),
+// per the user's explicit request to have all data in one place.
+var REFERRAL_SHEET_ID_ARCHIVED = '1IN1iv6X-isl2grAIG3f_LXHk1KrgUleqGXWmd3fdAdI'; // historical only, do not write
 var SHEET_ID = '13z3HtJpO7TPl67JVUPyrRxqrLhsMqcsSYz3iccqbRM4'; // new leads sheet, after the original ad/form was deleted
 var SIGNUP_LINK = 'https://voice.spirelight.ai/login?ref=QU2R4Y55';
 var WHATSAPP_GROUP_LINK = 'https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG';
 var CONFIG_SHEET_NAME = 'Config';
 var LEADS_SHEET_NAME = 'Leads Sitio';
+var REFERRALS_SHEET_NAME = 'Referidos';
 
 // Opens the Sheet explicitly by ID rather than relying on
 // getActiveSpreadsheet() — works the same whether this project is
@@ -98,6 +102,41 @@ function setupSheetsOnce() {
   if (!leadsSheet) {
     ss.insertSheet(LEADS_SHEET_NAME);
   }
+
+  // Unlike Leads Sitio, this tab is entirely our own -- nothing external
+  // writes to it, so it's fine (good, even) to seed a real header row
+  // plus dropdown data validation up front.
+  var referralsSheet = ss.getSheetByName(REFERRALS_SHEET_NAME);
+  if (!referralsSheet) {
+    referralsSheet = ss.insertSheet(REFERRALS_SHEET_NAME);
+    referralsSheet.appendRow([
+      'Fecha',
+      'NombreReferente',
+      'PaisReferente',
+      'WhatsAppReferente',
+      'NombreReferido',
+      'PaisReferido',
+      'WhatsAppReferido',
+      'Comentario',
+      'Resultado',
+      'Bono',
+      'FechaProgramada',
+      'EstadoPago'
+    ]);
+    referralsSheet.setFrozenRows(1);
+
+    var resultadoRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['Pendiente', 'Aprobado', 'Rechazado'], true)
+      .setAllowInvalid(false)
+      .build();
+    referralsSheet.getRange(2, 9, referralsSheet.getMaxRows() - 1, 1).setDataValidation(resultadoRule);
+
+    var estadoPagoRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['Pendiente', 'Programado', 'Pagado'], true)
+      .setAllowInvalid(false)
+      .build();
+    referralsSheet.getRange(2, 12, referralsSheet.getMaxRows() - 1, 1).setDataValidation(estadoPagoRule);
+  }
 }
 
 // One-off: wipes out the existing "Leads Sitio" tab (which still has
@@ -115,6 +154,13 @@ function resetLeadsSheet() {
 
 function installHourlyTrigger() {
   ScriptApp.newTrigger('sendWaitingListEmails')
+    .timeBased()
+    .everyHours(1)
+    .create();
+}
+
+function installReferralSyncTrigger() {
+  ScriptApp.newTrigger('syncReferralBonuses')
     .timeBased()
     .everyHours(1)
     .create();
@@ -252,20 +298,11 @@ function doPost(e) {
 }
 
 function handleReferralSubmission_(p) {
-  var ss = SpreadsheetApp.openById(REFERRAL_SHEET_ID);
-  var sheet = ss.getSheetByName('Referidos') || ss.insertSheet('Referidos');
-
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow([
-      'Fecha',
-      'Nombre del referente',
-      'País del referente',
-      'WhatsApp del referente',
-      'Nombre del referido',
-      'País del referido',
-      'WhatsApp del referido',
-      'Comentario'
-    ]);
+  var ss = getSheet_();
+  var sheet = ss.getSheetByName(REFERRALS_SHEET_NAME);
+  if (!sheet) {
+    setupSheetsOnce(); // creates it with the right headers + dropdowns
+    sheet = ss.getSheetByName(REFERRALS_SHEET_NAME);
   }
 
   sheet.appendRow([
@@ -276,7 +313,11 @@ function handleReferralSubmission_(p) {
     p.referredName || '',
     p.referredCountry || '',
     p.referredWhatsapp || '',
-    p.comments || ''
+    p.comments || '',
+    'Pendiente', // Resultado
+    '',          // Bono -- filled in automatically once Resultado -> Aprobado
+    '',          // FechaProgramada -- manual for now
+    'Pendiente'  // EstadoPago
   ]);
 
   return ContentService
@@ -333,6 +374,13 @@ var META_EMAIL_HEADER = 'email';
 var META_NAME_HEADER = 'full_name';
 var STATUS_HEADER = 'Estado';
 var EMAIL_SENT_HEADER = 'CorreoEnviado';
+// Set by the Worker (not by anything here) the moment someone actually
+// clicks through to the real Spirelight signup link on /gracias/ --
+// this is what lets a returning visit, even on a different device,
+// skip the 3-step checklist entirely instead of repeating it. Ensured
+// here (not lazily by the Worker) so the column always exists before
+// any click needs to write to it.
+var UNLOCK_HEADER = 'Desbloqueado';
 
 function getHeaderIndexMap_(sheet) {
   var lastCol = sheet.getLastColumn();
@@ -364,6 +412,12 @@ function matchCountryCaseInsensitive_(raw, activeCountriesMap) {
   return false;
 }
 
+// Paused 2026-09-25 at the user's request: rethinking email content and
+// the wider site before any more activation emails go out. The hourly
+// trigger keeps running and keeps "Estado" up to date, it just skips the
+// actual send. Flip back to false when ready to resume.
+var EMAILS_PAUSED = true;
+
 function sendWaitingListEmails() {
   var leadsSheet = getSheet_().getSheetByName(LEADS_SHEET_NAME);
   if (!leadsSheet) return;
@@ -379,6 +433,7 @@ function sendWaitingListEmails() {
   var nameCol = map[META_NAME_HEADER] || null;
   var estadoCol = ensureColumn_(leadsSheet, map, STATUS_HEADER);
   var sentCol = ensureColumn_(leadsSheet, map, EMAIL_SENT_HEADER);
+  ensureColumn_(leadsSheet, map, UNLOCK_HEADER); // just guarantees it exists; the Worker writes to it, this never does
 
   var numRows = lastRow - 1;
   var countryValues = leadsSheet.getRange(2, countryCol, numRows, 1).getValues();
@@ -399,7 +454,7 @@ function sendWaitingListEmails() {
     }
 
     var alreadySent = sentValues[i][0] === true;
-    if (isActive && !alreadySent) {
+    if (isActive && !alreadySent && !EMAILS_PAUSED) {
       var email = String(emailValues[i][0] || '').trim();
       var name = nameValues ? String(nameValues[i][0] || '').trim() : '';
       if (email) {
@@ -421,4 +476,47 @@ function sendActivationEmail_(name, email) {
     + WHATSAPP_GROUP_LINK + '\n\n'
     + '¡Nos vemos ahí!';
   GmailApp.sendEmail(email, subject, body);
+}
+
+// ---------------------------------------------------------------------
+// Referral bonus sync -- hourly, silent (no email, unlike the sweep
+// above). The pass/fail call itself ("Resultado") is always manual --
+// Spirelight gives no feed for who actually completed work and got
+// paid, so that has to stay a human judgment call in the sheet. This
+// only automates the math *after* that call is made: the moment
+// Resultado is set to "Aprobado", it fills in the bonus amount so it
+// isn't computed by hand every time.
+// FechaProgramada (when the referrer can expect payment) is NOT
+// touched here yet -- that needs Spirelight's actual biweekly payday
+// anchor date, which hasn't been provided. Leave it manual until then.
+// ---------------------------------------------------------------------
+
+var REFERRED_COUNTRY_COL = 6;   // F: PaisReferido
+var RESULTADO_COL = 9;          // I: Resultado
+var BONO_COL = 10;              // J: Bono
+var BONO_DEFAULT = 15;
+var BONO_PUERTO_RICO = 20;
+
+function syncReferralBonuses() {
+  var sheet = getSheet_().getSheetByName(REFERRALS_SHEET_NAME);
+  if (!sheet) return;
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+
+  var numRows = lastRow - 1;
+  var countryValues = sheet.getRange(2, REFERRED_COUNTRY_COL, numRows, 1).getValues();
+  var resultadoValues = sheet.getRange(2, RESULTADO_COL, numRows, 1).getValues();
+  var bonoValues = sheet.getRange(2, BONO_COL, numRows, 1).getValues();
+
+  for (var i = 0; i < numRows; i++) {
+    var resultado = String(resultadoValues[i][0] || '').trim();
+    var bonoAlreadySet = bonoValues[i][0] !== '' && bonoValues[i][0] !== null;
+
+    if (resultado === 'Aprobado' && !bonoAlreadySet) {
+      var country = String(countryValues[i][0] || '').trim().toLowerCase();
+      var bono = (country === 'puerto rico') ? BONO_PUERTO_RICO : BONO_DEFAULT;
+      sheet.getRange(2 + i, BONO_COL).setValue(bono);
+    }
+  }
 }
