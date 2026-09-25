@@ -34,40 +34,6 @@
     align-items: center;
     padding: 40px 16px;
   }
-  .site-nav {
-    width: 100%;
-    max-width: 640px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-    margin-bottom: 20px;
-  }
-  .nav-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 13px;
-    border-radius: 999px;
-    font-family: 'Sora', system-ui, sans-serif;
-    font-weight: 700;
-    font-size: 11.5px;
-    text-decoration: none;
-    border: 1.5px solid var(--border);
-    background: #ffffff;
-    color: var(--navy);
-    white-space: nowrap;
-  }
-  .nav-btn.active {
-    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
-    color: #fff;
-    border-color: transparent;
-  }
-  .nav-btn.whatsapp {
-    background: #25d366;
-    color: #fff;
-    border-color: transparent;
-  }
   .card {
     width: 100%;
     max-width: 560px;
@@ -141,22 +107,46 @@
     margin-bottom: 8px;
     text-align: left;
   }
-  .whatsapp-btn {
+  .register-btn {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
     margin-top: 22px;
     padding: 16px 24px;
-    background: #25d366;
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
     color: #ffffff;
     font-family: 'Sora', system-ui, sans-serif;
     font-weight: 800;
     font-size: 16px;
     border-radius: 999px;
     text-decoration: none;
-    box-shadow: 0 10px 24px rgba(37, 211, 102, 0.35);
+    box-shadow: 0 10px 24px rgba(13, 58, 102, 0.3);
   }
+  .known-greeting {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--blue-deep);
+    margin: 0 0 4px;
+  }
+  .change-number-btn {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 12px 0 0;
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #7793ad;
+    text-decoration: underline;
+    cursor: pointer;
+    text-align: center;
+  }
+  [hidden] { display: none !important; }
   .cta-caption {
     margin: 10px 0 0;
     font-size: 12.5px;
@@ -276,16 +266,6 @@
 </style>
 </head>
 <body>
-  <nav class="site-nav">
-    <a class="nav-btn active" href="./">🏠 Inicio</a>
-    <a class="nav-btn" href="registro/">📝 Regístrate</a>
-    <a class="nav-btn" href="referral-form/">📋 Formulario de referidos</a>
-    <a class="nav-btn" href="mis-referidos/">🎁 Mis referidos</a>
-    <a class="nav-btn" href="como-funciona/">ℹ️ Cómo funciona</a>
-    <a class="nav-btn whatsapp" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">📲 Empezar</a>
-    <a class="nav-btn" href="privacidad/">🔒 Privacidad</a>
-  </nav>
-
   <div class="card">
     <img class="logo" src="assets/logo-monologos.png?v=2" alt="Monólogos en Español">
     <h1>Gana dinero grabando tu voz 🎙️</h1>
@@ -306,10 +286,16 @@
     </div>
     <div class="bonus-pill">🎁 Gana $15 ($20 si eres de Puerto Rico) por cada persona que refieras y complete su grabación</div>
 
-    <a class="whatsapp-btn" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">
-      📲 Únete al grupo de WhatsApp para empezar
-    </a>
-    <p class="cta-caption">En el grupo encontrarás el video explicativo, las preguntas frecuentes y el enlace para registrarte.</p>
+    <div id="unknownCta">
+      <a class="register-btn" href="registro/">📝 Regístrate para empezar</a>
+      <p class="cta-caption">Toma un minuto — te decimos al instante si tu país ya está activo.</p>
+    </div>
+
+    <div id="knownBanner" hidden>
+      <p class="known-greeting"></p>
+      <a class="register-btn" href="referral-form/">🎁 Referir a alguien</a>
+      <button class="change-number-btn" id="notMeBtn" type="button">¿No eres tú? Usar otro número</button>
+    </div>
   </div>
 
   <div class="steps-card">
@@ -350,12 +336,40 @@
         <span class="chip later">Guatemala</span>
       </div>
     </div>
-    <p class="status-note">📲 Los anuncios de apertura de cada país se publican primero en el grupo de WhatsApp. Únete para enterarte en cuanto tu país esté activo.</p>
+    <p class="status-note">📧 Regístrate y te avisamos automáticamente por correo en cuanto tu país esté activo.</p>
   </div>
 
   <footer class="brand-footer">
     <img src="assets/logo-spirelight.webp?v=1" alt="">
     <span>Programa de referidos para Spirelight</span>
   </footer>
+
+<script>
+  // Shared with registro/gracias/referral-form/mis-referidos/metodo-pago.
+  var IDENTITY_KEY = 'spirelight_referrer';
+
+  function getStoredIdentity() {
+    try {
+      var raw = localStorage.getItem(IDENTITY_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  var identity = getStoredIdentity();
+  if (identity && identity.phone) {
+    document.getElementById('unknownCta').hidden = true;
+    var greeting = document.querySelector('.known-greeting');
+    greeting.textContent = identity.name
+      ? ('¡Hola, ' + identity.name + '! Ya estás registrado.')
+      : 'Ya estás registrado en este dispositivo.';
+    document.getElementById('knownBanner').hidden = false;
+  }
+
+  document.getElementById('notMeBtn').addEventListener('click', function () {
+    try { localStorage.removeItem(IDENTITY_KEY); } catch (e) { /* ignore */ }
+    document.getElementById('knownBanner').hidden = true;
+    document.getElementById('unknownCta').hidden = false;
+  });
+</script>
 </body>
 </html>
