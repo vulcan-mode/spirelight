@@ -347,12 +347,50 @@ function doPost(e) {
   return handleReferralSubmission_(p);
 }
 
+// Mirrors the Worker's checkReferredPhone -- silent backstop in case
+// the front-end's live pre-check was bypassed or failed open on a
+// network hiccup. Not meant to be the primary user-facing feedback
+// (this is a no-cors POST from referral-form/, so the response body
+// isn't readable there anyway); the Worker's live check is what
+// actually shows the referrer a message.
+function findReferralByReferredPhone_(rawPhone) {
+  var target = normalizePhone_(rawPhone);
+  if (!target) return false;
+
+  var sheet = getSheet_().getSheetByName(REFERRALS_SHEET_NAME);
+  if (!sheet) return false;
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return false;
+
+  var phoneValues = sheet.getRange(2, 7, lastRow - 1, 1).getValues(); // G: WhatsAppReferido
+  for (var i = 0; i < phoneValues.length; i++) {
+    var stored = normalizePhone_(phoneValues[i][0]);
+    if (stored && (stored === target || stored.slice(-10) === target.slice(-10))) return true;
+  }
+  return false;
+}
+
 function handleReferralSubmission_(p) {
   var ss = getSheet_();
   var sheet = ss.getSheetByName(REFERRALS_SHEET_NAME);
   if (!sheet) {
     setupSheetsOnce(); // creates it with the right headers + dropdowns
     sheet = ss.getSheetByName(REFERRALS_SHEET_NAME);
+  }
+
+  var referredPhone = String(p.referredWhatsapp || '').trim();
+
+  if (findLeadByPhone_(referredPhone).found) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: 'blocked', reason: 'already_lead' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (findReferralByReferredPhone_(referredPhone)) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: 'blocked', reason: 'already_referred' }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 
   sheet.appendRow([

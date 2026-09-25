@@ -367,6 +367,7 @@
   // Paste the Apps Script "Web app" URL here after deploying apps-script/Code.gs
   // (see README.md for the exact steps).
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWxLdQ70YBFIkZWu5xfobhYUA5s-bcrf081pDL6W9-9-s0rXwGWkRDxNoOz83GswRD/exec";
+  const WORKER_URL = "https://spirelight-leads.domlebo1.workers.dev";
 
   const form = document.getElementById('referralForm');
   const submitBtn = document.getElementById('submitBtn');
@@ -428,6 +429,28 @@
     }
 
     submitBtn.disabled = true;
+    submitBtn.textContent = 'Verificando...';
+
+    const referredPhoneRaw = (document.getElementById('referredWhatsapp').value || '').trim();
+
+    try {
+      const checkResp = await fetch(WORKER_URL + '?check_referred_phone=' + encodeURIComponent(referredPhoneRaw));
+      const checkData = await checkResp.json();
+      if (checkData && checkData.blocked) {
+        errorMsg.textContent = checkData.reason === 'referred'
+          ? 'Esta persona ya fue referida por alguien más -- no se puede referir dos veces.'
+          : 'Esta persona ya está registrada en nuestro sistema (llegó por su cuenta), así que no cuenta como un referido.';
+        errorMsg.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Enviar referido';
+        return;
+      }
+    } catch (err) {
+      // Worker hiccup -- fail open rather than block a legitimate
+      // referral over a network blip; Code.gs's own check on submit is
+      // the real backstop either way.
+    }
+
     submitBtn.textContent = 'Enviando...';
 
     const data = new FormData(form);
