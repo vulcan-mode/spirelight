@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="es" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google" content="notranslate">
+<meta name="robots" content="noindex">
+<title>Confirma tus datos — Spirelight</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;600;700&display=swap">
+<style>
+  :root {
+    --navy: #0d3a66;
+    --blue: #1e88e5;
+    --blue-deep: #0d5aa7;
+    --bg-a: #eaf7ff;
+    --bg-b: #cfeafe;
+    --ink: #10314f;
+    --card: #ffffff;
+    --border: #d7e8f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Manrope', system-ui, sans-serif;
+    background: linear-gradient(160deg, var(--bg-a) 0%, var(--bg-b) 100%);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px;
+  }
+  .card {
+    width: 100%;
+    max-width: 560px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px 32px;
+    box-shadow: 0 20px 50px rgba(13, 58, 102, 0.12);
+  }
+  .logo {
+    display: block;
+    width: 132px;
+    height: 132px;
+    border-radius: 28px;
+    margin: 0 auto 20px;
+    box-shadow: 0 14px 32px rgba(13, 58, 102, 0.22);
+  }
+  h1 {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 23px;
+    color: var(--navy);
+    margin: 0 0 8px;
+    line-height: 1.3;
+    text-align: center;
+  }
+  p.intro {
+    margin: 0 auto 22px;
+    max-width: 420px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: #4a6580;
+    text-align: center;
+  }
+  .loading { color: #7793ad; font-size: 14px; text-align: center; }
+  label {
+    display: block;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--navy);
+    margin: 18px 0 6px;
+  }
+  input, select {
+    width: 100%;
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 15px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: #fbfdff;
+    color: var(--ink);
+    box-sizing: border-box;
+  }
+  input:focus, select:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+  .phone-row { display: flex; gap: 8px; }
+  .phone-row select { flex: 0 0 128px; }
+  .phone-row input { flex: 1; min-width: 0; }
+  button, .apply-btn {
+    display: block;
+    width: 100%;
+    margin-top: 26px;
+    padding: 15px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: default; }
+  .error {
+    margin-top: 14px;
+    font-size: 14px;
+    color: #b3261e;
+    display: none;
+    text-align: center;
+  }
+  .success { text-align: center; padding: 10px 0; }
+  .success h2 {
+    font-family: 'Sora', system-ui, sans-serif;
+    color: var(--navy);
+    font-size: 22px;
+    margin: 0 0 10px;
+  }
+  .success p { color: #4a6580; font-size: 15px; line-height: 1.5; }
+  .change-number-btn {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 12px 0 0;
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #7793ad;
+    text-decoration: underline;
+    cursor: pointer;
+    text-align: center;
+  }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+  <div class="card">
+    <img class="logo" src="../assets/logo-monologos.png?v=2" alt="Monólogos en Español">
+
+    <div id="loadingView">
+      <p class="loading">Un momento…</p>
+    </div>
+
+    <div id="pickView" hidden>
+      <h1>Confirma tus datos ✏️</h1>
+      <p class="intro">Escribe el mismo número de WhatsApp que usaste para registrarte.</p>
+      <div class="phone-row">
+        <select id="phoneCode" aria-label="Código de país">
+          <option value="507">🇵🇦 +507</option>
+          <option value="1">🇵🇷 +1 (Puerto Rico)</option>
+          <option value="54">🇦🇷 +54</option>
+          <option value="1">🇩🇴 +1 (República Dominicana)</option>
+          <option value="53">🇨🇺 +53</option>
+          <option value="504">🇭🇳 +504</option>
+          <option value="595">🇵🇾 +595</option>
+          <option value="505">🇳🇮 +505</option>
+          <option value="503">🇸🇻 +503</option>
+          <option value="506">🇨🇷 +506</option>
+          <option value="598">🇺🇾 +598</option>
+          <option value="593">🇪🇨 +593</option>
+          <option value="51">🇵🇪 +51</option>
+          <option value="58">🇻🇪 +58</option>
+          <option value="56">🇨🇱 +56</option>
+          <option value="502">🇬🇹 +502</option>
+        </select>
+        <input type="tel" id="phoneInput" placeholder="6000 0000" autocomplete="tel">
+      </div>
+      <button type="button" id="phoneContinueBtn">Continuar →</button>
+      <p class="error" id="pickErrorMsg">No encontramos ese número. Verifica que sea el mismo que usaste al registrarte.</p>
+    </div>
+
+    <div id="formView" hidden>
+      <h1>¿Tus datos son correctos? ✏️</h1>
+      <p class="intro">Revisa y corrige lo que haga falta. Tu número de WhatsApp no se puede cambiar aquí.</p>
+
+      <form id="detailsForm">
+        <label for="fullName">Tu nombre completo</label>
+        <input id="fullName" name="name" type="text" required>
+
+        <label for="country">Tu país</label>
+        <select id="country" name="country" required>
+          <option value="panama">Panamá</option>
+          <option value="puerto_rico">Puerto Rico</option>
+          <option value="argentina">Argentina</option>
+          <option value="republica_dominicana">República Dominicana</option>
+          <option value="cuba">Cuba</option>
+          <option value="honduras">Honduras</option>
+          <option value="paraguay">Paraguay</option>
+          <option value="nicaragua">Nicaragua</option>
+          <option value="el_salvador">El Salvador</option>
+          <option value="costa_rica">Costa Rica</option>
+          <option value="uruguay">Uruguay</option>
+          <option value="ecuador">Ecuador</option>
+          <option value="peru">Perú</option>
+          <option value="venezuela">Venezuela</option>
+          <option value="chile">Chile</option>
+          <option value="guatemala">Guatemala</option>
+          <option value="otro">Otro</option>
+        </select>
+
+        <label for="email">Correo electrónico (opcional)</label>
+        <input id="email" name="email" type="email">
+
+        <button type="submit" id="submitBtn">Guardar cambios</button>
+        <p class="error" id="formErrorMsg">Algo salió mal. Por favor intenta de nuevo.</p>
+      </form>
+
+      <button class="change-number-btn" id="changeNumberBtn" type="button">Usar otro número</button>
+    </div>
+
+    <div id="successView" class="success" hidden>
+      <h2>¡Listo! ✅</h2>
+      <p>Guardamos tus datos. Puedes volver a esta página cuando quieras para actualizarlos.</p>
+      <a class="apply-btn" href="../gracias/" id="backToGraciasLink">Ver mi estado →</a>
+    </div>
+  </div>
+
+<script>
+  var WORKER_URL = "https://spirelight-leads.domlebo1.workers.dev";
+  var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWxLdQ70YBFIkZWu5xfobhYUA5s-bcrf081pDL6W9-9-s0rXwGWkRDxNoOz83GswRD/exec";
+
+  var currentPhone = '';
+
+  function show(viewId) {
+    ['loadingView', 'pickView', 'formView', 'successView'].forEach(function (id) {
+      document.getElementById(id).hidden = (id !== viewId);
+    });
+  }
+
+  function checkPhone(phone) {
+    show('loadingView');
+    fetch(WORKER_URL + '?phone=' + encodeURIComponent(phone))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || !data.found) {
+          document.getElementById('pickErrorMsg').style.display = 'block';
+          show('pickView');
+          return;
+        }
+        currentPhone = phone;
+        document.getElementById('fullName').value = data.name || '';
+        document.getElementById('email').value = data.email || '';
+        if (data.country) {
+          var select = document.getElementById('country');
+          if (Array.from(select.options).some(function (o) { return o.value === data.country; })) {
+            select.value = data.country;
+          }
+        }
+        document.getElementById('backToGraciasLink').href = '../gracias/?phone=' + encodeURIComponent(phone);
+        show('formView');
+      })
+      .catch(function () {
+        document.getElementById('pickErrorMsg').style.display = 'block';
+        show('pickView');
+      });
+  }
+
+  document.getElementById('phoneContinueBtn').addEventListener('click', function () {
+    var code = document.getElementById('phoneCode').value;
+    var numberDigits = document.getElementById('phoneInput').value.replace(/\D/g, '');
+    var errorEl = document.getElementById('pickErrorMsg');
+    if (!numberDigits) {
+      errorEl.style.display = 'block';
+      return;
+    }
+    errorEl.style.display = 'none';
+    checkPhone('+' + code + numberDigits);
+  });
+
+  document.getElementById('changeNumberBtn').addEventListener('click', function () {
+    document.getElementById('phoneInput').value = '';
+    show('pickView');
+  });
+
+  var form = document.getElementById('detailsForm');
+  var submitBtn = document.getElementById('submitBtn');
+  var formErrorMsg = document.getElementById('formErrorMsg');
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    formErrorMsg.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Guardando...';
+
+    var data = new FormData(form);
+    data.append('formType', 'update_details');
+    data.append('whatsapp', currentPhone);
+
+    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: data })
+      .then(function () {
+        document.getElementById('backToGraciasLink').href = '../gracias/?phone=' + encodeURIComponent(currentPhone);
+        show('successView');
+      })
+      .catch(function () {
+        formErrorMsg.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Guardar cambios';
+      });
+  });
+
+  var phoneFromUrl = new URLSearchParams(window.location.search).get('phone');
+  if (phoneFromUrl) {
+    checkPhone(phoneFromUrl);
+  } else {
+    show('pickView');
+  }
+</script>
+</body>
+</html>

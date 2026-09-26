@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="es" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google" content="notranslate">
+<title>Cómo tener éxito — Spirelight</title>
+<meta name="description" content="Guía práctica para pasar tu grabación de prueba con Spirelight: ambiente, soporte para el teléfono, y errores comunes a evitar.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;600;700&display=swap">
+<style>
+  :root {
+    --navy: #0d3a66;
+    --blue: #1e88e5;
+    --blue-deep: #0d5aa7;
+    --bg-a: #eaf7ff;
+    --bg-b: #cfeafe;
+    --green-bg: #e3f7ea;
+    --green-text: #0d5a2f;
+    --red-bg: #fde8e6;
+    --red-text: #a3231a;
+    --amber-bg: #fff4d6;
+    --amber-text: #8a5a00;
+    --ink: #10314f;
+    --card: #ffffff;
+    --border: #d7e8f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Manrope', system-ui, sans-serif;
+    background: linear-gradient(160deg, var(--bg-a) 0%, var(--bg-b) 100%);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px;
+  }
+  .card {
+    width: 100%;
+    max-width: 680px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px 32px;
+    box-shadow: 0 20px 50px rgba(13, 58, 102, 0.12);
+    margin-bottom: 24px;
+  }
+  .logo {
+    display: block;
+    width: 120px;
+    height: 120px;
+    border-radius: 26px;
+    margin: 0 auto 20px;
+    box-shadow: 0 14px 32px rgba(13, 58, 102, 0.22);
+  }
+  h1 {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 25px;
+    color: var(--navy);
+    margin: 0 0 10px;
+    line-height: 1.3;
+    text-align: center;
+  }
+  h2 {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--navy);
+    margin: 0 0 14px;
+  }
+  p.intro {
+    margin: 0 auto 8px;
+    max-width: 460px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #4a6580;
+    text-align: center;
+  }
+  .warning-strict {
+    margin: 18px 0 0;
+    padding: 14px 16px;
+    background: var(--red-bg);
+    border: 1.5px solid #f3b3ac;
+    border-radius: 12px;
+    color: var(--red-text);
+    font-weight: 800;
+    font-size: 14.5px;
+    line-height: 1.5;
+    text-align: center;
+  }
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+  @media (max-width: 480px) {
+    .compare-grid { grid-template-columns: 1fr; }
+  }
+  .compare-card {
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+  }
+  .compare-card.good { background: var(--green-bg); }
+  .compare-card.bad { background: var(--red-bg); }
+  .compare-card svg { width: 84px; height: 84px; margin-bottom: 8px; }
+  .compare-label {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 13.5px;
+    margin-bottom: 4px;
+  }
+  .compare-card.good .compare-label { color: var(--green-text); }
+  .compare-card.bad .compare-label { color: var(--red-text); }
+  .compare-caption { font-size: 12.5px; line-height: 1.4; color: #4a6580; }
+  .topic-block { margin-bottom: 34px; }
+  .topic-block:last-of-type { margin-bottom: 0; }
+  .tip-list { margin: 14px 0 0; padding: 0; list-style: none; }
+  .tip-list li {
+    display: flex;
+    gap: 10px;
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+  .tip-list li:last-child { margin-bottom: 0; }
+  .apply-btn {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 15px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    text-decoration: none;
+    text-align: center;
+  }
+  .back-link {
+    display: block;
+    margin-top: 16px;
+    text-align: center;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--blue-deep);
+    text-decoration: none;
+  }
+</style>
+</head>
+<body>
+
+  <div class="card">
+    <img class="logo" src="../assets/logo-monologos.png?v=2" alt="Monólogos en Español">
+    <h1>Cómo tener éxito en tu grabación de prueba 🎙️</h1>
+    <p class="intro">La muestra que grabes para Spirelight decide si pasas o no. Esto es lo que realmente importa para que suene limpia y profesional.</p>
+    <p class="warning-strict">El estándar de calidad de Spirelight es estricto: exige silencio prácticamente total, sin eco y sin ruido de fondo. La mayoría de los rechazos son por el ambiente de grabación, no por la voz.</p>
+  </div>
+
+  <div class="card">
+    <div class="topic-block">
+      <h2>1. Silencio real, no "silencio relativo"</h2>
+      <div class="compare-grid">
+        <div class="compare-card good">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="15" y="15" width="70" height="70" rx="6" stroke="#0d5a2f" stroke-width="4"/>
+            <rect x="15" y="15" width="70" height="12" fill="#0d5a2f" opacity="0.15"/>
+            <circle cx="50" cy="58" r="14" stroke="#0d5a2f" stroke-width="4"/>
+            <path d="M50 48 v20 M42 58 h16" stroke="#0d5a2f" stroke-width="3"/>
+          </svg>
+          <div class="compare-label">✅ Cuarto cerrado</div>
+          <div class="compare-caption">Puerta y ventanas cerradas. Ropa/cortinas en la habitación ayudan a absorber el eco.</div>
+        </div>
+        <div class="compare-card bad">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 70 Q35 40 50 70 Q65 40 80 70" stroke="#a3231a" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="30" cy="35" r="9" fill="#a3231a" opacity="0.5"/>
+            <circle cx="65" cy="28" r="6" fill="#a3231a" opacity="0.5"/>
+            <line x1="12" y1="88" x2="88" y2="88" stroke="#a3231a" stroke-width="4"/>
+          </svg>
+          <div class="compare-label">❌ Al aire libre / la calle</div>
+          <div class="compare-caption">Viento, tráfico y eco de la calle arruinan la grabación aunque tú no los notes al hablar.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-block">
+      <h2>2. El teléfono va en un soporte, no en tu mano</h2>
+      <div class="compare-grid">
+        <div class="compare-card good">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="40" y="20" width="20" height="38" rx="4" stroke="#0d5a2f" stroke-width="4"/>
+            <path d="M30 58 L50 78 L70 58" stroke="#0d5a2f" stroke-width="4" stroke-linejoin="round"/>
+            <line x1="50" y1="78" x2="50" y2="88" stroke="#0d5a2f" stroke-width="4"/>
+            <line x1="35" y1="88" x2="65" y2="88" stroke="#0d5a2f" stroke-width="4"/>
+          </svg>
+          <div class="compare-label">✅ En un soporte fijo</div>
+          <div class="compare-caption">Sin movimiento, sin ruido de manos, y el micrófono queda libre.</div>
+        </div>
+        <div class="compare-card bad">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="38" y="18" width="20" height="40" rx="4" stroke="#a3231a" stroke-width="4" transform="rotate(18 48 38)"/>
+            <path d="M20 78 Q35 65 48 70 Q60 74 68 62" stroke="#a3231a" stroke-width="4" fill="none" stroke-linecap="round"/>
+          </svg>
+          <div class="compare-label">❌ Sosteniéndolo con la mano</div>
+          <div class="compare-caption">Hasta el más mínimo movimiento o roce del dedo se escucha claramente en la grabación.</div>
+        </div>
+      </div>
+      <ul class="tip-list">
+        <li>💡 Una base/soporte de teléfono barato resuelve esto por completo -- vale la pena la inversión.</li>
+        <li>💡 Ubica el soporte de forma que el micrófono del teléfono (normalmente abajo) no quede tapado ni contra una superficie.</li>
+      </ul>
+    </div>
+
+    <div class="topic-block">
+      <h2>3. Nunca tapes el micrófono</h2>
+      <div class="compare-grid">
+        <div class="compare-card good">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="40" y="15" width="20" height="45" rx="4" stroke="#0d5a2f" stroke-width="4"/>
+            <circle cx="50" cy="66" r="4" fill="#0d5a2f"/>
+            <path d="M35 66 a15 15 0 0 0 30 0" stroke="#0d5a2f" stroke-width="3" fill="none"/>
+          </svg>
+          <div class="compare-label">✅ Micrófono libre</div>
+          <div class="compare-caption">Nada cubre la parte inferior del teléfono mientras hablas.</div>
+        </div>
+        <div class="compare-card bad">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="40" y="15" width="20" height="45" rx="4" stroke="#a3231a" stroke-width="4"/>
+            <ellipse cx="50" cy="63" rx="14" ry="9" fill="#a3231a" opacity="0.55"/>
+          </svg>
+          <div class="compare-label">❌ Dedo o funda tapando</div>
+          <div class="compare-caption">Un dedo, una funda gruesa, o apoyar el teléfono sobre la mesa boca abajo amortigua el audio.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Resumen rápido antes de grabar</h2>
+    <ul class="tip-list">
+      <li>✅ Cuarto pequeño, cerrado, con algo de tela (ropa, cortinas, almohadas) para cortar el eco.</li>
+      <li>✅ Teléfono en un soporte, quieto, con el micrófono libre.</li>
+      <li>✅ Avisa a quienes viven contigo para evitar interrupciones o ruido durante la grabación.</li>
+      <li>✅ Haz una grabación de práctica y escúchala completa antes de enviar la real -- si tú notas ruido, Spirelight también lo va a notar.</li>
+      <li>❌ No grabes afuera, cerca de ventiladores/AC, ni con música o TV de fondo.</li>
+      <li>❌ No sostengas el teléfono con la mano ni lo toques mientras hablas.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <a class="apply-btn" href="../confirmar-datos/">✏️ Confirma que tus datos estén correctos</a>
+    <a class="back-link" href="../como-funciona/">← Volver a "Cómo funciona"</a>
+  </div>
+
+</body>
+</html>

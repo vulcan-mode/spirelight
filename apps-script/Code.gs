@@ -280,6 +280,7 @@ function findLeadByPhone_(rawPhone) {
     if (stored && (stored === target || stored.slice(-10) === target.slice(-10))) {
       return {
         found: true,
+        rowNum: i + 2, // 1-based sheet row (values arrays are 0-based, header is row 1)
         country: String(countryValues[i][0] || '').trim(),
         name: nameValues ? String(nameValues[i][0] || '').trim() : ''
       };
@@ -344,7 +345,44 @@ function doPost(e) {
     return handlePaymentMethodSubmission_(p);
   }
 
+  if (formType === 'update_details') {
+    return handleUpdateDetailsSubmission_(p);
+  }
+
   return handleReferralSubmission_(p);
+}
+
+// Updates an EXISTING Leads Sitio row in place (found by phone) --
+// never appends. Used by /confirmar-datos/, where someone reviews and
+// corrects their own name/country/email.
+function handleUpdateDetailsSubmission_(p) {
+  var leadsSheet = getSheet_().getSheetByName(LEADS_SHEET_NAME);
+  if (!leadsSheet) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: 'error', message: 'no leads sheet' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var phone = String(p.whatsapp || '').trim();
+  var lead = findLeadByPhone_(phone);
+  if (!lead.found) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: 'error', message: 'not found' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var map = getHeaderIndexMap_(leadsSheet);
+  var nameCol = ensureColumn_(leadsSheet, map, META_NAME_HEADER);
+  var countryCol = ensureColumn_(leadsSheet, map, META_COUNTRY_HEADER);
+  var emailCol = ensureColumn_(leadsSheet, map, META_EMAIL_HEADER);
+
+  leadsSheet.getRange(lead.rowNum, nameCol).setValue(String(p.name || '').trim());
+  leadsSheet.getRange(lead.rowNum, countryCol).setValue(String(p.country || '').trim());
+  leadsSheet.getRange(lead.rowNum, emailCol).setValue(String(p.email || '').trim().toLowerCase());
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ result: 'success' }))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 // Mirrors the Worker's checkReferredPhone -- silent backstop in case
