@@ -517,6 +517,13 @@ function handleLeadSubmission_(p) {
   var fuenteCol = ensureColumn_(leadsSheet, map, FUENTE_HEADER);
   var estadoCol = ensureColumn_(leadsSheet, map, STATUS_HEADER);
   var sentCol = ensureColumn_(leadsSheet, map, EMAIL_SENT_HEADER);
+  // Meta's own column, already there for Facebook leads -- this was
+  // silently dropped when this function got rewritten to be
+  // header-name-based (that rewrite fixed a worse bug, but lost the
+  // timestamp in the process). Every website lead until now has a
+  // blank one; can't honestly backfill those retroactively, but every
+  // new one gets it from here on.
+  var createdTimeCol = ensureColumn_(leadsSheet, map, 'created_time');
   ensureColumn_(leadsSheet, map, UNLOCK_HEADER);
 
   var rowNum = leadsSheet.getLastRow() + 1;
@@ -526,6 +533,9 @@ function handleLeadSubmission_(p) {
   if (email) leadsSheet.getRange(rowNum, emailCol).setValue(email);
   leadsSheet.getRange(rowNum, idQuestionCol).setValue(idAnswer);
   leadsSheet.getRange(rowNum, fuenteCol).setValue('Sitio web');
+  leadsSheet.getRange(rowNum, createdTimeCol).setValue(
+    Utilities.formatDate(new Date(), 'America/Lima', "yyyy-MM-dd'T'HH:mm:ssXXX")
+  );
   // Set immediately (not just left for the hourly sweep) so a fresh
   // submission redirecting straight to /gracias/ sees the right state
   // right away instead of a stale "esperando" for up to an hour.
