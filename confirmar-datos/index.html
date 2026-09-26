@@ -137,6 +137,7 @@
 </style>
 </head>
 <body>
+  <script src="../assets/announcement-banner.js"></script>
 
   <div class="card">
     <img class="logo" src="../assets/logo-monologos.png?v=2" alt="Monólogos en Español">
@@ -202,8 +203,8 @@
           <option value="otro">Otro</option>
         </select>
 
-        <label for="email">Correo electrónico (opcional)</label>
-        <input id="email" name="email" type="email">
+        <label for="email">Correo electrónico</label>
+        <input id="email" name="email" type="email" required>
 
         <button type="submit" id="submitBtn">Guardar cambios</button>
         <p class="error" id="formErrorMsg">Algo salió mal. Por favor intenta de nuevo.</p>

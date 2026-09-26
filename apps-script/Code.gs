@@ -56,6 +56,10 @@ var REFERRALS_SHEET_NAME = 'Referidos';
 // (not appended) so a later resubmission updates the same row instead
 // of leaving stale duplicates.
 var PAYMENT_METHODS_SHEET_NAME = 'MetodosPago';
+// Simple site-wide announcement banner. Only the FIRST row with
+// Activo=Sí is shown; keep just one row set to Sí at a time to avoid
+// ambiguity about which one is "the" current banner.
+var ANNOUNCEMENTS_SHEET_NAME = 'Avisos';
 
 // Opens the Sheet explicitly by ID rather than relying on
 // getActiveSpreadsheet() — works the same whether this project is
@@ -155,6 +159,26 @@ function setupSheetsOnce() {
       .setAllowInvalid(false)
       .build();
     paymentSheet.getRange(2, 5, paymentSheet.getMaxRows() - 1, 1).setDataValidation(metodoRule);
+  }
+
+  var avisosSheet = ss.getSheetByName(ANNOUNCEMENTS_SHEET_NAME);
+  if (!avisosSheet) {
+    avisosSheet = ss.insertSheet(ANNOUNCEMENTS_SHEET_NAME);
+    avisosSheet.appendRow(['Activo', 'Mensaje', 'Tipo', 'Enlace']);
+    avisosSheet.appendRow(['No', 'Ejemplo: nuevo país activo esta semana.', 'info', '']);
+    avisosSheet.setFrozenRows(1);
+
+    var activoRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['Sí', 'No'], true)
+      .setAllowInvalid(false)
+      .build();
+    avisosSheet.getRange(2, 1, avisosSheet.getMaxRows() - 1, 1).setDataValidation(activoRule);
+
+    var tipoRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['info', 'aviso', 'urgente'], true)
+      .setAllowInvalid(false)
+      .build();
+    avisosSheet.getRange(2, 3, avisosSheet.getMaxRows() - 1, 1).setDataValidation(tipoRule);
   }
 }
 
@@ -364,10 +388,16 @@ function handleUpdateDetailsSubmission_(p) {
   }
 
   var phone = String(p.whatsapp || '').trim();
+  var email = String(p.email || '').trim().toLowerCase();
   var lead = findLeadByPhone_(phone);
   if (!lead.found) {
     return ContentService
       .createTextOutput(JSON.stringify({ result: 'error', message: 'not found' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  if (!email) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: 'error', message: 'missing email' }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 
@@ -378,7 +408,7 @@ function handleUpdateDetailsSubmission_(p) {
 
   leadsSheet.getRange(lead.rowNum, nameCol).setValue(String(p.name || '').trim());
   leadsSheet.getRange(lead.rowNum, countryCol).setValue(String(p.country || '').trim());
-  leadsSheet.getRange(lead.rowNum, emailCol).setValue(String(p.email || '').trim().toLowerCase());
+  leadsSheet.getRange(lead.rowNum, emailCol).setValue(email);
 
   return ContentService
     .createTextOutput(JSON.stringify({ result: 'success' }))
@@ -525,6 +555,15 @@ function handleLeadSubmission_(p) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
+  // Email is required now -- the welcome/activation/success-guide
+  // emails are core to the funnel, not optional extras, so there's no
+  // point letting someone register without a way to reach them.
+  if (!email) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: 'error', message: 'missing email' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
   // Dedup by phone -- the identifier used everywhere else in this
   // system (not email: plenty of people submitting this way won't
   // give one). Also the actual enforcement of "if they already did
@@ -568,7 +607,7 @@ function handleLeadSubmission_(p) {
   leadsSheet.getRange(rowNum, countryCol).setValue(country);
   leadsSheet.getRange(rowNum, nameCol).setValue(name);
   leadsSheet.getRange(rowNum, phoneCol).setValue(phone);
-  if (email) leadsSheet.getRange(rowNum, emailCol).setValue(email);
+  leadsSheet.getRange(rowNum, emailCol).setValue(email);
   leadsSheet.getRange(rowNum, idQuestionCol).setValue(idAnswer);
   leadsSheet.getRange(rowNum, fuenteCol).setValue('Sitio web');
   leadsSheet.getRange(rowNum, createdTimeCol).setValue(
@@ -807,9 +846,11 @@ function sendWelcomeEmails() {
     return;
   }
 
+  var countryCol = map[META_COUNTRY_HEADER];
   var emailValues = leadsSheet.getRange(2, emailCol, numRows, 1).getValues();
   var phoneValues = leadsSheet.getRange(2, phoneCol, numRows, 1).getValues();
   var nameValues = nameCol ? leadsSheet.getRange(2, nameCol, numRows, 1).getValues() : null;
+  var countryValues = countryCol ? leadsSheet.getRange(2, countryCol, numRows, 1).getValues() : null;
   var welcomeValues = leadsSheet.getRange(2, welcomeCol, numRows, 1).getValues();
 
   for (var i = 0; i < numRows; i++) {
@@ -820,20 +861,33 @@ function sendWelcomeEmails() {
     if (!email || !phone) continue; // nothing to email, or nothing to build the link with
 
     var name = nameValues ? String(nameValues[i][0] || '').trim() : '';
-    sendWelcomeEmail_(name, email, phone);
+    var country = countryValues ? String(countryValues[i][0] || '').trim() : '';
+    sendWelcomeEmail_(name, email, phone, country);
     leadsSheet.getRange(i + 2, welcomeCol).setValue(true);
   }
 }
 
-function sendWelcomeEmail_(name, email, phone) {
+// We already know their country and active status at send time --
+// state it plainly rather than making them click a link to find out
+// something we could just tell them. The confirm-details link is a
+// minor "fix a typo" utility here, not the main point of the email.
+function sendWelcomeEmail_(name, email, phone, country) {
   if (!email) return;
   var greeting = name ? ('¡Hola ' + name + '!') : '¡Hola!';
-  var link = 'https://vulcan-mode.github.io/spirelight/gracias/?phone=' + encodeURIComponent(normalizePhone_(phone));
-  var subject = 'Confirma tu información -- Spirelight'; // no emoji, see the note on sendActivationEmail_'s subject
+  var confirmLink = 'https://vulcan-mode.github.io/spirelight/confirmar-datos/?phone=' + encodeURIComponent(normalizePhone_(phone));
+  var isActive = isCountryActive_(country);
+  var subject = '¡Gracias por registrarte en Spirelight!'; // no emoji, see the note on sendActivationEmail_'s subject
+
+  var successGuideLink = 'https://vulcan-mode.github.io/spirelight/como-tener-exito/';
+  var statusLine = isActive
+    ? ('Buenas noticias: tu país ya está activo. Aplica aquí para comenzar: ' + SIGNUP_LINK)
+    : ('Tu país todavía no está activo. Te voy a avisar por correo automáticamente en cuanto se active -- no tienes que hacer nada más ni volver a escribir.');
+
   var body = greeting + '\n\n'
     + 'Gracias por tu interés en el programa de grabación de voz de Spirelight.\n\n'
-    + 'Confirma tu información y mira el estado de tu país aquí: ' + link + '\n\n'
-    + 'Si no ves este correo, revisa tu carpeta de spam o de "Social"/"Promociones".\n\n'
+    + statusLine + '\n\n'
+    + 'Antes de grabar, lee esto -- la mayoría de los rechazos son por el ambiente de grabación, no por la voz: ' + successGuideLink + '\n\n'
+    + '¿Algún dato tuyo está mal (nombre, correo, país)? Corrígelo aquí: ' + confirmLink + '\n\n'
     + '-- Domingo';
   GmailApp.sendEmail(email, subject, body);
 }
@@ -848,6 +902,8 @@ function sendActivationEmail_(name, email) {
   var subject = '¡Tu país ya está activo en Spirelight!';
   var body = greeting + '\n\n'
     + 'Buenas noticias: tu país ya está activo en el programa de grabación de voz de Spirelight.\n\n'
+    + 'Antes de aplicar, lee esto -- la mayoría de los rechazos son por el ambiente de grabación, no por la voz: '
+    + 'https://vulcan-mode.github.io/spirelight/como-tener-exito/\n\n'
     + 'Aplica aquí para comenzar: ' + SIGNUP_LINK + '\n\n'
     + 'Si aún no lo has hecho, únete a nuestro grupo de WhatsApp para el video explicativo y las preguntas frecuentes: '
     + WHATSAPP_GROUP_LINK + '\n\n'

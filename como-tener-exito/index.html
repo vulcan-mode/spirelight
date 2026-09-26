@@ -115,6 +115,14 @@
   }
   .compare-card.good .compare-label { color: var(--green-text); }
   .compare-card.bad .compare-label { color: var(--red-text); }
+  .audio-example {
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .audio-example.good { background: var(--green-bg); }
+  .audio-example.bad { background: var(--red-bg); }
+  .audio-example audio { width: 100%; margin: 8px 0; }
   .compare-caption { font-size: 12.5px; line-height: 1.4; color: #4a6580; }
   .topic-block { margin-bottom: 34px; }
   .topic-block:last-of-type { margin-bottom: 0; }
@@ -155,6 +163,7 @@
 </style>
 </head>
 <body>
+  <script src="../assets/announcement-banner.js"></script>
 
   <div class="card">
     <img class="logo" src="../assets/logo-monologos.png?v=2" alt="Monólogos en Español">
@@ -252,6 +261,22 @@
       <li>❌ No grabes afuera, cerca de ventiladores/AC, ni con música o TV de fondo.</li>
       <li>❌ No sostengas el teléfono con la mano ni lo toques mientras hablas.</li>
     </ul>
+  </div>
+
+  <!-- Placeholder for real recorded examples (good vs. bad, with an
+       explanation of why) -- audio files not uploaded yet. Once they
+       exist, drop each one in as:
+       <div class="audio-example good|bad">
+         <div class="compare-label">✅/❌ <label></div>
+         <audio controls src="../assets/audio/FILENAME.mp3"></audio>
+         <p class="compare-caption">Por qué...</p>
+       </div>
+       inside #audioExamplesList below, and remove the "próximamente"
+       placeholder text. -->
+  <div class="card" id="audioExamplesCard">
+    <h2>Ejemplos de audio reales</h2>
+    <p class="intro" id="audioExamplesPlaceholder">Próximamente: grabaciones reales de ejemplo -- buenas y malas -- con explicación de por qué cada una pasó o fue rechazada.</p>
+    <div id="audioExamplesList"></div>
   </div>
 
   <div class="card">
