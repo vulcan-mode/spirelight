@@ -416,6 +416,13 @@ function handleReferralSubmission_(p) {
 // Upserts by phone (not a blind append) -- a payment method belongs to
 // the person, so resubmitting (e.g. switching from PayPal to Wise)
 // should update their one row, not pile up stale duplicates.
+// "Otro" is only for Cuba/Venezuela -- enforced here too, not just by
+// hiding the option client-side. A direct/forged request (dev tools,
+// a raw POST) could otherwise submit metodo=Otro from any country;
+// this checks their own actual registered country (from Leads Sitio,
+// not anything the request itself claims) and refuses it outright.
+var OTRO_ELIGIBLE_COUNTRIES_ = ['cuba', 'venezuela'];
+
 function handlePaymentMethodSubmission_(p) {
   var ss = getSheet_();
   var sheet = ss.getSheetByName(PAYMENT_METHODS_SHEET_NAME);
@@ -425,8 +432,20 @@ function handlePaymentMethodSubmission_(p) {
   }
 
   var phone = String(p.referrerWhatsapp || '').trim();
+  var metodo = String(p.metodo || '').trim();
+
+  if (metodo === 'Otro') {
+    var lead = findLeadByPhone_(phone);
+    var country = lead.found ? lead.country : (p.referrerCountry || '');
+    if (OTRO_ELIGIBLE_COUNTRIES_.indexOf(normalizeCountryKey_(country)) === -1) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ result: 'blocked', reason: 'otro_not_eligible' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
   var target = normalizePhone_(phone);
-  var row = [new Date(), phone, p.referrerName || '', p.referrerCountry || '', p.metodo || '', p.detalle || '', p.comentario || ''];
+  var row = [new Date(), phone, p.referrerName || '', p.referrerCountry || '', metodo, p.detalle || '', p.comentario || ''];
 
   var lastRow = sheet.getLastRow();
   if (target && lastRow >= 2) {
