@@ -46,7 +46,9 @@
     border-radius: 24px;
     padding: 36px 32px;
     box-shadow: 0 20px 50px rgba(13, 58, 102, 0.12);
+    transition: max-width 0.15s ease;
   }
+  .card.card-wide { max-width: 860px; }
   .logo {
     display: block;
     width: 132px;
@@ -55,6 +57,35 @@
     margin: 0 auto 20px;
     box-shadow: 0 14px 32px rgba(13, 58, 102, 0.22);
   }
+  .list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .logo-small {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgba(13, 58, 102, 0.18);
+  }
+  .new-referral-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 24px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    text-decoration: none;
+    box-shadow: 0 10px 24px rgba(13, 58, 102, 0.3);
+    white-space: nowrap;
+  }
+  .plus-icon { font-size: 21px; line-height: 1; font-weight: 800; }
   h1 {
     font-family: 'Sora', system-ui, sans-serif;
     font-weight: 800;
@@ -140,28 +171,49 @@
     font-size: 14.5px;
     margin: 0 0 12px;
   }
-  .referral-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
-  .referral-card {
-    border: 1.5px solid var(--border);
+  .table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 16px 18px;
   }
-  .referral-card-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 8px;
+  .referrals-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
   }
-  .referral-name {
+  .referrals-table th {
+    text-align: left;
+    padding: 12px 16px;
+    background: #f3f8fd;
     font-family: 'Sora', system-ui, sans-serif;
-    font-weight: 800;
-    font-size: 15px;
+    font-weight: 700;
+    font-size: 11.5px;
     color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    border-bottom: 1.5px solid var(--border);
+    white-space: nowrap;
   }
-  .referral-country { font-size: 13px; color: #7793ad; margin-bottom: 10px; }
-  .badge-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .referrals-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    white-space: nowrap;
+  }
+  .referrals-table tbody tr:last-child td { border-bottom: none; }
+  .referrals-table tbody tr:hover { background: #fafcff; }
+  .cell-name { font-family: 'Sora', system-ui, sans-serif; font-weight: 700; color: var(--navy); }
+  .cell-note {
+    font-size: 12px;
+    color: #7793ad;
+    margin-top: 4px;
+    white-space: normal;
+    max-width: 220px;
+  }
   .badge {
+    display: inline-block;
     font-family: 'Manrope', system-ui, sans-serif;
     font-weight: 700;
     font-size: 12.5px;
@@ -173,23 +225,13 @@
   .badge.resultado-aprobado, .badge.pago-pagado { background: var(--green-bg); color: var(--green-text); }
   .badge.resultado-rechazado { background: var(--red-bg); color: var(--red-text); }
   .badge.resultado-inválido { background: var(--gray-bg); color: #4a6580; }
-  .invalid-note {
-    margin-top: 8px;
-    padding: 10px 12px;
-    background: var(--gray-bg);
-    border-radius: 10px;
-    font-size: 12.5px;
-    line-height: 1.5;
-    color: #4a6580;
-  }
   .badge.pago-programado { background: var(--gray-bg); color: var(--navy); }
   .bono-amount {
     font-family: 'Sora', system-ui, sans-serif;
     font-weight: 800;
-    font-size: 13px;
+    font-size: 13.5px;
     color: var(--blue-deep);
   }
-  .fecha-note { font-size: 12.5px; color: #7793ad; margin-top: 8px; }
   .empty-state {
     text-align: center;
     padding: 20px 0 8px;
@@ -223,8 +265,8 @@
 </head>
 <body>
 
-  <div class="card">
-    <img class="logo" src="../assets/logo-monologos.png?v=2" alt="Monólogos en Español">
+  <div class="card" id="mainCard">
+    <img class="logo" id="mainLogo" src="../assets/logo-monologos.png?v=2" alt="Monólogos en Español">
 
     <div id="loadingView">
       <p class="loading">Un momento, estamos revisando tus referidos…</p>
@@ -239,6 +281,11 @@
     </div>
 
     <div id="listView" hidden>
+      <div class="list-header">
+        <img class="logo-small" src="../assets/logo-monologos.png?v=2" alt="Monólogos en Español">
+        <a class="new-referral-btn" href="../referral-form/"><span class="plus-icon">+</span> Nuevo referido</a>
+      </div>
+
       <p class="greeting" id="referrerGreeting" hidden></p>
       <h1>Tus referidos 🎁</h1>
 
@@ -251,9 +298,21 @@
         Todavía no tienes referidos registrados con este número.<br>¿Conoces a alguien con buena voz?
       </div>
 
-      <div id="referralList" class="referral-list"></div>
+      <div class="table-wrap" id="tableWrap" hidden>
+        <table class="referrals-table">
+          <thead>
+            <tr>
+              <th>Referido</th>
+              <th>País</th>
+              <th>Resultado</th>
+              <th>Bono</th>
+              <th>Pago</th>
+            </tr>
+          </thead>
+          <tbody id="referralTableBody"></tbody>
+        </table>
+      </div>
 
-      <a class="apply-btn" href="../referral-form/">+ Referir a alguien</a>
       <button class="change-number-btn" id="changeNumberBtn" type="button">Usar otro número</button>
     </div>
 
@@ -289,6 +348,12 @@
     ['loadingView', 'pickView', 'listView', 'unknownView'].forEach(function (id) {
       document.getElementById(id).hidden = (id !== viewId);
     });
+    // listView has its own small logo alongside the "+ Nuevo referido"
+    // button, so the big shared one (used by every other view) would
+    // be redundant there. The card itself also gets wider, since a
+    // table needs more room than the narrow form views.
+    document.getElementById('mainLogo').hidden = (viewId === 'listView');
+    document.getElementById('mainCard').classList.toggle('card-wide', viewId === 'listView');
   }
 
   var RESULTADO_LABELS = { Pendiente: '🕐 Pendiente', Aprobado: '✅ Aprobado', Rechazado: '❌ Rechazado', 'Inválido': '🚫 No válido' };
@@ -302,72 +367,67 @@
       greeting.hidden = false;
     }
 
-    var listEl = document.getElementById('referralList');
-    listEl.innerHTML = '';
+    var tbody = document.getElementById('referralTableBody');
+    tbody.innerHTML = '';
 
     var referrals = data.referrals || [];
-    document.getElementById('emptyState').hidden = referrals.length > 0;
+    var hasReferrals = referrals.length > 0;
+    document.getElementById('emptyState').hidden = hasReferrals;
+    document.getElementById('tableWrap').hidden = !hasReferrals;
 
     referrals.forEach(function (r) {
-      var card = document.createElement('div');
-      card.className = 'referral-card';
+      var row = document.createElement('tr');
 
-      var top = document.createElement('div');
-      top.className = 'referral-card-top';
-      var nameEl = document.createElement('div');
-      nameEl.className = 'referral-name';
-      nameEl.textContent = r.referredName || '(sin nombre)';
-      top.appendChild(nameEl);
-      card.appendChild(top);
-
-      if (r.referredCountry) {
-        var countryEl = document.createElement('div');
-        countryEl.className = 'referral-country';
-        countryEl.textContent = r.referredCountry;
-        card.appendChild(countryEl);
+      var nameTd = document.createElement('td');
+      nameTd.className = 'cell-name';
+      nameTd.textContent = r.referredName || '(sin nombre)';
+      if (r.resultado === 'Inválido') {
+        var invalidNote = document.createElement('div');
+        invalidNote.className = 'cell-note';
+        invalidNote.textContent = 'No es una referencia genuina: llegó por Facebook, no fue referida por ti.';
+        nameTd.appendChild(invalidNote);
       }
+      row.appendChild(nameTd);
 
-      var badgeRow = document.createElement('div');
-      badgeRow.className = 'badge-row';
+      var countryTd = document.createElement('td');
+      countryTd.textContent = r.referredCountry || '—';
+      row.appendChild(countryTd);
 
+      var resultadoTd = document.createElement('td');
       var resultadoBadge = document.createElement('span');
       resultadoBadge.className = 'badge resultado-' + (r.resultado || 'pendiente').toLowerCase();
       resultadoBadge.textContent = RESULTADO_LABELS[r.resultado] || r.resultado;
-      badgeRow.appendChild(resultadoBadge);
+      resultadoTd.appendChild(resultadoBadge);
+      row.appendChild(resultadoTd);
 
+      var bonoTd = document.createElement('td');
+      if (r.resultado === 'Aprobado' && r.bono) {
+        var bonoEl = document.createElement('span');
+        bonoEl.className = 'bono-amount';
+        bonoEl.textContent = '$' + r.bono;
+        bonoTd.appendChild(bonoEl);
+      } else {
+        bonoTd.textContent = '—';
+      }
+      row.appendChild(bonoTd);
+
+      var pagoTd = document.createElement('td');
       if (r.resultado === 'Aprobado') {
         var pagoBadge = document.createElement('span');
         pagoBadge.className = 'badge pago-' + (r.estadoPago || 'pendiente').toLowerCase();
         pagoBadge.textContent = PAGO_LABELS[r.estadoPago] || r.estadoPago;
-        badgeRow.appendChild(pagoBadge);
+        pagoTd.appendChild(pagoBadge);
 
-        if (r.bono) {
-          var bonoEl = document.createElement('span');
-          bonoEl.className = 'bono-amount';
-          bonoEl.textContent = '🎁 $' + r.bono;
-          badgeRow.appendChild(bonoEl);
-        }
-      }
-
-      card.appendChild(badgeRow);
-
-      if (r.resultado === 'Aprobado') {
         var fechaEl = document.createElement('div');
-        fechaEl.className = 'fecha-note';
-        fechaEl.textContent = r.fechaProgramada
-          ? ('Fecha estimada de pago: ' + r.fechaProgramada)
-          : 'Fecha de pago: por confirmar.';
-        card.appendChild(fechaEl);
+        fechaEl.className = 'cell-note';
+        fechaEl.textContent = r.fechaProgramada ? ('Fecha estimada: ' + r.fechaProgramada) : 'Fecha por confirmar.';
+        pagoTd.appendChild(fechaEl);
+      } else {
+        pagoTd.textContent = '—';
       }
+      row.appendChild(pagoTd);
 
-      if (r.resultado === 'Inválido') {
-        var invalidNote = document.createElement('div');
-        invalidNote.className = 'invalid-note';
-        invalidNote.textContent = 'Esta no es una referencia genuina: esta persona llegó a través de un anuncio de Facebook y no fue referida por ti.';
-        card.appendChild(invalidNote);
-      }
-
-      listEl.appendChild(card);
+      tbody.appendChild(row);
     });
   }
 
