@@ -474,14 +474,30 @@
   // nothing is lost by adding this one extra stop.
   const HOMEPAGE_LINK = "https://vulcan-mode.github.io/spirelight/";
 
+  // Same accent-stripped, underscore-slugged format /registro/'s own
+  // country <select> uses (its option values), so the country param
+  // here actually matches an <option> there and gets pre-selected.
+  function toCountrySlug(raw) {
+    return String(raw || '')
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .trim().toLowerCase().replace(/\s+/g, '_');
+  }
+
   function buildWhatsappInviteLink() {
+    const referrerName = (document.getElementById('referrerName').value || '').trim();
     const referredName = (document.getElementById('referredName').value || '').trim();
+    const referredCountry = document.getElementById('referredCountry').value || '';
     const rawNumber = document.getElementById('referredWhatsapp').value || '';
     const digits = rawNumber.replace(/[^0-9]/g, '');
     if (!digits) return null;
 
+    const params = new URLSearchParams({ phone: digits });
+    if (referredName) params.set('name', referredName);
+    if (referredCountry) params.set('country', toCountrySlug(referredCountry));
+    if (referrerName) params.set('ref', referrerName);
+    const homepageLink = `${HOMEPAGE_LINK}?${params.toString()}`;
+
     const greeting = referredName ? `¡Hola ${referredName}!` : '¡Hola!';
-    const homepageLink = `${HOMEPAGE_LINK}?phone=${encodeURIComponent(digits)}`;
     const message = `${greeting} Te recomendé para el programa de grabación de voz de Monólogos en Español -- pagan por grabar tu voz leyendo textos cortos. `
       + `Mira aquí para ver si tu país ya está activo (toma un minuto): ${homepageLink}`;
 

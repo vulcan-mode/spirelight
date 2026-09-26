@@ -132,6 +132,18 @@
     color: var(--blue-deep);
     margin: 0 0 4px;
   }
+  .referred-by-banner {
+    background: var(--amber-bg);
+    color: var(--amber-text);
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.4;
+    border-radius: 14px;
+    padding: 10px 16px;
+    margin: 0 0 16px;
+    text-align: center;
+  }
   .change-number-btn {
     display: block;
     width: 100%;
@@ -268,6 +280,7 @@
 <body>
   <div class="card">
     <img class="logo" src="assets/logo-monologos.png?v=2" alt="Monólogos en Español">
+    <p class="referred-by-banner" id="referredByBanner" hidden></p>
     <h1>Gana dinero grabando tu voz 🎙️</h1>
     <p class="intro">
       Spirelight busca hispanohablantes para grabar audio — un proceso rápido,
@@ -355,12 +368,29 @@
     } catch (e) { return null; }
   }
 
-  // Carried over from a referral invite link (?phone=...) -- prefill
-  // the register button so a fresh, explicit link always wins even if
-  // this device separately has its own cached identity.
-  var phoneFromUrl = new URLSearchParams(window.location.search).get('phone');
+  // Carried over from a referral invite link (?phone=, ?name=,
+  // ?country=, ?ref=) -- relayed straight through to /registro/ so it
+  // can prefill the form, and a fresh, explicit link always wins even
+  // if this device separately has its own cached identity.
+  var urlParams = new URLSearchParams(window.location.search);
+  var phoneFromUrl = urlParams.get('phone');
+  var refFromUrl = urlParams.get('ref');
+  var nameFromUrl = urlParams.get('name');
+
+  if (refFromUrl) {
+    var banner = document.getElementById('referredByBanner');
+    banner.textContent = nameFromUrl
+      ? ('🎉 ¡Hola, ' + nameFromUrl + '! ' + refFromUrl + ' te refirió al programa -- debe caerle muy bien 😊')
+      : ('🎉 ' + refFromUrl + ' te refirió al programa -- debe caerle muy bien 😊');
+    banner.hidden = false;
+  }
+
   if (phoneFromUrl) {
-    document.querySelector('#unknownCta .register-btn').href = 'registro/?phone=' + encodeURIComponent(phoneFromUrl);
+    var registerParams = new URLSearchParams({ phone: phoneFromUrl });
+    if (nameFromUrl) registerParams.set('name', nameFromUrl);
+    var countryFromUrl = urlParams.get('country');
+    if (countryFromUrl) registerParams.set('country', countryFromUrl);
+    document.querySelector('#unknownCta .register-btn').href = 'registro/?' + registerParams.toString();
   }
 
   var identity = getStoredIdentity();

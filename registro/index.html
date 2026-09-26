@@ -278,6 +278,23 @@
     window.location.href = '../gracias/';
   }
 
+  // Carried over from a referral invite link (via the homepage) -- the
+  // referrer already typed these, so pre-fill rather than making the
+  // referred person retype their own name/country from scratch. Still
+  // fully editable, since the referrer could easily get either wrong.
+  function prefillFormFromUrl() {
+    var params = new URLSearchParams(window.location.search);
+    var name = params.get('name');
+    var country = params.get('country');
+    if (name) document.getElementById('fullName').value = name;
+    if (country) {
+      var select = document.getElementById('country');
+      if (Array.from(select.options).some(function (o) { return o.value === country; })) {
+        select.value = country;
+      }
+    }
+  }
+
   function checkExistingPhone(phone) {
     show('checkingView');
     fetch(WORKER_URL + '?phone=' + encodeURIComponent(phone))
@@ -290,6 +307,7 @@
           // to their real status.
           goToGracias();
         } else {
+          prefillFormFromUrl();
           show('formView');
         }
       })
@@ -297,6 +315,7 @@
         // Worker hiccup -- fail open to the form rather than trap them
         // on a spinner; the server-side phone dedup in doPost is the
         // real backstop against duplicates either way.
+        prefillFormFromUrl();
         show('formView');
       });
   }

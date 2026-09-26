@@ -339,15 +339,14 @@
 
     <div id="noIdView" hidden>
       <p class="greeting" hidden></p>
-      <div class="stop-sign">🛑</div>
-      <div class="status-pill stop">🪪 Identificación requerida</div>
-      <h1>No podemos aceptarte sin identificación</h1>
-      <p class="intro"><strong>Spirelight exige una identificación oficial válida de tu país</strong> (o pasaporte estadounidense si eres de Puerto Rico) para participar, sin excepciones. Según tu respuesta, no cuentas con una en este momento.</p>
-      <p class="warning-strict">Si realmente no tienes una identificación oficial válida, no vas a poder completar el trabajo. No hay excepciones a esto.</p>
-      <p class="intro">Por favor no continúes el proceso ni te unas al grupo de WhatsApp mientras esto no esté resuelto — solo se pierde tu tiempo y el nuestro.</p>
-      <a class="apply-btn" id="contactDomingoBtn" href="#" target="_blank" rel="noopener">
-        Sí tengo una identificación válida →
-      </a>
+      <div class="status-pill stop">🪪 Confirmación requerida</div>
+      <h1>Dijiste que no tienes identificación</h1>
+      <p class="intro">Puedes seguir registrado y participar en el programa de referidos sin ningún problema.</p>
+      <p class="warning-strict">Pero para grabar con Spirelight necesitas tener 18 años o más y una identificación oficial válida del país de tu acento (o pasaporte estadounidense si eres de Puerto Rico) — sin excepciones.</p>
+      <button class="apply-btn" id="confirmIdBtn" type="button">
+        Sí tengo mi identificación — la marqué por error
+      </button>
+      <p class="error" id="confirmIdError">Algo salió mal. Por favor intenta de nuevo.</p>
       <p class="referral-note">
         💰 Aunque tú no puedas grabar, puedes seguir ganando: si conoces a alguien con identificación válida de Panamá, Puerto Rico, Argentina o República Dominicana, <a href="../referral-form/">refiérelo aquí</a> y gana un bono cuando complete su grabación.
       </p>
@@ -384,7 +383,6 @@
   // API directly via a service account, with normal REST latency and
   // real CORS headers, so this is a plain fetch(), no JSONP needed.
   var WORKER_URL = "https://spirelight-leads.domlebo1.workers.dev";
-  var DOMINGO_WHATSAPP = "51926092155";
 
   var params = new URLSearchParams(window.location.search);
   var countryFromUrl = (params.get('country') || '').trim();
@@ -517,10 +515,6 @@
     // valid ID disqualifies regardless of country.
     if (data.noValidId) {
       show('noIdView');
-      var greetingName = data.name ? data.name.trim() : '';
-      var message = (greetingName ? ('Hola Domingo, soy ' + greetingName + '. ') : 'Hola Domingo. ')
-        + 'Contesté que no tenía una identificación oficial válida por error -- sí cuento con una.';
-      document.getElementById('contactDomingoBtn').href = 'https://wa.me/' + DOMINGO_WHATSAPP + '?text=' + encodeURIComponent(message);
       return;
     }
 
@@ -654,6 +648,32 @@
 
   document.getElementById('tryAgainBtn').addEventListener('click', function () {
     show('pickView');
+  });
+
+  // Self-service correction: fixes the same column Meta/registro both
+  // write into, then re-runs the lookup so they land straight in
+  // their real active/waiting view -- no message to anyone.
+  document.getElementById('confirmIdBtn').addEventListener('click', function () {
+    var btn = this;
+    var errorEl = document.getElementById('confirmIdError');
+    errorEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Confirmando...';
+
+    fetch(WORKER_URL + '?confirm_id_valid=1&phone=' + encodeURIComponent(currentPhone))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data && data.ok) {
+          checkPhone(currentPhone);
+        } else {
+          throw new Error('not ok');
+        }
+      })
+      .catch(function () {
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Sí tengo mi identificación — la marqué por error';
+      });
   });
 
   // Facebook's Instant Form "Thank You" screen link can't insert a
