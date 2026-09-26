@@ -31,16 +31,75 @@
     align-items: center;
     padding: 40px 16px;
   }
-  .site-nav {
+  .site-header {
     width: 100%;
-    max-width: 640px;
+    max-width: 960px;
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-    margin-bottom: 20px;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 4px 4px 28px;
+    position: relative;
   }
-  .nav-btn {
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+  .nav-link {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--navy);
+    text-decoration: none;
+    padding-bottom: 3px;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+  .nav-link:hover, .nav-link.active { color: var(--blue-deep); border-bottom-color: var(--blue); }
+  .nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 26px;
+    line-height: 1;
+    color: var(--navy);
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  .nav-overlay { display: none; }
+  @media (max-width: 640px) {
+    .nav-toggle { display: block; }
+    .site-nav {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: 250px;
+      max-width: 78vw;
+      background: #ffffff;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 22px;
+      padding: 84px 28px 28px;
+      box-shadow: -12px 0 32px rgba(13, 58, 102, 0.18);
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+      z-index: 50;
+    }
+    .site-nav.open { transform: translateX(0); }
+    .nav-overlay {
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 58, 102, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 40;
+    }
+    .nav-overlay.open { opacity: 1; pointer-events: auto; }
+  }
+  .pill-link {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -54,16 +113,6 @@
     background: #ffffff;
     color: var(--navy);
     white-space: nowrap;
-  }
-  .nav-btn.active {
-    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
-    color: #fff;
-    border-color: transparent;
-  }
-  .nav-btn.whatsapp {
-    background: #25d366;
-    color: #fff;
-    border-color: transparent;
   }
   .nav-caption {
     width: 100%;
@@ -236,15 +285,19 @@
 </style>
 </head>
 <body>
-  <nav class="site-nav">
-    <a class="nav-btn" href="../">🏠 Inicio</a>
-    <a class="nav-btn" href="../registro/">📝 Regístrate</a>
-    <a class="nav-btn active" href="../referral-form/">📋 Formulario de referidos</a>
-    <a class="nav-btn" href="../mis-referidos/">🎁 Mis referidos</a>
-    <a class="nav-btn" href="../como-funciona/">ℹ️ Cómo funciona</a>
-    <a class="nav-btn whatsapp" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">📲 Empezar</a>
-    <a class="nav-btn" href="../privacidad/">🔒 Privacidad</a>
-  </nav>
+  <header class="site-header">
+    <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
+    <nav class="site-nav" id="siteNav">
+      <a class="nav-link" href="../">Inicio</a>
+      <a class="nav-link" href="../registro/">Regístrate</a>
+      <a class="nav-link active" href="../referral-form/">Formulario de referidos</a>
+      <a class="nav-link" href="../mis-referidos/">Mis referidos</a>
+      <a class="nav-link" href="../como-funciona/">Cómo funciona</a>
+      <a class="nav-link" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">Empezar</a>
+      <a class="nav-link" href="../privacidad/">Privacidad</a>
+    </nav>
+  </header>
+  <div class="nav-overlay" id="navOverlay"></div>
   <p class="nav-caption">¿Aún no eres miembro? En el grupo de WhatsApp encontrarás el video explicativo, las preguntas frecuentes y el enlace para registrarte y empezar a grabar.</p>
 
   <div class="status-card">
@@ -356,7 +409,7 @@
     </div>
   </div>
 
-  <a class="nav-btn" style="margin-top: 4px; padding: 12px 20px;" href="../metodo-pago/">💳 Registra tu método de pago (para recibir tus bonos)</a>
+  <a class="pill-link" style="margin-top: 4px; padding: 12px 20px;" href="../metodo-pago/">💳 Registra tu método de pago (para recibir tus bonos)</a>
 
   <footer class="brand-footer">
     <img src="../assets/logo-spirelight.webp?v=1" alt="">
@@ -364,6 +417,22 @@
   </footer>
 
 <script>
+  // Slide-in side menu on small screens -- the nav itself is plain
+  // flex row CSS-only above a 640px breakpoint, this only matters
+  // below it.
+  (function () {
+    const toggle = document.getElementById('navToggle');
+    const nav = document.getElementById('siteNav');
+    const overlay = document.getElementById('navOverlay');
+    function closeNav() { nav.classList.remove('open'); overlay.classList.remove('open'); }
+    toggle.addEventListener('click', function () {
+      nav.classList.toggle('open');
+      overlay.classList.toggle('open');
+    });
+    overlay.addEventListener('click', closeNav);
+    nav.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', closeNav); });
+  })();
+
   // Paste the Apps Script "Web app" URL here after deploying apps-script/Code.gs
   // (see README.md for the exact steps).
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWxLdQ70YBFIkZWu5xfobhYUA5s-bcrf081pDL6W9-9-s0rXwGWkRDxNoOz83GswRD/exec";
