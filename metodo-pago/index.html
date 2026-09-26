@@ -173,7 +173,7 @@
           <option>PayPal</option>
           <option>Wise</option>
           <option>Payoneer</option>
-          <option>Otro</option>
+          <option id="otroOption" value="Otro" hidden>Otro (Cuba / Venezuela)</option>
         </select>
 
         <label for="detalle" id="detalleLabel">Correo o usuario de la cuenta</label>
@@ -204,6 +204,7 @@
 
 <script>
   var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWxLdQ70YBFIkZWu5xfobhYUA5s-bcrf081pDL6W9-9-s0rXwGWkRDxNoOz83GswRD/exec";
+  var WORKER_URL = "https://spirelight-leads.domlebo1.workers.dev";
 
   // Shared with referral-form/index.html and mis-referidos/index.html.
   var IDENTITY_KEY = 'spirelight_referrer';
@@ -231,8 +232,29 @@
     'PayPal': { label: 'Correo de tu cuenta PayPal', hint: 'El correo con el que iniciaste sesión en PayPal.' },
     'Wise': { label: 'Correo de tu cuenta Wise', hint: 'El correo con el que iniciaste sesión en Wise.' },
     'Payoneer': { label: 'Correo de tu cuenta Payoneer', hint: 'El correo con el que iniciaste sesión en Payoneer.' },
-    'Otro': { label: 'Detalle de tu método de pago', hint: 'Describe cómo prefieres recibir el pago (útil especialmente si eres de Cuba, Venezuela u otro país sin PayPal/Wise/Payoneer).' }
+    'Otro': {
+      label: 'Detalle de tu método de pago',
+      hint: 'Incluye toda la información posible: si es una billetera cripto, la dirección completa; si es depósito directo a tu banco, los datos de la cuenta; o cualquier otro método conveniente que se pueda hacer desde una cuenta bancaria peruana hacia tu cuenta.'
+    }
   };
+
+  // "Otro" is only offered to Cuba/Venezuela -- everywhere else has
+  // PayPal/Wise/Payoneer, which work fine. Determined from their own
+  // lead record (same country they registered with), not guessed.
+  var OTRO_ELIGIBLE_COUNTRIES = ['cuba', 'venezuela'];
+
+  function normalizeCountryKey(raw) {
+    return String(raw || '')
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/_/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+
+  function applyOtroEligibility(country) {
+    var eligible = OTRO_ELIGIBLE_COUNTRIES.indexOf(normalizeCountryKey(country)) !== -1;
+    document.getElementById('otroOption').hidden = !eligible;
+  }
 
   document.getElementById('metodo').addEventListener('change', function () {
     var info = DETALLE_HINTS[this.value];
@@ -258,6 +280,21 @@
     identity.phone = phone;
     storeIdentity(identity);
     showForm(identity);
+
+    // Look up their own lead record for their real registered country
+    // -- this is what gates "Otro", not anything they could type
+    // themselves. Falls back to the cached identity's country (set by
+    // gracias/registro/referral-form) if this specific phone isn't a
+    // lead itself (e.g. registered under a different number).
+    fetch(WORKER_URL + '?phone=' + encodeURIComponent(phone))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var country = (data && data.found && data.country) ? data.country : identity.country;
+        applyOtroEligibility(country);
+      })
+      .catch(function () {
+        applyOtroEligibility(identity.country);
+      });
   }
 
   document.getElementById('phoneContinueBtn').addEventListener('click', function () {
