@@ -458,8 +458,28 @@
     });
   }
 
+  // Raw stored country values are lowercase_with_underscores (Meta's
+  // own convention for Facebook leads, and now what /registro/ submits
+  // too, to keep the data consistent regardless of source). This maps
+  // back to a proper display name for anything shown to a person.
+  var COUNTRY_DISPLAY_NAMES = {
+    panama: 'Panamá', puerto_rico: 'Puerto Rico', argentina: 'Argentina',
+    republica_dominicana: 'República Dominicana', cuba: 'Cuba', honduras: 'Honduras',
+    paraguay: 'Paraguay', nicaragua: 'Nicaragua', el_salvador: 'El Salvador',
+    costa_rica: 'Costa Rica', uruguay: 'Uruguay', ecuador: 'Ecuador', peru: 'Perú',
+    venezuela: 'Venezuela', chile: 'Chile', guatemala: 'Guatemala'
+  };
+
+  function formatCountryDisplay(raw) {
+    var key = String(raw || '').trim().toLowerCase();
+    if (COUNTRY_DISPLAY_NAMES[key]) return COUNTRY_DISPLAY_NAMES[key];
+    // Fallback for anything unexpected: underscores -> spaces, capitalize words.
+    return key.replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+  }
+
   function setCountryLabels(text) {
-    document.querySelectorAll('.country-name').forEach(function (el) { el.textContent = text; });
+    var display = formatCountryDisplay(text);
+    document.querySelectorAll('.country-name').forEach(function (el) { el.textContent = display; });
   }
 
   function setGreeting(name) {
