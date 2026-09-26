@@ -341,7 +341,7 @@
 
   <footer class="brand-footer">
     <img src="assets/logo-spirelight.webp?v=1" alt="">
-    <span>Programa de referidos para Spirelight</span>
+    <span>Programa de referidos para Spirelight · <a href="acerca-de/" style="color: inherit;">Acerca de</a></span>
   </footer>
 
 <script>
@@ -353,6 +353,14 @@
       var raw = localStorage.getItem(IDENTITY_KEY);
       return raw ? JSON.parse(raw) : null;
     } catch (e) { return null; }
+  }
+
+  // Carried over from a referral invite link (?phone=...) -- prefill
+  // the register button so a fresh, explicit link always wins even if
+  // this device separately has its own cached identity.
+  var phoneFromUrl = new URLSearchParams(window.location.search).get('phone');
+  if (phoneFromUrl) {
+    document.querySelector('#unknownCta .register-btn').href = 'registro/?phone=' + encodeURIComponent(phoneFromUrl);
   }
 
   var identity = getStoredIdentity();

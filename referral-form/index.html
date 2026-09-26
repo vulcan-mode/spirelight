@@ -397,12 +397,13 @@
     if (identity.phone) document.getElementById('referrerWhatsapp').value = identity.phone;
   })();
 
-  // Points straight into the pipeline (/registro/) instead of just the
-  // explainer + WhatsApp group -- and since we already collected THEIR
-  // number right here in this form, we can prefill it (same pattern as
-  // the /gracias/ -> /registro/ handoff), so they land on the actual
-  // registration form with nothing left to type.
-  const REGISTRO_LINK = "https://vulcan-mode.github.io/spirelight/registro/";
+  // Points at the homepage, not straight into /registro/ -- they should
+  // see the pitch first and have the OPTION to register, not get
+  // dropped straight into a form. The homepage itself carries the
+  // phone through to its own "Regístrate" button (prefilled, same
+  // friction-reduction as the /gracias/ -> /registro/ handoff), so
+  // nothing is lost by adding this one extra stop.
+  const HOMEPAGE_LINK = "https://vulcan-mode.github.io/spirelight/";
 
   function buildWhatsappInviteLink() {
     const referredName = (document.getElementById('referredName').value || '').trim();
@@ -411,9 +412,9 @@
     if (!digits) return null;
 
     const greeting = referredName ? `¡Hola ${referredName}!` : '¡Hola!';
-    const registroLink = `${REGISTRO_LINK}?phone=${encodeURIComponent(digits)}`;
+    const homepageLink = `${HOMEPAGE_LINK}?phone=${encodeURIComponent(digits)}`;
     const message = `${greeting} Te recomendé para el programa de grabación de voz de Monólogos en Español -- pagan por grabar tu voz leyendo textos cortos. `
-      + `Regístrate aquí para ver si tu país ya está activo (toma un minuto): ${registroLink}`;
+      + `Mira aquí para ver si tu país ya está activo (toma un minuto): ${homepageLink}`;
 
     return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
   }
