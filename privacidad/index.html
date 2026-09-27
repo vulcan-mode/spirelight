@@ -65,9 +65,9 @@
     min-width: 0;
   }
   .brand-logo {
-    width: 38px;
-    height: 38px;
-    border-radius: 9px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
     display: block;
     flex-shrink: 0;
     box-shadow: 0 4px 10px rgba(13, 58, 102, 0.18);
@@ -107,16 +107,12 @@
     width: auto;
     background: none;
     border: none;
-    line-height: 0;
+    font-size: 30px;
+    line-height: 1;
+    color: var(--navy);
     cursor: pointer;
     padding: 4px 6px;
     flex-shrink: 0;
-  }
-  .nav-toggle-icon {
-    display: block;
-    width: 34px;
-    height: 34px;
-    border-radius: 9px;
   }
   .nav-overlay { display: none; }
   /* Mobile & medium: #siteNav is a slide-out drawer, not an inline row. */
@@ -355,7 +351,7 @@
         <a class="nav-link" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">Soporte</a>
         <a class="nav-link active" href="../privacidad/">Privacidad</a>
       </nav>
-      <button class="nav-toggle" id="navToggle" aria-label="Abrir menú"><img class="nav-toggle-icon" src="../assets/icon-mic-nye.png" alt=""></button>
+      <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
     </div>
   </header>
   <div class="nav-overlay" id="navOverlay"></div>
@@ -396,7 +392,7 @@
     <h1>Aviso de privacidad</h1>
     <p class="updated">Última actualización: 18 de septiembre de 2026</p>
 
-    <p class="intro">Spire Light gestiona esta plataforma para el cliente del proyecto, una empresa que desarrolla voces con inteligencia artificial. Aquí te contamos con palabras sencillas qué datos tuyos recogemos, para qué los usamos y quién los recibe.</p>
+    <p class="intro"><a href="https://www.spirelight.ai/" target="_blank" rel="noopener" style="color: inherit; font-weight: 700;">Spire Light</a> gestiona esta plataforma para el cliente del proyecto, una empresa que desarrolla voces con inteligencia artificial. Aquí te contamos con palabras sencillas qué datos tuyos recogemos, para qué los usamos y quién los recibe.</p>
     <p class="intro">Lo mismo se explica en la nota de privacidad del acuerdo que firmas antes de grabar.</p>
 
     <h2>Qué datos recogemos</h2>
@@ -479,7 +475,7 @@
 
   <footer class="brand-footer">
     <img src="../assets/logo-spirelight.webp?v=1" alt="">
-    <span>Programa de referidos para Spire Light</span>
+    <span>Programa de referidos para <a href="https://www.spirelight.ai/" target="_blank" rel="noopener" style="color: inherit; font-weight: 700;">Spire Light</a></span>
   </footer>
 
 <script>

@@ -67,9 +67,9 @@
     min-width: 0;
   }
   .brand-logo {
-    width: 38px;
-    height: 38px;
-    border-radius: 9px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
     display: block;
     flex-shrink: 0;
     box-shadow: 0 4px 10px rgba(13, 58, 102, 0.18);
@@ -109,16 +109,12 @@
     width: auto;
     background: none;
     border: none;
-    line-height: 0;
+    font-size: 30px;
+    line-height: 1;
+    color: var(--navy);
     cursor: pointer;
     padding: 4px 6px;
     flex-shrink: 0;
-  }
-  .nav-toggle-icon {
-    display: block;
-    width: 34px;
-    height: 34px;
-    border-radius: 9px;
   }
   .nav-overlay { display: none; }
   /* Mobile & medium: #siteNav is a slide-out drawer, not an inline row. */
@@ -258,13 +254,6 @@
     border-radius: 999px;
     text-decoration: none;
     box-shadow: 0 10px 24px rgba(13, 58, 102, 0.3);
-  }
-  .known-greeting {
-    font-family: 'Sora', system-ui, sans-serif;
-    font-weight: 700;
-    font-size: 15px;
-    color: var(--blue-deep);
-    margin: 0 0 4px;
   }
   .referred-by-banner {
     background: var(--amber-bg);
@@ -436,7 +425,7 @@
         <a class="nav-link" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">Soporte</a>
         <a class="nav-link" href="privacidad/">Privacidad</a>
       </nav>
-      <button class="nav-toggle" id="navToggle" aria-label="Abrir menú"><img class="nav-toggle-icon" src="assets/icon-mic-nye.png" alt=""></button>
+      <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
     </div>
   </header>
   <div class="nav-overlay" id="navOverlay"></div>
@@ -447,7 +436,7 @@
     <p class="referred-by-banner" id="referredByBanner" hidden></p>
     <h1>Gana dinero grabando tu voz 🎙️</h1>
     <p class="intro">
-      Spire Light busca hispanohablantes para grabar audio — un proceso rápido,
+      <a href="https://www.spirelight.ai/" target="_blank" rel="noopener" style="color: inherit; font-weight: 700;">Spire Light</a> busca hispanohablantes para grabar audio — un proceso rápido,
       sin experiencia necesaria, y un bono extra por cada persona que refieras.
     </p>
 
@@ -469,7 +458,6 @@
     </div>
 
     <div id="knownBanner" hidden>
-      <p class="known-greeting"></p>
       <a class="register-btn" href="referral-form/">🎁 Referir a alguien</a>
       <button class="change-number-btn" id="notMeBtn" type="button">¿No eres tú? Usar otro número</button>
     </div>
@@ -562,10 +550,6 @@
   var identity = getStoredIdentity();
   if (identity && identity.phone) {
     document.getElementById('unknownCta').hidden = true;
-    var greeting = document.querySelector('.known-greeting');
-    greeting.textContent = identity.name
-      ? ('¡Hola, ' + identity.name + '! Ya estás registrado.')
-      : 'Ya estás registrado en este dispositivo.';
     document.getElementById('knownBanner').hidden = false;
   }
 

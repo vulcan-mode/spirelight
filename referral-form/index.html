@@ -66,9 +66,9 @@
     min-width: 0;
   }
   .brand-logo {
-    width: 38px;
-    height: 38px;
-    border-radius: 9px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
     display: block;
     flex-shrink: 0;
     box-shadow: 0 4px 10px rgba(13, 58, 102, 0.18);
@@ -108,16 +108,12 @@
     width: auto;
     background: none;
     border: none;
-    line-height: 0;
+    font-size: 30px;
+    line-height: 1;
+    color: var(--navy);
     cursor: pointer;
     padding: 4px 6px;
     flex-shrink: 0;
-  }
-  .nav-toggle-icon {
-    display: block;
-    width: 34px;
-    height: 34px;
-    border-radius: 9px;
   }
   .nav-overlay { display: none; }
   /* Mobile & medium: #siteNav is a slide-out drawer, not an inline row. */
@@ -389,7 +385,7 @@
         <a class="nav-link" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">Soporte</a>
         <a class="nav-link" href="../privacidad/">Privacidad</a>
       </nav>
-      <button class="nav-toggle" id="navToggle" aria-label="Abrir menú"><img class="nav-toggle-icon" src="../assets/icon-mic-nye.png" alt=""></button>
+      <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
     </div>
   </header>
   <div class="nav-overlay" id="navOverlay"></div>
@@ -430,7 +426,7 @@
     <div id="formView">
       <h1>Refiere a alguien 🎙️</h1>
       <p class="intro">
-        ¿Conoces a alguien con buena voz que quiera grabar para Spire Light?
+        ¿Conoces a alguien con buena voz que quiera grabar para <a href="https://www.spirelight.ai/" target="_blank" rel="noopener" style="color: inherit; font-weight: 700;">Spire Light</a>?
         Cuéntanos quién es y te avisaremos cuando complete el proceso.
       </p>
       <div class="bonus-pill">🎁 Ganas $15 ($20 si es de Puerto Rico) cuando tu referido complete su grabación</div>
@@ -515,7 +511,7 @@
 
   <footer class="brand-footer">
     <img src="../assets/logo-spirelight.webp?v=1" alt="">
-    <span>Programa de referidos para Spire Light</span>
+    <span>Programa de referidos para <a href="https://www.spirelight.ai/" target="_blank" rel="noopener" style="color: inherit; font-weight: 700;">Spire Light</a></span>
   </footer>
 
 <script>
@@ -640,19 +636,6 @@
 
     if (SCRIPT_URL.indexOf('REPLACE_WITH') === 0) {
       errorMsg.textContent = 'El formulario aún no está conectado. Revisa SCRIPT_URL en index.html.';
-      errorMsg.style.display = 'block';
-      return;
-    }
-
-    // Neither of these fields has a country-code select like registro/ --
-    // they're free text (placeholder shows the expected "+507 ..."
-    // shape), so nothing stopped someone from typing 3 digits or leaving
-    // stray characters before this. 8 digits is a floor (country code +
-    // local number), not real per-country validation.
-    const referrerDigits = (document.getElementById('referrerWhatsapp').value || '').replace(/\D/g, '');
-    const referredDigits = (document.getElementById('referredWhatsapp').value || '').replace(/\D/g, '');
-    if (referrerDigits.length < 8 || referredDigits.length < 8) {
-      errorMsg.textContent = 'Escribe un número de WhatsApp válido, con código de país (ej: +507 6000 0000).';
       errorMsg.style.display = 'block';
       return;
     }

@@ -62,9 +62,9 @@
     min-width: 0;
   }
   .brand-logo {
-    width: 38px;
-    height: 38px;
-    border-radius: 9px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
     display: block;
     flex-shrink: 0;
     box-shadow: 0 4px 10px rgba(13, 58, 102, 0.18);
@@ -104,16 +104,12 @@
     width: auto;
     background: none;
     border: none;
-    line-height: 0;
+    font-size: 30px;
+    line-height: 1;
+    color: var(--navy);
     cursor: pointer;
     padding: 4px 6px;
     flex-shrink: 0;
-  }
-  .nav-toggle-icon {
-    display: block;
-    width: 34px;
-    height: 34px;
-    border-radius: 9px;
   }
   .nav-overlay { display: none; }
   /* Mobile & medium: #siteNav is a slide-out drawer, not an inline row. */
@@ -318,7 +314,7 @@
         <a class="nav-link" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">Soporte</a>
         <a class="nav-link" href="../privacidad/">Privacidad</a>
       </nav>
-      <button class="nav-toggle" id="navToggle" aria-label="Abrir menú"><img class="nav-toggle-icon" src="../assets/icon-mic-nye.png" alt=""></button>
+      <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
     </div>
   </header>
   <div class="nav-overlay" id="navOverlay"></div>
@@ -622,10 +618,7 @@
     var code = document.getElementById('phoneCode').value;
     var numberDigits = document.getElementById('phoneInput').value.replace(/\D/g, '');
     var errorEl = document.getElementById('phoneErrorMsg');
-    // 7 digits is a floor, not real per-country validation -- just
-    // enough to reject a couple of stray digits or an empty field
-    // padded by autofill, which used to sail straight through here.
-    if (numberDigits.length < 7) {
+    if (!numberDigits) {
       errorEl.style.display = 'block';
       return;
     }
