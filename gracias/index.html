@@ -530,7 +530,7 @@
     </div>
 
     <div id="pickView" hidden>
-      <h1>Ver tu estado 📬</h1>
+      <h1>Bienvenido 👋</h1>
       <p class="intro">Escribe tu correo. Por seguridad, nadie puede ver tus datos sin hacer clic en un enlace que solo llega a tu propio correo.</p>
       <input type="email" id="emailInput" placeholder="tu@correo.com" autocomplete="email">
       <button type="button" id="emailContinueBtn">Enviarme el enlace de confirmación →</button>
@@ -693,12 +693,10 @@
 
     <div id="noIdView" hidden>
       <p class="greeting" hidden></p>
-      <div class="status-pill stop">🪪 Confirmación requerida</div>
-      <h1>Dijiste que no tienes identificación</h1>
+      <div class="status-pill stop">🪪 Solo referidos</div>
+      <h1>No calificas para grabar</h1>
       <p class="intro">Puedes seguir registrado y participar en el programa de referidos sin ningún problema.</p>
-      <p class="warning-strict">Pero para grabar con Spire Light necesitas tener 18 años o más y una identificación oficial válida del país de tu acento (o pasaporte estadounidense si eres de Puerto Rico) — sin excepciones.</p>
-      <button type="button" id="confirmIdBtn">¿Te equivocaste? Sí tengo mi identificación →</button>
-      <p class="error" id="confirmIdError" style="display:none; color:#b3261e; font-size:14px; text-align:center;">Algo salió mal. Por favor intenta de nuevo.</p>
+      <p class="warning-strict">Para grabar con Spire Light se necesita tener 18 años o más y una identificación oficial válida del país de tu acento (o pasaporte estadounidense si eres de Puerto Rico) — sin excepciones.</p>
     </div>
 
     <div id="unknownView" hidden>
@@ -984,28 +982,6 @@
       show('waitingView');
     }
   }
-
-  document.getElementById('confirmIdBtn').addEventListener('click', function () {
-    var btn = this;
-    var errorEl = document.getElementById('confirmIdError');
-    errorEl.style.display = 'none';
-    btn.disabled = true;
-    btn.textContent = 'Un momento...';
-    fetch(WORKER_URL + '?confirm_id_valid=1&phone=' + encodeURIComponent(currentPhone))
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        if (data && data.ok) {
-          loadForToken(currentPhone, currentToken);
-        } else {
-          throw new Error('not ok');
-        }
-      })
-      .catch(function () {
-        errorEl.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = '¿Te equivocaste? Sí tengo mi identificación →';
-      });
-  });
 
   // ---------------------------------------------------------------------
   // Email-gated access -- same signed-token mechanism as confirmar-datos/
