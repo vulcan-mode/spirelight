@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="google" content="notranslate">
-<title>Regístrate — Spirelight</title>
+<title>Regístrate — Spire Light</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;600;700&display=swap">
 <style>
   :root {
@@ -107,6 +107,23 @@
     cursor: pointer;
   }
   .radio-option input { width: auto; accent-color: var(--blue); }
+  .both-required-note {
+    margin: 18px 0 0;
+    font-size: 13px;
+    color: #7793ad;
+  }
+  .country-fill {
+    color: var(--ink);
+  }
+  .country-fill.filled {
+    font-weight: 800;
+    color: var(--blue-deep);
+    animation: id-country-pop 0.28s ease;
+  }
+  @keyframes id-country-pop {
+    0% { opacity: 0; transform: translateY(3px) scale(0.97); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
   button {
     width: 100%;
     margin-top: 26px;
@@ -189,12 +206,18 @@
     </div>
 
     <div id="formView" hidden>
-      <h1>Casi listo 🎙️</h1>
-      <p class="intro">Completa tus datos para ver el estado de tu país.</p>
+      <h1 id="formHeading">Casi listo 🎙️</h1>
 
       <form id="intakeForm">
+        <div id="phoneConfirmGroup" hidden>
+          <label for="phoneConfirm">Tu número de WhatsApp</label>
+          <input id="phoneConfirm" type="tel" autocomplete="tel" required>
+        </div>
+
         <label for="fullName">Tu nombre completo</label>
         <input id="fullName" name="name" type="text" required autocomplete="name">
+
+        <p class="both-required-note">Tu país, acento e identificación no se pueden cambiar después de enviarlos.</p>
 
         <label for="country">Tu país</label>
         <select id="country" name="country" required>
@@ -218,13 +241,28 @@
           <option value="otro">Otro</option>
         </select>
 
-        <label>¿Tienes una identificación oficial válida de ese país (o pasaporte estadounidense si eres de Puerto Rico)?</label>
+        <label>¿Acento <span id="accentCountryName" class="country-fill">de ese país</span>?</label>
+        <div class="radio-row">
+          <label class="radio-option" for="accentSi">
+            <input type="radio" id="accentSi" name="accentAnswer" value="sí" required> Sí
+          </label>
+          <label class="radio-option" for="accentNo">
+            <input type="radio" id="accentNo" name="accentAnswer" value="no" required> No
+          </label>
+        </div>
+
+        <div class="stop-banner" id="noAccentWarning" hidden>
+          <p class="stop-banner-title">🛑 ALTO</p>
+          <p>Sin un acento nativo de ese país no podemos aceptarte en el programa, sin excepciones. Por favor no continúes el registro ni te unas al grupo de WhatsApp — nos ayuda a no perder tu tiempo ni el nuestro.</p>
+        </div>
+
+        <label>¿Identificación <span id="idCountryName" class="country-fill">de ese país</span> válida<span id="idPRClause" hidden> (o pasaporte estadounidense)</span>?</label>
         <div class="radio-row">
           <label class="radio-option" for="idSi">
-            <input type="radio" id="idSi" name="idAnswer" value="Sí" required> Sí
+            <input type="radio" id="idSi" name="idAnswer" value="sí" required> Sí
           </label>
           <label class="radio-option" for="idNo">
-            <input type="radio" id="idNo" name="idAnswer" value="No" required> No
+            <input type="radio" id="idNo" name="idAnswer" value="no" required> No
           </label>
         </div>
 
@@ -258,10 +296,24 @@
 
   var currentPhone = '';
 
+  // Set only when arriving via a referral link's ?phone= param -- that
+  // number came from the REFERRER, not the person themselves, so unlike
+  // a manually-typed phone (already confirmed by the act of typing it)
+  // it needs to be shown back to them to catch a referrer's typo.
+  var phoneFromReferralLink = false;
+  var originalReferralPhone = '';
+
   // Shared with referral-form/mis-referidos/metodo-pago: once someone's
   // registered here, referring someone shouldn't ask them to type their
   // own phone a second time on the same device.
   var SHARED_IDENTITY_KEY = 'spirelight_referrer';
+
+  function getStoredIdentity() {
+    try {
+      var raw = localStorage.getItem(SHARED_IDENTITY_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
 
   function updateSharedIdentity(phone, name, country) {
     try {
@@ -279,6 +331,55 @@
     window.location.href = '../gracias/';
   }
 
+  // Demonyms (gentilicios), masculine/feminine -- "acento" is masculine
+  // ("acento peruano"), "identificación" is feminine ("identificación
+  // peruana"). "otro" has no single demonym, so it falls back to the
+  // generic "de ese país" phrasing, same as before any country is picked.
+  var DEMONYMS = {
+    panama: { m: 'panameño', f: 'panameña' },
+    puerto_rico: { m: 'puertorriqueño', f: 'puertorriqueña' },
+    argentina: { m: 'argentino', f: 'argentina' },
+    republica_dominicana: { m: 'dominicano', f: 'dominicana' },
+    cuba: { m: 'cubano', f: 'cubana' },
+    honduras: { m: 'hondureño', f: 'hondureña' },
+    paraguay: { m: 'paraguayo', f: 'paraguaya' },
+    nicaragua: { m: 'nicaragüense', f: 'nicaragüense' },
+    el_salvador: { m: 'salvadoreño', f: 'salvadoreña' },
+    costa_rica: { m: 'costarricense', f: 'costarricense' },
+    uruguay: { m: 'uruguayo', f: 'uruguaya' },
+    ecuador: { m: 'ecuatoriano', f: 'ecuatoriana' },
+    peru: { m: 'peruano', f: 'peruana' },
+    venezuela: { m: 'venezolano', f: 'venezolana' },
+    chile: { m: 'chileno', f: 'chilena' },
+    guatemala: { m: 'guatemalteco', f: 'guatemalteca' }
+  };
+
+  // Updates the "¿Acento ___?" and "¿Identificación ___ válida?"
+  // questions to name the selected country's demonym instead of the
+  // generic "de ese país", and only shows the Puerto Rico passport
+  // alternative when Puerto Rico is selected.
+  function updateCountryDependentText() {
+    var select = document.getElementById('country');
+    var prClause = document.getElementById('idPRClause');
+    var value = select.value;
+    var demonym = DEMONYMS[value];
+
+    var accentEl = document.getElementById('accentCountryName');
+    var idEl = document.getElementById('idCountryName');
+    [accentEl, idEl].forEach(function (el) { el.classList.remove('filled'); });
+
+    accentEl.textContent = demonym ? demonym.m : 'de ese país';
+    idEl.textContent = demonym ? demonym.f : 'de ese país';
+
+    if (demonym) {
+      // Force a reflow so the pop-in animation re-triggers on every
+      // change, not just the first time a country is picked.
+      [accentEl, idEl].forEach(function (el) { void el.offsetWidth; el.classList.add('filled'); });
+    }
+    prClause.hidden = (value !== 'puerto_rico');
+  }
+  document.getElementById('country').addEventListener('change', updateCountryDependentText);
+
   // Carried over from a referral invite link (via the homepage) -- the
   // referrer already typed these, so pre-fill rather than making the
   // referred person retype their own name/country from scratch. Still
@@ -287,13 +388,32 @@
     var params = new URLSearchParams(window.location.search);
     var name = params.get('name');
     var country = params.get('country');
-    if (name) document.getElementById('fullName').value = name;
+    var didPrefill = false;
+    if (name) { document.getElementById('fullName').value = name; didPrefill = true; }
     if (country) {
       var select = document.getElementById('country');
       if (Array.from(select.options).some(function (o) { return o.value === country; })) {
         select.value = country;
+        didPrefill = true;
       }
     }
+    // We already have this person's info from a referral or a previous
+    // visit -- ask them to confirm it rather than implying it's blank.
+    if (didPrefill) {
+      document.getElementById('formHeading').textContent = 'Por favor confirma tus datos 🎙️';
+    }
+    updateCountryDependentText();
+  }
+
+  // Reveals the phone field in formView, pre-filled with the (possibly
+  // wrong) number the referrer typed, so the referred person can fix it
+  // before it becomes their permanent identifier in the sheet.
+  function maybeShowPhoneConfirm() {
+    if (!phoneFromReferralLink) return;
+    var input = document.getElementById('phoneConfirm');
+    input.value = currentPhone;
+    document.getElementById('phoneConfirmGroup').hidden = false;
+    input.oninput = function () { currentPhone = input.value.trim(); };
   }
 
   function checkExistingPhone(phone) {
@@ -309,6 +429,7 @@
           goToGracias();
         } else {
           prefillFormFromUrl();
+          maybeShowPhoneConfirm();
           show('formView');
         }
       })
@@ -317,6 +438,7 @@
         // on a spinner; the server-side phone dedup in doPost is the
         // real backstop against duplicates either way.
         prefillFormFromUrl();
+        maybeShowPhoneConfirm();
         show('formView');
       });
   }
@@ -339,9 +461,12 @@
   var submitBtn = document.getElementById('submitBtn');
   var formErrorMsg = document.getElementById('formErrorMsg');
   var noIdWarning = document.getElementById('noIdWarning');
+  var noAccentWarning = document.getElementById('noAccentWarning');
 
   document.getElementById('idSi').addEventListener('change', function () { noIdWarning.hidden = true; });
   document.getElementById('idNo').addEventListener('change', function () { noIdWarning.hidden = false; });
+  document.getElementById('accentSi').addEventListener('change', function () { noAccentWarning.hidden = true; });
+  document.getElementById('accentNo').addEventListener('change', function () { noAccentWarning.hidden = false; });
 
   form.addEventListener('submit', function (event) {
     event.preventDefault();
@@ -352,6 +477,13 @@
     var data = new FormData(form);
     data.append('formType', 'lead');
     data.append('whatsapp', currentPhone);
+
+    // Referrer's number was pre-filled and then edited -- tell the
+    // backend so it can re-point the referrer's pending Referidos row
+    // at the corrected number instead of leaving it stuck on the typo.
+    if (phoneFromReferralLink && originalReferralPhone && originalReferralPhone !== currentPhone) {
+      data.append('correctedFromPhone', originalReferralPhone);
+    }
 
     updateSharedIdentity(currentPhone, data.get('name'), data.get('country'));
 
@@ -368,11 +500,24 @@
   });
 
   // Carried over from /gracias/'s notFoundView -- skip retyping the
-  // number a third time.
+  // number a third time. Also how a referral link's ?phone= arrives
+  // here (relayed through the homepage's register button) -- in that
+  // case the number came from the referrer, not this person, so it
+  // gets shown back to them for confirmation (see maybeShowPhoneConfirm).
   var phoneFromUrl = new URLSearchParams(window.location.search).get('phone');
+  var storedIdentity = getStoredIdentity();
+
   if (phoneFromUrl) {
     currentPhone = phoneFromUrl;
+    phoneFromReferralLink = true;
+    originalReferralPhone = phoneFromUrl;
     checkExistingPhone(phoneFromUrl);
+  } else if (storedIdentity && storedIdentity.phone) {
+    // Already registered on this device -- no reason to make them type
+    // their own number again just because they landed on this page
+    // (nav link, bookmark, etc) instead of a link that carried ?phone=.
+    currentPhone = storedIdentity.phone;
+    checkExistingPhone(storedIdentity.phone);
   } else {
     show('phoneView');
   }

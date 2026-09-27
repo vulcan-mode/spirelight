@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="google" content="notranslate">
 <meta name="robots" content="noindex">
-<title>Método de pago — Spirelight</title>
+<title>Método de pago — Spire Light</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;600;700&display=swap">
 <style>
   :root {
@@ -157,9 +157,21 @@
 
     <div id="pickView" hidden>
       <h1>Registra tu método de pago 💳</h1>
-      <p class="intro">Escribe el mismo número de WhatsApp que usas para referir.</p>
+      <p class="intro">Por seguridad, primero te enviamos un enlace de confirmación a tu correo -- así nadie más puede cambiar tu método de pago solo con tu número.</p>
       <input type="tel" id="phoneInput" placeholder="+507 6000 0000" autocomplete="tel">
-      <button type="button" id="phoneContinueBtn">Continuar →</button>
+      <button type="button" id="phoneContinueBtn">Enviarme el enlace →</button>
+    </div>
+
+    <div id="checkEmailView" hidden>
+      <h1>Revisa tu correo 📩</h1>
+      <p class="intro">Si ese número está en nuestro sistema, te enviamos un enlace de confirmación -- es válido por 15 minutos. Haz clic ahí para registrar tu método de pago.</p>
+      <button class="change-number-btn" id="checkEmailTryAnotherBtn" type="button">Usar otro número</button>
+    </div>
+
+    <div id="expiredView" hidden>
+      <h1>Ese enlace ya no es válido</h1>
+      <p class="intro">Los enlaces de confirmación duran 15 minutos. Pide uno nuevo.</p>
+      <button type="button" id="requestNewLinkBtn">Pedir un nuevo enlace →</button>
     </div>
 
     <div id="formView" hidden>
@@ -222,12 +234,27 @@
   }
 
   function show(viewId) {
-    ['loadingView', 'pickView', 'formView', 'successView', 'unknownView'].forEach(function (id) {
+    ['loadingView', 'pickView', 'checkEmailView', 'expiredView', 'formView', 'successView', 'unknownView'].forEach(function (id) {
       document.getElementById(id).hidden = (id !== viewId);
     });
   }
 
   var currentPhone = '';
+  var currentToken = '';
+
+  // Client-side smell test only, for a faster/nicer message -- this
+  // can't verify the signature (no secret on this side), so it never
+  // substitutes for the server-side check in handlePaymentMethodSubmission_,
+  // which is the actual security boundary.
+  function tokenLooksExpired(token) {
+    try {
+      var payload = atob(token.split('.')[0].replace(/-/g, '+').replace(/_/g, '/'));
+      var expiresAt = Number(payload.split('|')[1]);
+      return !expiresAt || Date.now() > expiresAt;
+    } catch (e) {
+      return true;
+    }
+  }
 
   var DETALLE_HINTS = {
     'PayPal': { label: 'Correo de tu cuenta PayPal', hint: 'El correo con el que iniciaste sesión en PayPal.' },
@@ -275,8 +302,13 @@
     show('formView');
   }
 
-  function checkPhone(phone) {
+  // Only called once we have a token from the emailed link -- never
+  // straight from a typed phone number. See handlePaymentMethodSubmission_
+  // in Code.gs for why (a typed phone alone used to be enough to
+  // overwrite someone else's payout destination).
+  function showFormForPhone(phone, token) {
     currentPhone = phone;
+    currentToken = token;
     var identity = getStoredIdentity() || {};
     identity.phone = phone;
     storeIdentity(identity);
@@ -298,10 +330,33 @@
       });
   }
 
+  function requestToken(phone) {
+    show('loadingView');
+    var data = new FormData();
+    data.append('formType', 'request_payment_token');
+    data.append('phone', phone);
+
+    // Same reply either way (see handleRequestPaymentToken_ in Code.gs)
+    // -- this page can't tell you whether that phone was actually
+    // found, on purpose, so it can't be used to enumerate real numbers.
+    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: data })
+      .then(function () { show('checkEmailView'); })
+      .catch(function () { show('checkEmailView'); });
+  }
+
   document.getElementById('phoneContinueBtn').addEventListener('click', function () {
     var value = document.getElementById('phoneInput').value.trim();
     if (!value) return;
-    checkPhone(value);
+    requestToken(value);
+  });
+
+  document.getElementById('checkEmailTryAnotherBtn').addEventListener('click', function () {
+    document.getElementById('phoneInput').value = '';
+    show('pickView');
+  });
+
+  document.getElementById('requestNewLinkBtn').addEventListener('click', function () {
+    if (currentPhone) requestToken(currentPhone);
   });
 
   document.getElementById('changeNumberBtn').addEventListener('click', function () {
@@ -324,13 +379,25 @@
     submitBtn.disabled = true;
     submitBtn.textContent = 'Guardando...';
 
+    if (tokenLooksExpired(currentToken)) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Guardar método de pago';
+      show('expiredView');
+      return;
+    }
+
     var identity = getStoredIdentity() || {};
     var data = new FormData(form);
     data.append('formType', 'payment');
     data.append('referrerWhatsapp', currentPhone);
     data.append('referrerName', identity.name || '');
     data.append('referrerCountry', identity.country || '');
+    data.append('token', currentToken);
 
+    // no-cors means we can't read the real result -- if the token were
+    // somehow invalid server-side despite passing the check above
+    // (expired mid-submit, tampered, etc), Code.gs still refuses the
+    // write; this just can't show that specific failure here.
     fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: data })
       .then(function () { show('successView'); })
       .catch(function () {
@@ -340,10 +407,26 @@
       });
   });
 
-  var stored = getStoredIdentity();
-  if (stored && stored.phone) {
-    checkPhone(stored.phone);
+  var urlParams = new URLSearchParams(window.location.search);
+  var phoneFromUrl = urlParams.get('phone');
+  var tokenFromUrl = urlParams.get('token');
+
+  if (phoneFromUrl && tokenFromUrl) {
+    currentPhone = phoneFromUrl;
+    if (tokenLooksExpired(tokenFromUrl)) {
+      currentToken = tokenFromUrl;
+      show('expiredView');
+    } else {
+      showFormForPhone(phoneFromUrl, tokenFromUrl);
+    }
   } else {
+    // No more auto-showing the form from a cached identity -- that's
+    // exactly the shortcut this fix closes. Just prefill the number
+    // typed/cached before, so requesting a fresh link is one tap.
+    var stored = getStoredIdentity();
+    if (stored && stored.phone) {
+      document.getElementById('phoneInput').value = stored.phone;
+    }
     show('pickView');
   }
 </script>

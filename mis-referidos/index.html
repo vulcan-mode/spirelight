@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="google" content="notranslate">
 <meta name="robots" content="noindex">
-<title>Mis referidos — Spirelight</title>
+<title>Mis referidos — Spire Light</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;600;700&display=swap">
 <style>
   :root {
@@ -357,6 +357,33 @@
     document.getElementById('mainCard').classList.toggle('card-wide', viewId === 'listView');
   }
 
+  // referredCountry comes straight from the "PaisReferido" sheet column
+  // as-is -- normally already properly cased (the referral form's own
+  // country dropdown), but older/raw entries can be a lowercase slug
+  // (e.g. "republica_dominicana"). This handles either shape so a
+  // two-word country never shows up half-lowercase.
+  var COUNTRY_DISPLAY_NAMES = {
+    panama: 'Panamá', puerto_rico: 'Puerto Rico', argentina: 'Argentina',
+    republica_dominicana: 'República Dominicana', cuba: 'Cuba', honduras: 'Honduras',
+    paraguay: 'Paraguay', nicaragua: 'Nicaragua', el_salvador: 'El Salvador',
+    costa_rica: 'Costa Rica', uruguay: 'Uruguay', ecuador: 'Ecuador', peru: 'Perú',
+    venezuela: 'Venezuela', chile: 'Chile', guatemala: 'Guatemala'
+  };
+
+  function formatCountryDisplay(raw) {
+    var key = String(raw || '').trim().toLowerCase();
+    if (!key) return '';
+    if (COUNTRY_DISPLAY_NAMES[key]) return COUNTRY_DISPLAY_NAMES[key];
+    // Fallback: underscores -> spaces, capitalize every word (covers
+    // both a raw slug and text that's already spaced but lowercase).
+    // Split on spaces rather than a \b\w regex -- \w doesn't match
+    // accented letters, so "república" would regex-match a boundary
+    // right after the "ú" and capitalize mid-word instead of at the start.
+    return key.replace(/_/g, ' ').split(' ').map(function (word) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(' ');
+  }
+
   var RESULTADO_LABELS = { Pendiente: '🕐 Pendiente', Aprobado: '✅ Aprobado', Rechazado: '❌ Rechazado', 'Inválido': '🚫 No válido' };
   var PAGO_LABELS = { Pendiente: '🕐 Pago pendiente', Programado: '📅 Pago programado', Pagado: '💰 Pagado' };
 
@@ -391,7 +418,7 @@
       row.appendChild(nameTd);
 
       var countryTd = document.createElement('td');
-      countryTd.textContent = r.referredCountry || '—';
+      countryTd.textContent = formatCountryDisplay(r.referredCountry) || '—';
       row.appendChild(countryTd);
 
       var resultadoTd = document.createElement('td');

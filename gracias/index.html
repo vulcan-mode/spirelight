@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="google" content="notranslate">
 <meta name="robots" content="noindex">
-<title>Gracias — Spirelight</title>
+<title>Gracias — Spire Light</title>
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://vulcan-mode.github.io/spirelight/gracias/">
 <meta property="og:title" content="Gana dinero grabando tu voz 🎙️">
-<meta property="og:description" content="Spirelight busca hispanohablantes para grabar audio — $45 por sesión ($50 en Puerto Rico), 30–60 min, sin experiencia. Haz clic para ver si tu país ya está activo.">
+<meta property="og:description" content="Spire Light busca hispanohablantes para grabar audio — $45 por sesión ($50 en Puerto Rico), 30–60 min, sin experiencia. Haz clic para ver si tu país ya está activo.">
 <meta property="og:image" content="https://vulcan-mode.github.io/spirelight/assets/logo-monologos.png">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Gana dinero grabando tu voz 🎙️">
-<meta name="twitter:description" content="Spirelight busca hispanohablantes para grabar audio — $45 por sesión ($50 en Puerto Rico), 30–60 min, sin experiencia.">
+<meta name="twitter:description" content="Spire Light busca hispanohablantes para grabar audio — $45 por sesión ($50 en Puerto Rico), 30–60 min, sin experiencia.">
 <meta name="twitter:image" content="https://vulcan-mode.github.io/spirelight/assets/logo-monologos.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;600;700&display=swap">
 <style>
@@ -43,31 +43,78 @@
     align-items: center;
     padding: 40px 16px;
   }
-  .site-nav {
+  /* Shown only once a result view (active/waiting/otro) is displayed --
+     see RESULT_VIEWS below. Someone who doesn't know their status yet
+     has nowhere to navigate to; once they do, they deserve the same
+     real menu every other page has. */
+  .site-header {
     width: 100%;
     max-width: 640px;
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-    margin-bottom: 20px;
-  }
-  .nav-btn {
-    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 7px 13px;
-    border-radius: 999px;
-    font-family: 'Sora', system-ui, sans-serif;
-    font-weight: 700;
-    font-size: 11.5px;
-    text-decoration: none;
-    border: 1.5px solid var(--border);
-    background: #ffffff;
+    justify-content: flex-end;
+    padding: 4px 4px 28px;
+    position: relative;
+  }
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+  .nav-link {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
     color: var(--navy);
+    text-decoration: none;
+    padding-bottom: 3px;
+    border-bottom: 2px solid transparent;
     white-space: nowrap;
   }
-  .nav-btn.whatsapp { background: #25d366; color: #fff; border-color: transparent; }
+  .nav-link:hover, .nav-link.active { color: var(--blue-deep); border-bottom-color: var(--blue); }
+  .nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 26px;
+    line-height: 1;
+    color: var(--navy);
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  .nav-overlay { display: none; }
+  @media (max-width: 800px) {
+    .nav-toggle { display: block; }
+    .site-nav {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: 250px;
+      max-width: 78vw;
+      background: #ffffff;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 22px;
+      padding: 84px 28px 28px;
+      box-shadow: -12px 0 32px rgba(13, 58, 102, 0.18);
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+      z-index: 50;
+    }
+    .site-nav.open { transform: translateX(0); }
+    .nav-overlay {
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 58, 102, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 40;
+    }
+    .nav-overlay.open { opacity: 1; pointer-events: auto; }
+  }
   .card {
     width: 100%;
     max-width: 520px;
@@ -164,23 +211,6 @@
     text-align: center;
     text-decoration: none;
   }
-  .gracias-footer {
-    margin-top: 24px;
-    padding-top: 18px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 18px;
-  }
-  .gracias-footer a {
-    font-family: 'Manrope', system-ui, sans-serif;
-    font-size: 12.5px;
-    font-weight: 700;
-    color: var(--blue-deep);
-    text-decoration: none;
-  }
-  .gracias-footer a:hover { text-decoration: underline; }
   .checkbox-row {
     display: flex;
     align-items: flex-start;
@@ -217,6 +247,44 @@
     opacity: 0.45;
     pointer-events: none;
   }
+  /* Bottom of every result view (active/waiting/otro): 1-3 buttons
+     depending on what they've done so far (see renderResultActions).
+     Exactly one -> a single big pill, matching the other primary CTAs
+     on this page. Two or three -> small text links instead, so it
+     doesn't turn into a wall of big blue buttons. */
+  .result-actions {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+  }
+  .action-pill {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    text-decoration: none;
+    text-align: center;
+  }
+  .action-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 18px;
+  }
+  .action-links a {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--blue-deep);
+    text-decoration: none;
+  }
+  .action-links a:hover { text-decoration: underline; }
   .referral-note {
     margin-top: 20px;
     padding-top: 18px;
@@ -304,6 +372,21 @@
 <body>
   <script src="../assets/announcement-banner.js"></script>
 
+  <header class="site-header" id="siteHeader" hidden>
+    <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
+    <nav class="site-nav" id="siteNav">
+      <a class="nav-link" href="../">Inicio</a>
+      <a class="nav-link" href="../registro/" id="navRegistroLink">Regístrate</a>
+      <a class="nav-link" href="../referral-form/">Formulario de referidos</a>
+      <a class="nav-link" href="../mis-referidos/">Mis referidos</a>
+      <a class="nav-link" href="../como-funciona/">Cómo funciona</a>
+      <a class="nav-link" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">Empezar</a>
+      <a class="nav-link" href="../privacidad/">Privacidad</a>
+    </nav>
+  </header>
+  <div class="nav-overlay" id="navOverlay"></div>
+  <script src="../assets/nav-identity.js"></script>
+
   <div class="card">
     <img class="logo" src="../assets/logo-monologos.png?v=2" alt="Monólogos en Español">
 
@@ -313,7 +396,7 @@
 
     <div id="activeView" hidden>
       <p class="greeting" hidden></p>
-      <div class="status-pill active">✅ ¡<span class="country-name"></span> está activo!</div>
+      <div class="status-pill active"><span>✅</span><span>¡<span class="country-name"></span> está activo!</span></div>
       <h1>2 pasos antes de aplicar 🎙️</h1>
       <p class="intro">Completa esto en orden — cada paso se desbloquea cuando confirmas el anterior.</p>
 
@@ -340,7 +423,7 @@
       </a>
 
       <a class="apply-btn" id="applyBtn" href="#" target="_blank" rel="noopener" aria-disabled="true">
-        Aplicar en Spirelight →
+        Aplicar en Spire Light →
       </a>
 
       <a class="whatsapp-btn" id="linkWhatsapp" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener" style="margin-top: 14px;">
@@ -350,17 +433,9 @@
 
     <div id="waitingView" hidden>
       <p class="greeting" hidden></p>
-      <div class="status-pill waiting">🕐 <span class="country-name"></span> — próximamente</div>
+      <div class="status-pill waiting"><span>🕐</span><span><span class="country-name"></span> — próximamente</span></div>
       <h1>Todavía no, pero ya casi 🕐</h1>
-      <p class="intro">Ya quedaste registrado. Cuando tu país se active, te voy a avisar personalmente por correo con el enlace para empezar — no tienes que hacer nada más ni volver a escribir.</p>
-
-      <a class="whatsapp-btn" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">
-        📲 Únete al grupo de WhatsApp mientras tanto
-      </a>
-
-      <p class="referral-note">
-        💰 No tienes que esperar para ganar: ya puedes empezar a <a href="../referral-form/">referir a otras personas</a> y ganar tu bono por cada una que complete su grabación.
-      </p>
+      <p class="intro">Ya quedaste registrado. Cuando Spire Light apruebe tu país y esté listo para procesar tu grupo de acento, te voy a avisar personalmente por correo con el enlace para empezar — no tienes que hacer nada más ni volver a escribir.</p>
     </div>
 
     <div id="otroView" hidden>
@@ -368,10 +443,6 @@
       <div class="status-pill waiting">🙏 Tu país no está en nuestra lista</div>
       <h1>Por ahora no podemos aceptarte</h1>
       <p class="intro">Gracias por tu interés. No tenemos planes de expandir a tu país por el momento, así que no podremos avisarte de nada nuevo.</p>
-
-      <p class="referral-note">
-        💰 Pero puedes seguir ganando: si conoces a alguien de Panamá, Puerto Rico, Argentina o República Dominicana, <a href="../referral-form/">refiérelo aquí</a> y gana un bono cuando complete su grabación.
-      </p>
     </div>
 
     <div id="noIdView" hidden>
@@ -379,7 +450,7 @@
       <div class="status-pill stop">🪪 Confirmación requerida</div>
       <h1>Dijiste que no tienes identificación</h1>
       <p class="intro">Puedes seguir registrado y participar en el programa de referidos sin ningún problema.</p>
-      <p class="warning-strict">Pero para grabar con Spirelight necesitas tener 18 años o más y una identificación oficial válida del país de tu acento (o pasaporte estadounidense si eres de Puerto Rico) — sin excepciones.</p>
+      <p class="warning-strict">Pero para grabar con Spire Light necesitas tener 18 años o más y una identificación oficial válida del país de tu acento (o pasaporte estadounidense si eres de Puerto Rico) — sin excepciones.</p>
       <button class="apply-btn" id="confirmIdBtn" type="button">
         Sí tengo mi identificación — la marqué por error
       </button>
@@ -411,13 +482,13 @@
       </a>
     </div>
 
-    <!-- Always visible, regardless of which view above is showing --
-         without this, someone who's done (applied, or just parked
-         waiting) has no way back to the referral program at all. -->
-    <div class="gracias-footer">
-      <a href="../referral-form/">🎁 Referir a alguien</a>
-      <a href="../mis-referidos/">📊 Mis referidos</a>
-      <a href="../metodo-pago/">💳 Método de pago</a>
+    <div class="result-actions" id="resultActions" hidden>
+      <a class="action-pill" id="actionPill" href="../referral-form/">🎁 Referir a alguien</a>
+      <div class="action-links" id="actionLinks" hidden>
+        <a href="../referral-form/">🎁 Referir a alguien</a>
+        <a href="../mis-referidos/" id="actionMisReferidos" hidden>📊 Mis referidos</a>
+        <a href="../metodo-pago/" id="actionMetodoPago" hidden>💳 Método de pago</a>
+      </div>
     </div>
   </div>
 
@@ -496,10 +567,50 @@
     try { localStorage.removeItem(PHONE_CACHE_KEY); } catch (e) { /* ignore */ }
   }
 
+  // Only once we actually know their country status is there anywhere
+  // meaningful to navigate to -- loadingView/pickView/notFoundView/
+  // unknownView/noIdView get no menu and no action buttons.
+  var RESULT_VIEWS = ['activeView', 'waitingView', 'otroView'];
+
   function show(viewId) {
     ['loadingView', 'activeView', 'waitingView', 'unknownView', 'pickView', 'notFoundView', 'otroView', 'noIdView'].forEach(function (id) {
       document.getElementById(id).hidden = (id !== viewId);
     });
+    var isResult = RESULT_VIEWS.indexOf(viewId) !== -1;
+    document.getElementById('siteHeader').hidden = !isResult;
+    document.getElementById('resultActions').hidden = !isResult;
+    if (isResult) loadResultActions();
+  }
+
+  // 1-3 buttons depending on what they've actually done: referring is
+  // always offered; "Mis referidos" only once they've referred someone;
+  // "Método de pago" only on top of that, and only if they haven't
+  // given us one yet (no point nudging them twice).
+  function renderResultActions(hasReferrals, hasPaymentMethodOnFile) {
+    var count = 1 + (hasReferrals ? 1 : 0) + (hasReferrals && !hasPaymentMethodOnFile ? 1 : 0);
+    var pill = document.getElementById('actionPill');
+    var links = document.getElementById('actionLinks');
+
+    if (count === 1) {
+      pill.hidden = false;
+      links.hidden = true;
+    } else {
+      pill.hidden = true;
+      links.hidden = false;
+      document.getElementById('actionMisReferidos').hidden = !hasReferrals;
+      document.getElementById('actionMetodoPago').hidden = !(hasReferrals && !hasPaymentMethodOnFile);
+    }
+  }
+
+  function loadResultActions() {
+    if (!currentPhone) { renderResultActions(false, false); return; }
+    fetch(WORKER_URL + '?referrer_phone=' + encodeURIComponent(currentPhone))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var hasReferrals = !!(data && data.referrals && data.referrals.length > 0);
+        renderResultActions(hasReferrals, !!(data && data.hasPaymentMethod));
+      })
+      .catch(function () { renderResultActions(false, false); });
   }
 
   // Raw stored country values are lowercase_with_underscores (Meta's
@@ -517,8 +628,13 @@
   function formatCountryDisplay(raw) {
     var key = String(raw || '').trim().toLowerCase();
     if (COUNTRY_DISPLAY_NAMES[key]) return COUNTRY_DISPLAY_NAMES[key];
-    // Fallback for anything unexpected: underscores -> spaces, capitalize words.
-    return key.replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+    // Fallback for anything unexpected: underscores -> spaces, capitalize
+    // words. Split on spaces rather than a \b\w regex -- \w doesn't match
+    // accented letters, so "república" would regex-match a boundary right
+    // after the "ú" and capitalize mid-word instead of at the start.
+    return key.replace(/_/g, ' ').split(' ').map(function (word) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(' ');
   }
 
   function setCountryLabels(text) {
@@ -619,7 +735,7 @@
       }
 
       // Server-side memory: once someone has actually clicked through to
-      // Spirelight before (any device), "Desbloqueado" is set on their
+      // Spire Light before (any device), "Desbloqueado" is set on their
       // lead row. On any later visit -- even a brand new browser -- skip
       // the checklist entirely instead of making them repeat it.
       if (data.unlocked) {
@@ -740,6 +856,19 @@
   } else {
     show('pickView');
   }
+
+  (function () {
+    var toggle = document.getElementById('navToggle');
+    var nav = document.getElementById('siteNav');
+    var overlay = document.getElementById('navOverlay');
+    function closeNav() { nav.classList.remove('open'); overlay.classList.remove('open'); }
+    toggle.addEventListener('click', function () {
+      nav.classList.toggle('open');
+      overlay.classList.toggle('open');
+    });
+    overlay.addEventListener('click', closeNav);
+    nav.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', closeNav); });
+  })();
 </script>
 </body>
 </html>

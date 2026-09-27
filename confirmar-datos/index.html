@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="google" content="notranslate">
 <meta name="robots" content="noindex">
-<title>Confirma tus datos — Spirelight</title>
+<title>Confirma tus datos — Spire Light</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;600;700&display=swap">
 <style>
   :root {
@@ -84,9 +84,61 @@
     box-sizing: border-box;
   }
   input:focus, select:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
-  .phone-row { display: flex; gap: 8px; }
-  .phone-row select { flex: 0 0 128px; }
-  .phone-row input { flex: 1; min-width: 0; }
+  .radio-row {
+    display: flex;
+    gap: 14px;
+    margin-top: 8px;
+  }
+  .radio-option {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14.5px;
+    cursor: pointer;
+  }
+  .radio-option input { width: auto; accent-color: var(--blue); }
+  .radio-option:has(input:disabled) { opacity: 0.55; cursor: default; }
+  .edit-row select:disabled { opacity: 0.55; cursor: default; }
+  .both-required-note {
+    margin: 18px 0 0;
+    font-size: 13px;
+    color: #7793ad;
+  }
+  .country-fill { color: var(--ink); }
+  .country-fill.filled {
+    font-weight: 800;
+    color: var(--blue-deep);
+    animation: id-country-pop 0.28s ease;
+  }
+  @keyframes id-country-pop {
+    0% { opacity: 0; transform: translateY(3px) scale(0.97); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .stop-banner {
+    margin-top: 14px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: #fdeceb;
+    border: 2px solid #b3261e;
+  }
+  .stop-banner-title {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    color: #b3261e;
+    margin: 0 0 6px;
+  }
+  .stop-banner p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #7a2119;
+  }
   button, .apply-btn {
     display: block;
     width: 100%;
@@ -119,6 +171,88 @@
     margin: 0 0 10px;
   }
   .success p { color: #4a6580; font-size: 15px; line-height: 1.5; }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .info-row:first-of-type { border-top: 1px solid var(--border); margin-top: 8px; }
+  .info-label {
+    font-weight: 700;
+    font-size: 13px;
+    color: #7793ad;
+    white-space: nowrap;
+  }
+  .info-value {
+    font-size: 15px;
+    color: var(--ink);
+    font-weight: 700;
+    text-align: right;
+  }
+  .edit-btn {
+    background: none;
+    color: var(--blue-deep);
+    box-shadow: none;
+  }
+  /* Mirrors .info-row's exact geometry so switching between "Tus datos"
+     and "Editar tus datos" looks like the same rows opening up an input,
+     not a different page -- no heading swap, no layout jump. */
+  .edit-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .edit-row:first-of-type { border-top: 1px solid var(--border); margin-top: 8px; }
+  .edit-row input, .edit-row select {
+    flex: 0 1 auto;
+    width: auto;
+    max-width: 60%;
+    text-align: right;
+    border: none;
+    border-bottom: 1.5px solid var(--border);
+    border-radius: 0;
+    padding: 4px 0 4px 8px;
+    background: transparent;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .edit-row input:focus, .edit-row select:focus {
+    outline: none;
+    border-bottom-color: var(--blue);
+  }
+  @keyframes view-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  #infoView:not([hidden]), #formView:not([hidden]) {
+    animation: view-fade-in 0.18s ease;
+  }
+  .payment-nudge {
+    margin: 20px 0 0;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    font-size: 14px;
+    text-align: center;
+    color: var(--ink);
+  }
+  .payment-nudge a {
+    color: var(--blue-deep);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .payment-disclaimer {
+    margin: 8px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: center;
+    color: #7793ad;
+  }
   .change-number-btn {
     display: block;
     width: 100%;
@@ -147,77 +281,114 @@
     </div>
 
     <div id="pickView" hidden>
-      <h1>Confirma tus datos ✏️</h1>
-      <p class="intro">Escribe el mismo número de WhatsApp que usaste para registrarte.</p>
-      <div class="phone-row">
-        <select id="phoneCode" aria-label="Código de país">
-          <option value="507">🇵🇦 +507</option>
-          <option value="1">🇵🇷 +1 (Puerto Rico)</option>
-          <option value="54">🇦🇷 +54</option>
-          <option value="1">🇩🇴 +1 (República Dominicana)</option>
-          <option value="53">🇨🇺 +53</option>
-          <option value="504">🇭🇳 +504</option>
-          <option value="595">🇵🇾 +595</option>
-          <option value="505">🇳🇮 +505</option>
-          <option value="503">🇸🇻 +503</option>
-          <option value="506">🇨🇷 +506</option>
-          <option value="598">🇺🇾 +598</option>
-          <option value="593">🇪🇨 +593</option>
-          <option value="51">🇵🇪 +51</option>
-          <option value="58">🇻🇪 +58</option>
-          <option value="56">🇨🇱 +56</option>
-          <option value="502">🇬🇹 +502</option>
-        </select>
-        <input type="tel" id="phoneInput" placeholder="6000 0000" autocomplete="tel">
-      </div>
-      <button type="button" id="phoneContinueBtn">Continuar →</button>
-      <p class="error" id="pickErrorMsg">No encontramos ese número. Verifica que sea el mismo que usaste al registrarte.</p>
+      <h1>Ver o editar tus datos ✏️</h1>
+      <p class="intro">Escribe tu correo. Por seguridad, nadie puede ver ni cambiar tus datos sin hacer clic en un enlace que solo llega a tu propio correo.</p>
+      <input type="email" id="emailInput" placeholder="tu@correo.com" autocomplete="email">
+      <button type="button" id="emailContinueBtn">Enviarme el enlace →</button>
+    </div>
+
+    <div id="checkEmailView" hidden>
+      <h1>Revisa tu correo 📩</h1>
+      <p class="intro">Si ese correo está en nuestro sistema, te enviamos un enlace de confirmación -- válido por 15 minutos.</p>
+      <button class="change-number-btn" id="checkEmailTryAnotherBtn" type="button">Usar otro correo</button>
+    </div>
+
+    <div id="expiredView" hidden>
+      <h1>Ese enlace ya no es válido</h1>
+      <p class="intro">Los enlaces de confirmación duran 15 minutos. Pide uno nuevo.</p>
+      <input type="email" id="expiredEmailInput" placeholder="tu@correo.com" autocomplete="email">
+      <button type="button" id="requestNewLinkBtn">Pedir un nuevo enlace →</button>
+    </div>
+
+    <h1 id="datosHeading" hidden>Tus datos 📋</h1>
+
+    <div id="infoView" hidden>
+      <div class="info-row"><span class="info-label">Nombre</span><span class="info-value" id="infoName"></span></div>
+      <div class="info-row"><span class="info-label">Correo</span><span class="info-value" id="infoEmail"></span></div>
+      <div class="info-row"><span class="info-label">WhatsApp</span><span class="info-value" id="infoPhone"></span></div>
+      <div class="info-row"><span class="info-label">País</span><span class="info-value" id="infoCountry"></span></div>
+      <div class="info-row"><span class="info-label">¿Acento?</span><span class="info-value" id="infoAccent"></span></div>
+      <div class="info-row"><span class="info-label">¿Identificación?</span><span class="info-value" id="infoId"></span></div>
+
+      <button type="button" id="editBtn">✏️ Editar mis datos</button>
+      <a class="apply-btn edit-btn" href="../gracias/" id="infoBackToGraciasLink">Ver mi estado →</a>
+
+      <p class="payment-nudge">¿Planeas referir a personas? <a href="../metodo-pago/" id="paymentNudgeLink">Agrega tu método de pago aquí →</a></p>
+      <p class="payment-disclaimer">* El programa de referidos es una iniciativa independiente de Monólogos en Español, no de Spire Light. Por eso pedimos tu método de pago por separado, para poder pagarte tus bonos.</p>
     </div>
 
     <div id="formView" hidden>
-      <h1>¿Tus datos son correctos? ✏️</h1>
-      <p class="intro">Revisa y corrige lo que haga falta. Tu número de WhatsApp no se puede cambiar aquí.</p>
-
       <form id="detailsForm">
-        <label for="fullName">Tu nombre completo</label>
-        <input id="fullName" name="name" type="text" required>
+        <div class="edit-row">
+          <span class="info-label">Nombre</span>
+          <input id="fullName" name="name" type="text" required>
+        </div>
+        <div class="edit-row">
+          <span class="info-label">Correo</span>
+          <input id="email" name="email" type="email" required>
+        </div>
+        <div class="info-row"><span class="info-label">WhatsApp</span><span class="info-value" id="formPhone"></span></div>
 
-        <label for="country">Tu país</label>
-        <select id="country" name="country" required>
-          <option value="panama">Panamá</option>
-          <option value="puerto_rico">Puerto Rico</option>
-          <option value="argentina">Argentina</option>
-          <option value="republica_dominicana">República Dominicana</option>
-          <option value="cuba">Cuba</option>
-          <option value="honduras">Honduras</option>
-          <option value="paraguay">Paraguay</option>
-          <option value="nicaragua">Nicaragua</option>
-          <option value="el_salvador">El Salvador</option>
-          <option value="costa_rica">Costa Rica</option>
-          <option value="uruguay">Uruguay</option>
-          <option value="ecuador">Ecuador</option>
-          <option value="peru">Perú</option>
-          <option value="venezuela">Venezuela</option>
-          <option value="chile">Chile</option>
-          <option value="guatemala">Guatemala</option>
-          <option value="otro">Otro</option>
-        </select>
+        <p class="both-required-note" id="bothRequiredNote">Tu país, acento e identificación no se pueden cambiar después de guardarlos.</p>
 
-        <label for="email">Correo electrónico</label>
-        <input id="email" name="email" type="email" required>
+        <div class="edit-row">
+          <span class="info-label">País</span>
+          <select id="country" name="country" required>
+            <option value="panama">Panamá</option>
+            <option value="puerto_rico">Puerto Rico</option>
+            <option value="argentina">Argentina</option>
+            <option value="republica_dominicana">República Dominicana</option>
+            <option value="cuba">Cuba</option>
+            <option value="honduras">Honduras</option>
+            <option value="paraguay">Paraguay</option>
+            <option value="nicaragua">Nicaragua</option>
+            <option value="el_salvador">El Salvador</option>
+            <option value="costa_rica">Costa Rica</option>
+            <option value="uruguay">Uruguay</option>
+            <option value="ecuador">Ecuador</option>
+            <option value="peru">Perú</option>
+            <option value="venezuela">Venezuela</option>
+            <option value="chile">Chile</option>
+            <option value="guatemala">Guatemala</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+
+        <label>¿Acento <span id="accentCountryName" class="country-fill">de ese país</span>?</label>
+        <div class="radio-row">
+          <label class="radio-option" for="accentSi">
+            <input type="radio" id="accentSi" name="accentAnswer" value="sí" required> Sí
+          </label>
+          <label class="radio-option" for="accentNo">
+            <input type="radio" id="accentNo" name="accentAnswer" value="no" required> No
+          </label>
+        </div>
+        <div class="stop-banner" id="noAccentWarning" hidden>
+          <p class="stop-banner-title">🛑 ALTO</p>
+          <p>Sin un acento nativo de ese país no podemos aceptarte en el programa, sin excepciones. Por favor no continúes ni te unas al grupo de WhatsApp — nos ayuda a no perder tu tiempo ni el nuestro.</p>
+        </div>
+
+        <label>¿Identificación <span id="idCountryName" class="country-fill">de ese país</span> válida<span id="idPRClause" hidden> (o pasaporte estadounidense)</span>?</label>
+        <div class="radio-row">
+          <label class="radio-option" for="idSi">
+            <input type="radio" id="idSi" name="idAnswer" value="sí" required> Sí
+          </label>
+          <label class="radio-option" for="idNo">
+            <input type="radio" id="idNo" name="idAnswer" value="no" required> No
+          </label>
+        </div>
+        <div class="stop-banner" id="noIdWarning" hidden>
+          <p class="stop-banner-title">🛑 ALTO</p>
+          <p>Sin una identificación oficial válida no podemos aceptarte en el programa, sin excepciones. Por favor no continúes ni te unas al grupo de WhatsApp — nos ayuda a no perder tu tiempo ni el nuestro. Si más adelante obtienes tu identificación, puedes volver a corregir esto.</p>
+        </div>
 
         <button type="submit" id="submitBtn">Guardar cambios</button>
         <p class="error" id="formErrorMsg">Algo salió mal. Por favor intenta de nuevo.</p>
       </form>
 
-      <button class="change-number-btn" id="changeNumberBtn" type="button">Usar otro número</button>
+      <button class="change-number-btn" id="cancelEditBtn" type="button" hidden>Cancelar</button>
     </div>
 
-    <div id="successView" class="success" hidden>
-      <h2>¡Listo! ✅</h2>
-      <p>Guardamos tus datos. Puedes volver a esta página cuando quieras para actualizarlos.</p>
-      <a class="apply-btn" href="../gracias/" id="backToGraciasLink">Ver mi estado →</a>
-    </div>
   </div>
 
 <script>
@@ -225,24 +396,160 @@
   var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWxLdQ70YBFIkZWu5xfobhYUA5s-bcrf081pDL6W9-9-s0rXwGWkRDxNoOz83GswRD/exec";
 
   var currentPhone = '';
+  var currentToken = '';
+  var isFirstTime = false;
 
   function show(viewId) {
-    ['loadingView', 'pickView', 'formView', 'successView'].forEach(function (id) {
+    ['loadingView', 'pickView', 'checkEmailView', 'expiredView', 'infoView', 'formView'].forEach(function (id) {
       document.getElementById(id).hidden = (id !== viewId);
+    });
+    // Shared heading stays in place across infoView/formView -- no text
+    // change, no re-layout, just the rows below it opening up.
+    document.getElementById('datosHeading').hidden = (viewId !== 'infoView' && viewId !== 'formView');
+  }
+
+  // Client-side smell test only (see the identical helper in
+  // metodo-pago/index.html) -- the real check is server-side.
+  function tokenLooksExpired(token) {
+    try {
+      var payload = atob(token.split('.')[0].replace(/-/g, '+').replace(/_/g, '/'));
+      var expiresAt = Number(payload.split('|')[1]);
+      return !expiresAt || Date.now() > expiresAt;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  // Same map as gracias//mis-referidos: raw stored country values are
+  // lowercase_with_underscores, this maps back to a proper display name.
+  var COUNTRY_DISPLAY_NAMES = {
+    panama: 'Panamá', puerto_rico: 'Puerto Rico', argentina: 'Argentina',
+    republica_dominicana: 'República Dominicana', cuba: 'Cuba', honduras: 'Honduras',
+    paraguay: 'Paraguay', nicaragua: 'Nicaragua', el_salvador: 'El Salvador',
+    costa_rica: 'Costa Rica', uruguay: 'Uruguay', ecuador: 'Ecuador', peru: 'Perú',
+    venezuela: 'Venezuela', chile: 'Chile', guatemala: 'Guatemala'
+  };
+
+  function formatCountryDisplay(raw) {
+    var key = String(raw || '').trim().toLowerCase();
+    if (!key) return '—';
+    if (COUNTRY_DISPLAY_NAMES[key]) return COUNTRY_DISPLAY_NAMES[key];
+    return key.replace(/_/g, ' ').split(' ').map(function (word) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(' ');
+  }
+
+  // Stored value is lowercase ("sí"/"no"), but tolerate the old
+  // capitalized "Sí"/"No" too for anything answered before this change.
+  function isYesAnswer(raw) {
+    var v = String(raw || '').trim().toLowerCase();
+    return v === 'sí' || v === 'si';
+  }
+  function isNoAnswer(raw) {
+    return String(raw || '').trim().toLowerCase() === 'no';
+  }
+  function formatYesNo(raw) {
+    if (isYesAnswer(raw)) return '✅ Sí';
+    if (isNoAnswer(raw)) return '❌ No';
+    return '—';
+  }
+
+  // Demonyms (gentilicios), masculine/feminine -- "acento" is masculine
+  // ("acento peruano"), "identificación" is feminine ("identificación
+  // peruana"). "otro" has no single demonym, so it falls back to the
+  // generic "de ese país" phrasing, same as before any country is picked.
+  var DEMONYMS = {
+    panama: { m: 'panameño', f: 'panameña' },
+    puerto_rico: { m: 'puertorriqueño', f: 'puertorriqueña' },
+    argentina: { m: 'argentino', f: 'argentina' },
+    republica_dominicana: { m: 'dominicano', f: 'dominicana' },
+    cuba: { m: 'cubano', f: 'cubana' },
+    honduras: { m: 'hondureño', f: 'hondureña' },
+    paraguay: { m: 'paraguayo', f: 'paraguaya' },
+    nicaragua: { m: 'nicaragüense', f: 'nicaragüense' },
+    el_salvador: { m: 'salvadoreño', f: 'salvadoreña' },
+    costa_rica: { m: 'costarricense', f: 'costarricense' },
+    uruguay: { m: 'uruguayo', f: 'uruguaya' },
+    ecuador: { m: 'ecuatoriano', f: 'ecuatoriana' },
+    peru: { m: 'peruano', f: 'peruana' },
+    venezuela: { m: 'venezolano', f: 'venezolana' },
+    chile: { m: 'chileno', f: 'chilena' },
+    guatemala: { m: 'guatemalteco', f: 'guatemalteca' }
+  };
+
+  // Names the selected country's demonym in the two eligibility
+  // questions ("¿Acento peruano?", "¿Identificación peruana válida?")
+  // instead of the generic "de ese país", and only shows the Puerto
+  // Rico passport alternative when Puerto Rico is selected.
+  function updateCountryDependentText() {
+    var select = document.getElementById('country');
+    var prClause = document.getElementById('idPRClause');
+    var value = select.value;
+    var demonym = DEMONYMS[value];
+
+    var accentEl = document.getElementById('accentCountryName');
+    var idEl = document.getElementById('idCountryName');
+    [accentEl, idEl].forEach(function (el) { el.classList.remove('filled'); });
+
+    accentEl.textContent = demonym ? demonym.m : 'de ese país';
+    idEl.textContent = demonym ? demonym.f : 'de ese país';
+
+    if (demonym) {
+      [accentEl, idEl].forEach(function (el) { void el.offsetWidth; el.classList.add('filled'); });
+    }
+    prClause.hidden = (value !== 'puerto_rico');
+  }
+  document.getElementById('country').addEventListener('change', updateCountryDependentText);
+
+  var noIdWarning = document.getElementById('noIdWarning');
+  var noAccentWarning = document.getElementById('noAccentWarning');
+  document.getElementById('idSi').addEventListener('change', function () { noIdWarning.hidden = true; });
+  document.getElementById('idNo').addEventListener('change', function () { noIdWarning.hidden = false; });
+  document.getElementById('accentSi').addEventListener('change', function () { noAccentWarning.hidden = true; });
+  document.getElementById('accentNo').addEventListener('change', function () { noAccentWarning.hidden = false; });
+
+  // Locking these three once they're already on file is what makes the
+  // "no se pueden cambiar" warning actually true, not just a polite
+  // request -- Code.gs refuses the write server-side regardless, but
+  // disabling them here too means nobody sees an editable field that
+  // secretly can't do anything.
+  function setPermanentFieldsLocked(locked) {
+    document.getElementById('country').disabled = locked;
+    ['accentSi', 'accentNo', 'idSi', 'idNo'].forEach(function (id) {
+      document.getElementById(id).disabled = locked;
     });
   }
 
-  function checkPhone(phone) {
+  // Shared with referral-form/mis-referidos/metodo-pago/nav-identity.js
+  // -- keeps the nav's "Tus datos" swap and other pages' prefill
+  // working, but this page never READS it to decide access anymore
+  // (that was the insecure shortcut this whole rework closes).
+  function cacheIdentity(phone, name, country) {
+    try {
+      var raw = localStorage.getItem('spirelight_referrer');
+      var identity = raw ? JSON.parse(raw) : {};
+      identity.phone = phone;
+      if (name) identity.name = name;
+      if (country) identity.country = country;
+      localStorage.setItem('spirelight_referrer', JSON.stringify(identity));
+    } catch (e) { /* ignore */ }
+  }
+
+  function loadForToken(phone, token) {
     show('loadingView');
+    currentPhone = phone;
+    currentToken = token;
+
     fetch(WORKER_URL + '?phone=' + encodeURIComponent(phone))
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (!data || !data.found) {
-          document.getElementById('pickErrorMsg').style.display = 'block';
-          show('pickView');
+          show('expiredView'); // token was valid but the lead vanished -- same recovery path
           return;
         }
-        currentPhone = phone;
+
+        cacheIdentity(phone, data.name, data.country);
+
         document.getElementById('fullName').value = data.name || '';
         document.getElementById('email').value = data.email || '';
         if (data.country) {
@@ -251,30 +558,83 @@
             select.value = data.country;
           }
         }
-        document.getElementById('backToGraciasLink').href = '../gracias/?phone=' + encodeURIComponent(phone);
-        show('formView');
+        updateCountryDependentText();
+        if (isYesAnswer(data.accentAnswer)) document.getElementById('accentSi').checked = true;
+        if (isNoAnswer(data.accentAnswer)) { document.getElementById('accentNo').checked = true; noAccentWarning.hidden = false; }
+        if (isYesAnswer(data.idAnswer)) document.getElementById('idSi').checked = true;
+        if (isNoAnswer(data.idAnswer)) { document.getElementById('idNo').checked = true; noIdWarning.hidden = false; }
+
+        document.getElementById('infoName').textContent = data.name || '—';
+        document.getElementById('infoCountry').textContent = formatCountryDisplay(data.country);
+        document.getElementById('infoEmail').textContent = data.email || '—';
+        document.getElementById('infoPhone').textContent = phone;
+        document.getElementById('formPhone').textContent = phone;
+        document.getElementById('infoAccent').textContent = formatYesNo(data.accentAnswer);
+        document.getElementById('infoId').textContent = formatYesNo(data.idAnswer);
+        document.getElementById('infoBackToGraciasLink').href = '../gracias/?phone=' + encodeURIComponent(phone);
+        document.getElementById('paymentNudgeLink').href = '../metodo-pago/?phone=' + encodeURIComponent(phone) + '&token=' + encodeURIComponent(token);
+
+        isFirstTime = !(data.country && data.accentAnswer && data.idAnswer);
+
+        if (isFirstTime) {
+          // Nothing to lock in yet, nothing to look at -- straight into
+          // the open, editable form. "Se ve bien" instead of "Guardar
+          // cambios": they're confirming what Facebook/Meta gave us,
+          // not correcting a mistake.
+          document.getElementById('bothRequiredNote').hidden = false;
+          document.getElementById('cancelEditBtn').hidden = true;
+          setPermanentFieldsLocked(false);
+          submitBtn.textContent = 'Se ve bien →';
+          show('formView');
+        } else {
+          document.getElementById('bothRequiredNote').hidden = true;
+          setPermanentFieldsLocked(true);
+          submitBtn.textContent = 'Guardar cambios';
+          show('infoView');
+        }
       })
-      .catch(function () {
-        document.getElementById('pickErrorMsg').style.display = 'block';
-        show('pickView');
-      });
+      .catch(function () { show('expiredView'); });
   }
 
-  document.getElementById('phoneContinueBtn').addEventListener('click', function () {
-    var code = document.getElementById('phoneCode').value;
-    var numberDigits = document.getElementById('phoneInput').value.replace(/\D/g, '');
-    var errorEl = document.getElementById('pickErrorMsg');
-    if (!numberDigits) {
-      errorEl.style.display = 'block';
-      return;
-    }
-    errorEl.style.display = 'none';
-    checkPhone('+' + code + numberDigits);
+  function requestConfirmLink(email) {
+    show('loadingView');
+    var data = new FormData();
+    data.append('formType', 'request_confirm_link');
+    data.append('email', email);
+
+    // Same reply either way, on purpose -- see handleRequestConfirmLink_
+    // in Code.gs. This page can't be used to check whether an email is
+    // in the system.
+    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: data })
+      .then(function () { show('checkEmailView'); })
+      .catch(function () { show('checkEmailView'); });
+  }
+
+  document.getElementById('emailContinueBtn').addEventListener('click', function () {
+    var value = document.getElementById('emailInput').value.trim();
+    if (!value) return;
+    requestConfirmLink(value);
   });
 
-  document.getElementById('changeNumberBtn').addEventListener('click', function () {
-    document.getElementById('phoneInput').value = '';
+  document.getElementById('checkEmailTryAnotherBtn').addEventListener('click', function () {
+    document.getElementById('emailInput').value = '';
     show('pickView');
+  });
+
+  document.getElementById('requestNewLinkBtn').addEventListener('click', function () {
+    var value = document.getElementById('expiredEmailInput').value.trim();
+    if (!value) return;
+    requestConfirmLink(value);
+  });
+
+  document.getElementById('editBtn').addEventListener('click', function () {
+    submitBtn.textContent = 'Guardar cambios';
+    document.getElementById('cancelEditBtn').hidden = false;
+    show('formView');
+  });
+
+  document.getElementById('cancelEditBtn').addEventListener('click', function () {
+    show('infoView');
   });
 
   var form = document.getElementById('detailsForm');
@@ -284,28 +644,64 @@
   form.addEventListener('submit', function (event) {
     event.preventDefault();
     formErrorMsg.style.display = 'none';
+
+    if (tokenLooksExpired(currentToken)) {
+      show('expiredView');
+      return;
+    }
+
     submitBtn.disabled = true;
     submitBtn.textContent = 'Guardando...';
 
     var data = new FormData(form);
     data.append('formType', 'update_details');
     data.append('whatsapp', currentPhone);
+    data.append('token', currentToken);
 
     fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: data })
       .then(function () {
-        document.getElementById('backToGraciasLink').href = '../gracias/?phone=' + encodeURIComponent(currentPhone);
-        show('successView');
+        // No separate "saved!" screen -- just close the edit form and
+        // show the updated info directly, same as what they'd see if
+        // they reloaded the page. País/acento/identificación are absent
+        // from FormData entirely once locked (disabled fields don't
+        // submit) -- only touch those three display rows when this was
+        // the first-time save that actually set them.
+        document.getElementById('infoName').textContent = data.get('name') || '—';
+        document.getElementById('infoEmail').textContent = data.get('email') || '—';
+        if (isFirstTime) {
+          document.getElementById('infoCountry').textContent = formatCountryDisplay(data.get('country'));
+          document.getElementById('infoAccent').textContent = formatYesNo(data.get('accentAnswer'));
+          document.getElementById('infoId').textContent = formatYesNo(data.get('idAnswer'));
+        }
+        cacheIdentity(currentPhone, data.get('name'), data.get('country'));
+        submitBtn.disabled = false;
+        document.getElementById('bothRequiredNote').hidden = true;
+        setPermanentFieldsLocked(true);
+        isFirstTime = false;
+        show('infoView');
       })
       .catch(function () {
         formErrorMsg.style.display = 'block';
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Guardar cambios';
       });
   });
 
-  var phoneFromUrl = new URLSearchParams(window.location.search).get('phone');
-  if (phoneFromUrl) {
-    checkPhone(phoneFromUrl);
+  // The only way into this page now: a link mailed to a real inbox --
+  // never a manual "type your email and see the data" lookup. Losing
+  // the link, a different device, it expired: all the same recovery,
+  // request a fresh one.
+  var urlParams = new URLSearchParams(window.location.search);
+  var phoneFromUrl = urlParams.get('phone');
+  var tokenFromUrl = urlParams.get('token');
+
+  if (phoneFromUrl && tokenFromUrl) {
+    if (tokenLooksExpired(tokenFromUrl)) {
+      currentPhone = phoneFromUrl;
+      currentToken = tokenFromUrl;
+      show('expiredView');
+    } else {
+      loadForToken(phoneFromUrl, tokenFromUrl);
+    }
   } else {
     show('pickView');
   }

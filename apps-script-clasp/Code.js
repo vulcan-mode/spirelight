@@ -68,6 +68,16 @@ function getSheet_() {
   return SpreadsheetApp.openById(SHEET_ID);
 }
 
+// One-off, run manually from the Apps Script editor (▶) -- creates the
+// accent-question column on Leads Sitio right now, ahead of the first
+// real submission that would otherwise create it lazily. clasp run is
+// broken (see standing note), so this has to be run by hand once.
+function ensureAccentColumnNow() {
+  var leadsSheet = getSheet_().getSheetByName(LEADS_SHEET_NAME);
+  var map = getHeaderIndexMap_(leadsSheet);
+  ensureColumn_(leadsSheet, map, ACCENT_QUESTION_HEADER);
+}
+
 // ---------------------------------------------------------------------
 // One-time setup
 // ---------------------------------------------------------------------
@@ -286,6 +296,9 @@ function findLeadByPhone_(rawPhone) {
   var phoneCol = map[META_PHONE_HEADER];
   var countryCol = map[META_COUNTRY_HEADER];
   var nameCol = map[META_NAME_HEADER];
+  var emailCol = map[META_EMAIL_HEADER];
+  var idQuestionCol = map[ID_QUESTION_HEADER];
+  var accentQuestionCol = map[ACCENT_QUESTION_HEADER];
   if (!phoneCol || !countryCol) return { found: false };
 
   var lastRow = sheet.getLastRow();
@@ -295,6 +308,9 @@ function findLeadByPhone_(rawPhone) {
   var phoneValues = sheet.getRange(2, phoneCol, numRows, 1).getValues();
   var countryValues = sheet.getRange(2, countryCol, numRows, 1).getValues();
   var nameValues = nameCol ? sheet.getRange(2, nameCol, numRows, 1).getValues() : null;
+  var emailValues = emailCol ? sheet.getRange(2, emailCol, numRows, 1).getValues() : null;
+  var idAnswerValues = idQuestionCol ? sheet.getRange(2, idQuestionCol, numRows, 1).getValues() : null;
+  var accentAnswerValues = accentQuestionCol ? sheet.getRange(2, accentQuestionCol, numRows, 1).getValues() : null;
 
   for (var i = 0; i < numRows; i++) {
     // Compare on a suffix match too (last 10 digits) so a stored
@@ -306,6 +322,48 @@ function findLeadByPhone_(rawPhone) {
         found: true,
         rowNum: i + 2, // 1-based sheet row (values arrays are 0-based, header is row 1)
         country: String(countryValues[i][0] || '').trim(),
+        name: nameValues ? String(nameValues[i][0] || '').trim() : '',
+        email: emailValues ? String(emailValues[i][0] || '').trim() : '',
+        idAnswer: idAnswerValues ? String(idAnswerValues[i][0] || '').trim() : '',
+        accentAnswer: accentAnswerValues ? String(accentAnswerValues[i][0] || '').trim() : ''
+      };
+    }
+  }
+  return { found: false };
+}
+
+// Same shape as findLeadByPhone_, keyed by email instead -- used only
+// by confirmar-datos' "send me a link" step, since unlike phone numbers,
+// nobody's email ever gets typed by another user anywhere in this
+// system (referral-form/ only ever collects the referred person's
+// phone, never their email), making it a meaningfully more private
+// identifier to gate access on.
+function findLeadByEmail_(rawEmail) {
+  var target = String(rawEmail || '').trim().toLowerCase();
+  if (!target) return { found: false };
+
+  var sheet = getSheet_().getSheetByName(LEADS_SHEET_NAME);
+  if (!sheet) return { found: false };
+
+  var map = getHeaderIndexMap_(sheet);
+  var emailCol = map[META_EMAIL_HEADER];
+  var phoneCol = map[META_PHONE_HEADER];
+  var nameCol = map[META_NAME_HEADER];
+  if (!emailCol || !phoneCol) return { found: false };
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { found: false };
+
+  var numRows = lastRow - 1;
+  var emailValues = sheet.getRange(2, emailCol, numRows, 1).getValues();
+  var phoneValues = sheet.getRange(2, phoneCol, numRows, 1).getValues();
+  var nameValues = nameCol ? sheet.getRange(2, nameCol, numRows, 1).getValues() : null;
+
+  for (var i = 0; i < numRows; i++) {
+    if (String(emailValues[i][0] || '').trim().toLowerCase() === target) {
+      return {
+        found: true,
+        phone: String(phoneValues[i][0] || '').trim(),
         name: nameValues ? String(nameValues[i][0] || '').trim() : ''
       };
     }
@@ -369,8 +427,20 @@ function doPost(e) {
     return handlePaymentMethodSubmission_(p);
   }
 
+  if (formType === 'request_payment_token') {
+    return handleRequestPaymentToken_(p);
+  }
+
+  if (formType === 'bootstrap_payment_secret') {
+    return handleBootstrapPaymentSecret_(p);
+  }
+
   if (formType === 'update_details') {
     return handleUpdateDetailsSubmission_(p);
+  }
+
+  if (formType === 'request_confirm_link') {
+    return handleRequestConfirmLink_(p);
   }
 
   return handleReferralSubmission_(p);
@@ -378,8 +448,18 @@ function doPost(e) {
 
 // Updates an EXISTING Leads Sitio row in place (found by phone) --
 // never appends. Used by /confirmar-datos/, where someone reviews and
-// corrects their own name/country/email.
+// corrects their own name/country/email. Same token requirement as
+// handlePaymentMethodSubmission_ -- reachable only via a link mailed
+// to the real email on file, whether this is someone's very first
+// confirmation or a later edit.
 function handleUpdateDetailsSubmission_(p) {
+  var phone = String(p.whatsapp || '').trim();
+  if (!verifyPaymentToken_(phone, p.token)) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: 'error', message: 'invalid_or_expired_token' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
   var leadsSheet = getSheet_().getSheetByName(LEADS_SHEET_NAME);
   if (!leadsSheet) {
     return ContentService
@@ -387,7 +467,6 @@ function handleUpdateDetailsSubmission_(p) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
-  var phone = String(p.whatsapp || '').trim();
   var email = String(p.email || '').trim().toLowerCase();
   var lead = findLeadByPhone_(phone);
   if (!lead.found) {
@@ -405,10 +484,22 @@ function handleUpdateDetailsSubmission_(p) {
   var nameCol = ensureColumn_(leadsSheet, map, META_NAME_HEADER);
   var countryCol = ensureColumn_(leadsSheet, map, META_COUNTRY_HEADER);
   var emailCol = ensureColumn_(leadsSheet, map, META_EMAIL_HEADER);
+  var idQuestionCol = ensureColumn_(leadsSheet, map, ID_QUESTION_HEADER);
+  var accentQuestionCol = ensureColumn_(leadsSheet, map, ACCENT_QUESTION_HEADER);
 
   leadsSheet.getRange(lead.rowNum, nameCol).setValue(String(p.name || '').trim());
-  leadsSheet.getRange(lead.rowNum, countryCol).setValue(String(p.country || '').trim());
   leadsSheet.getRange(lead.rowNum, emailCol).setValue(email);
+
+  // País/acento/identificación lock the moment they're first set --
+  // enforced here server-side, not just by disabling the fields on the
+  // confirmar-datos/ form. Once any of the three has a real value on
+  // file, whatever the client submits for it is ignored outright; this
+  // is also what makes a locked <select>/<radio> (excluded from
+  // FormData by the browser) safe to submit alongside them without
+  // accidentally blanking the stored answer.
+  if (!lead.country) leadsSheet.getRange(lead.rowNum, countryCol).setValue(String(p.country || '').trim());
+  if (!lead.idAnswer) leadsSheet.getRange(lead.rowNum, idQuestionCol).setValue(String(p.idAnswer || '').trim());
+  if (!lead.accentAnswer) leadsSheet.getRange(lead.rowNum, accentQuestionCol).setValue(String(p.accentAnswer || '').trim());
 
   return ContentService
     .createTextOutput(JSON.stringify({ result: 'success' }))
@@ -437,6 +528,37 @@ function findReferralByReferredPhone_(rawPhone) {
     if (stored && (stored === target || stored.slice(-10) === target.slice(-10))) return true;
   }
   return false;
+}
+
+// Called when someone lands on /registro/ via a referral link and edits
+// the phone number the referrer typed for them (a typo, wrong digit,
+// etc). The Referidos row the referrer already submitted still has the
+// OLD number in WhatsAppReferido -- without this, that row would never
+// line up with the corrected number in Leads Sitio, and whoever reviews
+// referrals for payout (by matching phone numbers) would see an orphan.
+// Best-effort: never let this block or fail a lead submission.
+function updateReferralReferredPhone_(oldPhone, newPhone) {
+  try {
+    var target = normalizePhone_(oldPhone);
+    if (!target) return;
+
+    var sheet = getSheet_().getSheetByName(REFERRALS_SHEET_NAME);
+    if (!sheet) return;
+
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return;
+
+    var phoneValues = sheet.getRange(2, 7, lastRow - 1, 1).getValues(); // G: WhatsAppReferido
+    for (var i = 0; i < phoneValues.length; i++) {
+      var stored = normalizePhone_(phoneValues[i][0]);
+      if (stored && (stored === target || stored.slice(-10) === target.slice(-10))) {
+        sheet.getRange(2 + i, 7).setValue(newPhone);
+        return;
+      }
+    }
+  } catch (e) {
+    // Swallow -- this is a best-effort sync, not core to the submission.
+  }
 }
 
 function handleReferralSubmission_(p) {
@@ -481,6 +603,126 @@ function handleReferralSubmission_(p) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+// ---------------------------------------------------------------------
+// Payment-method possession check.
+//
+// Until now, /metodo-pago/ trusted whatever phone number was typed
+// into the box, with nothing proving the submitter actually owns that
+// WhatsApp number -- and it upserts (overwrites) the existing payout
+// destination for that phone. Since phone numbers flow through this
+// system in plenty of non-secret ways (a referrer types someone
+// else's number into referral-form/, invite links carry ?phone= in
+// plain URLs), anyone who knows or guesses a real phone number could
+// silently redirect that person's referral bonus to their own
+// PayPal/Wise/Payoneer. This closes that: setting a payment method now
+// requires a short-lived, signed token that only ever reaches the
+// real lead's own email on file (GmailApp, not something a submitter
+// can forge or intercept without also controlling that inbox).
+//
+// The signing secret lives in Script Properties (getScriptProperties),
+// never in this source file -- this repo is public. handleBootstrap
+// PaymentSecret_ below is a one-time, first-write-wins setter: once
+// the property exists, every later call is a no-op, so it's safe to
+// leave deployed indefinitely instead of needing removal after use.
+// ---------------------------------------------------------------------
+
+var PAYMENT_TOKEN_PROP_ = 'PAYMENT_TOKEN_SECRET';
+var PAYMENT_TOKEN_TTL_MS_ = 15 * 60 * 1000; // 15 minutes -- reactive "confirm right now" links
+var WELCOME_TOKEN_TTL_MS_ = 7 * 24 * 60 * 60 * 1000; // 7 days -- a welcome email might sit unread a while
+
+function getPaymentTokenSecret_() {
+  return PropertiesService.getScriptProperties().getProperty(PAYMENT_TOKEN_PROP_);
+}
+
+function handleBootstrapPaymentSecret_(p) {
+  var props = PropertiesService.getScriptProperties();
+  if (!props.getProperty(PAYMENT_TOKEN_PROP_) && p.secret && String(p.secret).length >= 32) {
+    props.setProperty(PAYMENT_TOKEN_PROP_, String(p.secret));
+  }
+  return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function signPaymentToken_(phone, expiresAt) {
+  var secret = getPaymentTokenSecret_();
+  if (!secret) return null;
+  var payload = normalizePhone_(phone) + '|' + expiresAt;
+  var sig = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(payload, secret));
+  return Utilities.base64EncodeWebSafe(payload) + '.' + sig;
+}
+
+function verifyPaymentToken_(phone, token) {
+  if (!token || String(token).indexOf('.') === -1) return false;
+  var parts = String(token).split('.');
+  var payloadStr;
+  try {
+    payloadStr = Utilities.newBlob(Utilities.base64DecodeWebSafe(parts[0])).getDataAsString();
+  } catch (e) {
+    return false;
+  }
+  var bits = payloadStr.split('|');
+  if (bits.length !== 2 || bits[0] !== normalizePhone_(phone)) return false;
+  var expiresAt = Number(bits[1]);
+  if (!expiresAt || Date.now() > expiresAt) return false;
+  return signPaymentToken_(phone, expiresAt) === String(token);
+}
+
+// Sends the actual verification link -- never confirms whether a
+// phone is or isn't a real lead in the response (same reply either
+// way), so this can't be used to enumerate real phone numbers either.
+function handleRequestPaymentToken_(p) {
+  var phone = String(p.phone || '').trim();
+  var lead = findLeadByPhone_(phone);
+  if (lead.found && lead.email) {
+    var expiresAt = Date.now() + PAYMENT_TOKEN_TTL_MS_;
+    var token = signPaymentToken_(phone, expiresAt);
+    if (token) {
+      var link = 'https://vulcan-mode.github.io/spirelight/metodo-pago/?phone='
+        + encodeURIComponent(phone) + '&token=' + encodeURIComponent(token);
+      var greeting = lead.name ? ('¡Hola ' + lead.name + '!') : '¡Hola!';
+      var body = greeting + '\n\n'
+        + 'Alguien (probablemente tú) pidió actualizar el método de pago para el programa de referidos de Monólogos en Español. '
+        + 'Por seguridad, solo se puede hacer desde este enlace, válido por 15 minutos:\n\n'
+        + link + '\n\n'
+        + 'Si tú no pediste esto, ignora este correo -- nadie puede cambiar nada sin hacer clic aquí.\n\n'
+        + '-- Domingo';
+      GmailApp.sendEmail(lead.email, 'Confirma que eres tú -- método de pago', body);
+    }
+  }
+  return ContentService.createTextOutput(JSON.stringify({ result: 'sent' })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// Same token mechanism as handleRequestPaymentToken_ above (same
+// secret, same signing/verify functions) -- deliberately, so a token
+// issued from either page works on both. Someone who's just verified
+// their email to edit their info shouldn't have to check their inbox
+// again a minute later just to add a payment method; the emailed link
+// carries them into confirmar-datos/, and confirmar-datos/ passes the
+// same still-valid token along into metodo-pago/'s link.
+//
+// Looked up by EMAIL, not phone -- see findLeadByEmail_ for why that's
+// the safer identifier to gate this specific request on.
+function handleRequestConfirmLink_(p) {
+  var email = String(p.email || '').trim().toLowerCase();
+  var lead = findLeadByEmail_(email);
+  if (lead.found && lead.phone) {
+    var expiresAt = Date.now() + PAYMENT_TOKEN_TTL_MS_;
+    var token = signPaymentToken_(lead.phone, expiresAt);
+    if (token) {
+      var link = 'https://vulcan-mode.github.io/spirelight/confirmar-datos/?phone='
+        + encodeURIComponent(lead.phone) + '&token=' + encodeURIComponent(token);
+      var greeting = lead.name ? ('¡Hola ' + lead.name + '!') : '¡Hola!';
+      var body = greeting + '\n\n'
+        + 'Alguien (probablemente tú) pidió ver o editar tus datos del programa de referidos. '
+        + 'Por seguridad, solo se puede hacer desde este enlace, válido por 15 minutos:\n\n'
+        + link + '\n\n'
+        + 'Si tú no pediste esto, ignora este correo -- nadie puede cambiar nada sin hacer clic aquí.\n\n'
+        + '-- Domingo';
+      GmailApp.sendEmail(email, 'Confirma que eres tú -- tus datos', body);
+    }
+  }
+  return ContentService.createTextOutput(JSON.stringify({ result: 'sent' })).setMimeType(ContentService.MimeType.JSON);
+}
+
 // Upserts by phone (not a blind append) -- a payment method belongs to
 // the person, so resubmitting (e.g. switching from PayPal to Wise)
 // should update their one row, not pile up stale duplicates.
@@ -492,6 +734,12 @@ function handleReferralSubmission_(p) {
 var OTRO_ELIGIBLE_COUNTRIES_ = ['cuba', 'venezuela'];
 
 function handlePaymentMethodSubmission_(p) {
+  if (!verifyPaymentToken_(String(p.referrerWhatsapp || '').trim(), p.token)) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: 'error', message: 'invalid_or_expired_token' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
   var ss = getSheet_();
   var sheet = ss.getSheetByName(PAYMENT_METHODS_SHEET_NAME);
   if (!sheet) {
@@ -538,7 +786,17 @@ function handlePaymentMethodSubmission_(p) {
 // tonight. Backs /registro/index.html, the website intake form for
 // people who never went through the Facebook ad.
 var ID_QUESTION_HEADER = '¿tienes_una_identificación_oficial_válida_de_ese_país_(o_pasaporte_estadounidense_si_eres_de_puerto_rico)?';
-var FUENTE_HEADER = 'Fuente';
+// Same convention as ID_QUESTION_HEADER: the literal on-site question
+// text (with the "ese país" placeholder, not the actual selected
+// country) lowercased/underscored. This isn't collected via Meta's
+// form yet -- once it is, its header needs to match this exactly for
+// the two sources to line up in the same column instead of splitting
+// into two.
+var ACCENT_QUESTION_HEADER = '¿tu_acento_es_de_ese_país?';
+// Conforms to Meta's own Lead Ads column (fb/ig, lowercase) instead of
+// a separate custom header -- a website lead just gets "sitioweb" in
+// the same column, so there's one source-of-truth column, not two.
+var PLATFORM_HEADER = 'platform';
 
 function handleLeadSubmission_(p) {
   var leadsSheet = getSheet_().getSheetByName(LEADS_SHEET_NAME) || getSheet_().insertSheet(LEADS_SHEET_NAME);
@@ -548,6 +806,7 @@ function handleLeadSubmission_(p) {
   var country = String(p.country || '').trim();
   var email = String(p.email || '').trim().toLowerCase();
   var idAnswer = String(p.idAnswer || '').trim();
+  var accentAnswer = String(p.accentAnswer || '').trim();
 
   if (!phone) {
     return ContentService
@@ -591,7 +850,8 @@ function handleLeadSubmission_(p) {
   var phoneCol = ensureColumn_(leadsSheet, map, META_PHONE_HEADER);
   var emailCol = ensureColumn_(leadsSheet, map, META_EMAIL_HEADER);
   var idQuestionCol = ensureColumn_(leadsSheet, map, ID_QUESTION_HEADER);
-  var fuenteCol = ensureColumn_(leadsSheet, map, FUENTE_HEADER);
+  var accentQuestionCol = ensureColumn_(leadsSheet, map, ACCENT_QUESTION_HEADER);
+  var platformCol = ensureColumn_(leadsSheet, map, PLATFORM_HEADER);
   var estadoCol = ensureColumn_(leadsSheet, map, STATUS_HEADER);
   var sentCol = ensureColumn_(leadsSheet, map, EMAIL_SENT_HEADER);
   // Meta's own column, already there for Facebook leads -- this was
@@ -609,7 +869,8 @@ function handleLeadSubmission_(p) {
   leadsSheet.getRange(rowNum, phoneCol).setValue(phone);
   leadsSheet.getRange(rowNum, emailCol).setValue(email);
   leadsSheet.getRange(rowNum, idQuestionCol).setValue(idAnswer);
-  leadsSheet.getRange(rowNum, fuenteCol).setValue('Sitio web');
+  leadsSheet.getRange(rowNum, accentQuestionCol).setValue(accentAnswer);
+  leadsSheet.getRange(rowNum, platformCol).setValue('sitioweb');
   leadsSheet.getRange(rowNum, createdTimeCol).setValue(
     Utilities.formatDate(new Date(), 'America/Lima', "yyyy-MM-dd'T'HH:mm:ssXXX")
   );
@@ -618,6 +879,14 @@ function handleLeadSubmission_(p) {
   // right away instead of a stale "esperando" for up to an hour.
   leadsSheet.getRange(rowNum, estadoCol).setValue(isCountryActive_(country) ? 'activo' : 'esperando');
   leadsSheet.getRange(rowNum, sentCol).setValue(false);
+
+  // If they arrived via a referral link and corrected the phone number
+  // the referrer typed for them, keep the referrer's pending Referidos
+  // row pointing at the right number.
+  var correctedFromPhone = String(p.correctedFromPhone || '').trim();
+  if (correctedFromPhone && correctedFromPhone !== phone) {
+    updateReferralReferredPhone_(correctedFromPhone, phone);
+  }
 
   return ContentService
     .createTextOutput(JSON.stringify({ result: 'success' }))
@@ -799,10 +1068,10 @@ function sendBugFixApologyEmail_(name, email) {
     + 'Quiero ser directo contigo: cometí un error.\n\n'
     + 'Un problema técnico en mi sistema estaba marcando incorrectamente tu país como "todavía no activo", cuando en realidad ya está activo ahora mismo. '
     + 'Esto fue un error mío, y quiero que lo sepas de mi parte -- yo soy el único responsable de este proyecto de referidos y de este sitio, y esta vez me equivoqué.\n\n'
-    + 'La buena noticia: ya está corregido, y puedes aplicar a Spirelight hoy mismo.\n\n'
+    + 'La buena noticia: ya está corregido, y puedes aplicar a Spire Light hoy mismo.\n\n'
     + 'Esto es dinero sobre la mesa ahora mismo -- no hay razón para esperar ni un día más.\n\n'
     + 'Entra aquí con el mismo número de WhatsApp que usaste antes: https://vulcan-mode.github.io/spirelight/gracias/\n\n'
-    + 'Ahí vas a ver el video explicativo, cómo funciona todo, y el enlace directo para aplicar a Spirelight.\n\n'
+    + 'Ahí vas a ver el video explicativo, cómo funciona todo, y el enlace directo para aplicar a Spire Light.\n\n'
     + 'De nuevo, lamento mucho el error. Gracias por tu paciencia, y espero verte grabando pronto 🎙️\n\n'
     + '-- Domingo';
   GmailApp.sendEmail(email, subject, body);
@@ -874,9 +1143,12 @@ function sendWelcomeEmails() {
 function sendWelcomeEmail_(name, email, phone, country) {
   if (!email) return;
   var greeting = name ? ('¡Hola ' + name + '!') : '¡Hola!';
-  var confirmLink = 'https://vulcan-mode.github.io/spirelight/confirmar-datos/?phone=' + encodeURIComponent(normalizePhone_(phone));
+  var normalizedPhone = normalizePhone_(phone);
+  var confirmToken = signPaymentToken_(normalizedPhone, Date.now() + WELCOME_TOKEN_TTL_MS_);
+  var confirmLink = 'https://vulcan-mode.github.io/spirelight/confirmar-datos/?phone=' + encodeURIComponent(normalizedPhone)
+    + (confirmToken ? ('&token=' + encodeURIComponent(confirmToken)) : '');
   var isActive = isCountryActive_(country);
-  var subject = '¡Gracias por registrarte en Spirelight!'; // no emoji, see the note on sendActivationEmail_'s subject
+  var subject = '¡Gracias por registrarte en Spire Light!'; // no emoji, see the note on sendActivationEmail_'s subject
 
   var successGuideLink = 'https://vulcan-mode.github.io/spirelight/como-tener-exito/';
   var statusLine = isActive
@@ -884,7 +1156,7 @@ function sendWelcomeEmail_(name, email, phone, country) {
     : ('Tu país todavía no está activo. Te voy a avisar por correo automáticamente en cuanto se active -- no tienes que hacer nada más ni volver a escribir.');
 
   var body = greeting + '\n\n'
-    + 'Gracias por tu interés en el programa de grabación de voz de Spirelight.\n\n'
+    + 'Gracias por tu interés en el programa de grabación de voz de Spire Light.\n\n'
     + statusLine + '\n\n'
     + 'Antes de grabar, lee esto -- la mayoría de los rechazos son por el ambiente de grabación, no por la voz: ' + successGuideLink + '\n\n'
     + '¿Algún dato tuyo está mal (nombre, correo, país)? Corrígelo aquí: ' + confirmLink + '\n\n'
@@ -899,9 +1171,9 @@ function sendActivationEmail_(name, email) {
   // supplementary-plane emoji (like 🎙️) in the SUBJECT line specifically
   // into garbled "?????" characters; confirmed via a real sent email.
   // The body's emoji render fine, this is a subject-only quirk.
-  var subject = '¡Tu país ya está activo en Spirelight!';
+  var subject = '¡Tu país ya está activo en Spire Light!';
   var body = greeting + '\n\n'
-    + 'Buenas noticias: tu país ya está activo en el programa de grabación de voz de Spirelight.\n\n'
+    + 'Buenas noticias: tu país ya está activo en el programa de grabación de voz de Spire Light.\n\n'
     + 'Antes de aplicar, lee esto -- la mayoría de los rechazos son por el ambiente de grabación, no por la voz: '
     + 'https://vulcan-mode.github.io/spirelight/como-tener-exito/\n\n'
     + 'Aplica aquí para comenzar: ' + SIGNUP_LINK + '\n\n'
