@@ -272,6 +272,7 @@
 </head>
 <body>
   <script src="../assets/announcement-banner.js"></script>
+  <script src="../assets/toast.js"></script>
 
   <div class="card">
     <img class="logo" src="../assets/logo-monologos.png?v=2" alt="Monólogos en Español">
@@ -285,12 +286,6 @@
       <p class="intro">Escribe tu correo. Por seguridad, nadie puede ver ni cambiar tus datos sin hacer clic en un enlace que solo llega a tu propio correo.</p>
       <input type="email" id="emailInput" placeholder="tu@correo.com" autocomplete="email">
       <button type="button" id="emailContinueBtn">Enviarme el enlace de confirmación →</button>
-    </div>
-
-    <div id="checkEmailView" hidden>
-      <h1>Revisa tu correo 📩</h1>
-      <p class="intro">Si ese correo está en nuestro sistema, te enviamos un enlace de confirmación -- válido por 15 minutos.</p>
-      <button class="change-number-btn" id="checkEmailTryAnotherBtn" type="button">Usar otro correo</button>
     </div>
 
     <div id="expiredView" hidden>
@@ -309,6 +304,7 @@
       <div class="info-row"><span class="info-label">País</span><span class="info-value" id="infoCountry"></span></div>
       <div class="info-row"><span class="info-label">¿Acento?</span><span class="info-value" id="infoAccent"></span></div>
       <div class="info-row"><span class="info-label">¿Identificación?</span><span class="info-value" id="infoId"></span></div>
+      <div class="info-row"><span class="info-label">¿18 años o más?</span><span class="info-value" id="infoAge"></span></div>
 
       <button type="button" id="editBtn">✏️ Editar mis datos</button>
       <a class="apply-btn edit-btn" href="../gracias/" id="infoBackToGraciasLink">Ver mi estado →</a>
@@ -329,7 +325,7 @@
         </div>
         <div class="info-row"><span class="info-label">WhatsApp</span><span class="info-value" id="formPhone"></span></div>
 
-        <p class="both-required-note" id="bothRequiredNote">Tu país, acento e identificación no se pueden cambiar después de guardarlos.</p>
+        <p class="both-required-note" id="bothRequiredNote">Tu país, acento, identificación y edad no se pueden cambiar después de guardarlos.</p>
 
         <div class="edit-row">
           <span class="info-label">País</span>
@@ -382,11 +378,31 @@
           <p>Sin una identificación oficial válida no podemos aceptarte en el programa, sin excepciones. Por favor no continúes ni te unas al grupo de WhatsApp — nos ayuda a no perder tu tiempo ni el nuestro. Si más adelante obtienes tu identificación, puedes volver a corregir esto.</p>
         </div>
 
+        <label>¿Tiene por lo menos 18 años?</label>
+        <div class="radio-row">
+          <label class="radio-option" for="ageSi">
+            <input type="radio" id="ageSi" name="ageAnswer" value="sí" required> Sí
+          </label>
+          <label class="radio-option" for="ageNo">
+            <input type="radio" id="ageNo" name="ageAnswer" value="no" required> No
+          </label>
+        </div>
+
         <button type="submit" id="submitBtn">Guardar cambios</button>
         <p class="error" id="formErrorMsg">Algo salió mal. Por favor intenta de nuevo.</p>
       </form>
 
       <button class="change-number-btn" id="cancelEditBtn" type="button" hidden>Cancelar</button>
+    </div>
+
+    <!-- Under-18 is a harder stop than accent/ID -- not eligible for
+         Spirelight OR the referral program, so there's nothing left for
+         them here. Reached either by answering "No" live, or by an
+         existing lead (e.g. from Facebook) already having "No" on file. -->
+    <div id="underageView" hidden>
+      <h1>No puedes participar 🔒</h1>
+      <p class="intro">Este programa requiere tener 18 años o más, sin excepciones — esto incluye el programa de referidos. Gracias por tu interés.</p>
+      <a class="apply-btn" href="../">Ir a la página principal →</a>
     </div>
 
   </div>
@@ -400,7 +416,7 @@
   var isFirstTime = false;
 
   function show(viewId) {
-    ['loadingView', 'pickView', 'checkEmailView', 'expiredView', 'infoView', 'formView'].forEach(function (id) {
+    ['loadingView', 'pickView', 'expiredView', 'infoView', 'formView', 'underageView'].forEach(function (id) {
       document.getElementById(id).hidden = (id !== viewId);
     });
     // Shared heading stays in place across infoView/formView -- no text
@@ -508,14 +524,19 @@
   document.getElementById('accentSi').addEventListener('change', function () { noAccentWarning.hidden = true; });
   document.getElementById('accentNo').addEventListener('change', function () { noAccentWarning.hidden = false; });
 
-  // Locking these three once they're already on file is what makes the
+  // Under-18 is a harder stop than accent/ID -- not eligible for
+  // Spirelight OR the referral program, so there's nothing left for
+  // them here at all.
+  document.getElementById('ageNo').addEventListener('change', function () { show('underageView'); });
+
+  // Locking these four once they're already on file is what makes the
   // "no se pueden cambiar" warning actually true, not just a polite
   // request -- Code.gs refuses the write server-side regardless, but
   // disabling them here too means nobody sees an editable field that
   // secretly can't do anything.
   function setPermanentFieldsLocked(locked) {
     document.getElementById('country').disabled = locked;
-    ['accentSi', 'accentNo', 'idSi', 'idNo'].forEach(function (id) {
+    ['accentSi', 'accentNo', 'idSi', 'idNo', 'ageSi', 'ageNo'].forEach(function (id) {
       document.getElementById(id).disabled = locked;
     });
   }
@@ -548,6 +569,13 @@
           return;
         }
 
+        // Under-18 on file (e.g. from Facebook) -- same hard stop as
+        // answering "No" live, no need to render anything else first.
+        if (isNoAnswer(data.ageAnswer)) {
+          show('underageView');
+          return;
+        }
+
         cacheIdentity(phone, data.name, data.country);
 
         document.getElementById('fullName').value = data.name || '';
@@ -563,6 +591,7 @@
         if (isNoAnswer(data.accentAnswer)) { document.getElementById('accentNo').checked = true; noAccentWarning.hidden = false; }
         if (isYesAnswer(data.idAnswer)) document.getElementById('idSi').checked = true;
         if (isNoAnswer(data.idAnswer)) { document.getElementById('idNo').checked = true; noIdWarning.hidden = false; }
+        if (isYesAnswer(data.ageAnswer)) document.getElementById('ageSi').checked = true;
 
         document.getElementById('infoName').textContent = data.name || '—';
         document.getElementById('infoCountry').textContent = formatCountryDisplay(data.country);
@@ -571,10 +600,11 @@
         document.getElementById('formPhone').textContent = phone;
         document.getElementById('infoAccent').textContent = formatYesNo(data.accentAnswer);
         document.getElementById('infoId').textContent = formatYesNo(data.idAnswer);
+        document.getElementById('infoAge').textContent = formatYesNo(data.ageAnswer);
         document.getElementById('infoBackToGraciasLink').href = '../gracias/?phone=' + encodeURIComponent(phone);
         document.getElementById('paymentNudgeLink').href = '../metodo-pago/?phone=' + encodeURIComponent(phone) + '&token=' + encodeURIComponent(token);
 
-        isFirstTime = !(data.country && data.accentAnswer && data.idAnswer);
+        isFirstTime = !(data.country && data.accentAnswer && data.idAnswer && data.ageAnswer);
 
         if (isFirstTime) {
           // Nothing to lock in yet, nothing to look at -- straight into
@@ -596,35 +626,37 @@
       .catch(function () { show('expiredView'); });
   }
 
-  function requestConfirmLink(email) {
-    show('loadingView');
+  function requestConfirmLink(email, button) {
+    button.disabled = true;
+    var originalText = button.textContent;
+    button.textContent = 'Enviando...';
+
     var data = new FormData();
     data.append('formType', 'request_confirm_link');
     data.append('email', email);
 
     // Same reply either way, on purpose -- see handleRequestConfirmLink_
     // in Code.gs. This page can't be used to check whether an email is
-    // in the system.
-    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: data })
-      .then(function () { show('checkEmailView'); })
-      .catch(function () { show('checkEmailView'); });
+    // in the system. Toast instead of a separate screen, same as
+    // metodo-pago/ -- no reason to replace the whole page for this.
+    var done = function () {
+      showToast('📩 Revisa tu correo -- te enviamos un enlace de confirmación.');
+      button.disabled = false;
+      button.textContent = originalText;
+    };
+    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: data }).then(done).catch(done);
   }
 
   document.getElementById('emailContinueBtn').addEventListener('click', function () {
     var value = document.getElementById('emailInput').value.trim();
     if (!value) return;
-    requestConfirmLink(value);
-  });
-
-  document.getElementById('checkEmailTryAnotherBtn').addEventListener('click', function () {
-    document.getElementById('emailInput').value = '';
-    show('pickView');
+    requestConfirmLink(value, this);
   });
 
   document.getElementById('requestNewLinkBtn').addEventListener('click', function () {
     var value = document.getElementById('expiredEmailInput').value.trim();
     if (!value) return;
-    requestConfirmLink(value);
+    requestConfirmLink(value, this);
   });
 
   document.getElementById('editBtn').addEventListener('click', function () {
@@ -662,9 +694,9 @@
       .then(function () {
         // No separate "saved!" screen -- just close the edit form and
         // show the updated info directly, same as what they'd see if
-        // they reloaded the page. País/acento/identificación are absent
-        // from FormData entirely once locked (disabled fields don't
-        // submit) -- only touch those three display rows when this was
+        // they reloaded the page. País/acento/identificación/edad are
+        // absent from FormData entirely once locked (disabled fields
+        // don't submit) -- only touch those display rows when this was
         // the first-time save that actually set them.
         document.getElementById('infoName').textContent = data.get('name') || '—';
         document.getElementById('infoEmail').textContent = data.get('email') || '—';
@@ -672,6 +704,7 @@
           document.getElementById('infoCountry').textContent = formatCountryDisplay(data.get('country'));
           document.getElementById('infoAccent').textContent = formatYesNo(data.get('accentAnswer'));
           document.getElementById('infoId').textContent = formatYesNo(data.get('idAnswer'));
+          document.getElementById('infoAge').textContent = formatYesNo(data.get('ageAnswer'));
         }
         cacheIdentity(currentPhone, data.get('name'), data.get('country'));
         submitBtn.disabled = false;
@@ -693,6 +726,16 @@
   var urlParams = new URLSearchParams(window.location.search);
   var phoneFromUrl = urlParams.get('phone');
   var tokenFromUrl = urlParams.get('token');
+  var toastFromUrl = urlParams.get('toast');
+
+  // Landed here from another page (metodo-pago/'s save redirect) with
+  // a message to show -- once, not on every later reload of this URL.
+  if (toastFromUrl) {
+    showToast(toastFromUrl);
+    var cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete('toast');
+    window.history.replaceState({}, '', cleanUrl);
+  }
 
   if (phoneFromUrl && tokenFromUrl) {
     if (tokenLooksExpired(tokenFromUrl)) {

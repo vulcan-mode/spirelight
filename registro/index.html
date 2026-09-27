@@ -29,6 +29,74 @@
     align-items: center;
     padding: 40px 16px;
   }
+  .site-header {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 4px 4px 28px;
+    position: relative;
+  }
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+  .nav-link {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--navy);
+    text-decoration: none;
+    padding-bottom: 3px;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+  .nav-link:hover, .nav-link.active { color: var(--blue-deep); border-bottom-color: var(--blue); }
+  .nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 26px;
+    line-height: 1;
+    color: var(--navy);
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  .nav-overlay { display: none; }
+  @media (max-width: 800px) {
+    .nav-toggle { display: block; }
+    .site-nav {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: 250px;
+      max-width: 78vw;
+      background: #ffffff;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 22px;
+      padding: 84px 28px 28px;
+      box-shadow: -12px 0 32px rgba(13, 58, 102, 0.18);
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+      z-index: 50;
+    }
+    .site-nav.open { transform: translateX(0); }
+    .nav-overlay {
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 58, 102, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 40;
+    }
+    .nav-overlay.open { opacity: 1; pointer-events: auto; }
+  }
   .card {
     width: 100%;
     max-width: 560px;
@@ -124,7 +192,8 @@
     0% { opacity: 0; transform: translateY(3px) scale(0.97); }
     100% { opacity: 1; transform: translateY(0) scale(1); }
   }
-  button {
+  button, .btn-link {
+    display: block;
     width: 100%;
     margin-top: 26px;
     padding: 15px;
@@ -135,6 +204,9 @@
     font-family: 'Sora', system-ui, sans-serif;
     font-weight: 800;
     font-size: 16px;
+    text-decoration: none;
+    text-align: center;
+    box-sizing: border-box;
     cursor: pointer;
   }
   button:disabled { opacity: 0.6; cursor: default; }
@@ -170,6 +242,21 @@
 </head>
 <body>
   <script src="../assets/announcement-banner.js"></script>
+  <header class="site-header">
+    <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
+    <nav class="site-nav" id="siteNav">
+      <a class="nav-link" href="../">Inicio</a>
+      <a class="nav-link active" href="../registro/" id="navRegistroLink">Regístrate</a>
+      <a class="nav-link" href="../referral-form/">Formulario de referidos</a>
+      <a class="nav-link" href="../mis-referidos/">Mis referidos</a>
+      <a class="nav-link" href="../como-funciona/">Cómo funciona</a>
+      <a class="nav-link" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">Empezar</a>
+      <a class="nav-link" href="../privacidad/">Privacidad</a>
+    </nav>
+  </header>
+  <div class="nav-overlay" id="navOverlay"></div>
+  <script src="../assets/nav-identity.js"></script>
+
   <div class="card">
     <img class="logo" src="../assets/logo-monologos.png?v=2" alt="Monólogos en Español">
 
@@ -217,7 +304,7 @@
         <label for="fullName">Tu nombre completo</label>
         <input id="fullName" name="name" type="text" required autocomplete="name">
 
-        <p class="both-required-note">Tu país, acento e identificación no se pueden cambiar después de enviarlos.</p>
+        <p class="both-required-note">Tu país, acento, identificación y edad no se pueden cambiar después de enviarlos.</p>
 
         <label for="country">Tu país</label>
         <select id="country" name="country" required>
@@ -271,12 +358,30 @@
           <p>Sin una identificación oficial válida no podemos aceptarte en el programa, sin excepciones. Por favor no continúes el registro ni te unas al grupo de WhatsApp — nos ayuda a no perder tu tiempo ni el nuestro. Si más adelante obtienes tu identificación, puedes volver a registrarte.</p>
         </div>
 
+        <label>¿Tiene por lo menos 18 años?</label>
+        <div class="radio-row">
+          <label class="radio-option" for="ageSi">
+            <input type="radio" id="ageSi" name="ageAnswer" value="sí" required> Sí
+          </label>
+          <label class="radio-option" for="ageNo">
+            <input type="radio" id="ageNo" name="ageAnswer" value="no" required> No
+          </label>
+        </div>
         <label for="email">Correo electrónico</label>
         <input id="email" name="email" type="email" autocomplete="email" required>
 
         <button type="submit" id="submitBtn">Continuar →</button>
         <p class="error" id="formErrorMsg">Algo salió mal. Por favor intenta de nuevo.</p>
       </form>
+    </div>
+
+    <!-- Under-18 is a harder stop than accent/ID -- no self-correction
+         button, no rest-of-form left visible, just out. If it was a
+         misclick they can just reload and start over. -->
+    <div id="underageView" hidden>
+      <h1>No puedes participar 🔒</h1>
+      <p class="intro">Este programa requiere tener 18 años o más, sin excepciones — esto incluye el programa de referidos. Gracias por tu interés.</p>
+      <a class="btn-link" href="../">Ir a la página principal →</a>
     </div>
   </div>
 
@@ -289,7 +394,7 @@
   var GRACIAS_PHONE_CACHE_KEY = 'spirelight_gracias_phone';
 
   function show(viewId) {
-    ['checkingView', 'phoneView', 'formView'].forEach(function (id) {
+    ['checkingView', 'phoneView', 'formView', 'underageView'].forEach(function (id) {
       document.getElementById(id).hidden = (id !== viewId);
     });
   }
@@ -468,6 +573,11 @@
   document.getElementById('accentSi').addEventListener('change', function () { noAccentWarning.hidden = true; });
   document.getElementById('accentNo').addEventListener('change', function () { noAccentWarning.hidden = false; });
 
+  // Under-18 is a harder stop than accent/ID -- not eligible for
+  // Spirelight OR the referral program, so there's nothing left for
+  // them here at all. Straight out, nothing submitted.
+  document.getElementById('ageNo').addEventListener('change', function () { show('underageView'); });
+
   form.addEventListener('submit', function (event) {
     event.preventDefault();
     formErrorMsg.style.display = 'none';
@@ -521,6 +631,20 @@
   } else {
     show('phoneView');
   }
+</script>
+<script>
+  (function () {
+    var toggle = document.getElementById('navToggle');
+    var nav = document.getElementById('siteNav');
+    var overlay = document.getElementById('navOverlay');
+    function closeNav() { nav.classList.remove('open'); overlay.classList.remove('open'); }
+    toggle.addEventListener('click', function () {
+      nav.classList.toggle('open');
+      overlay.classList.toggle('open');
+    });
+    overlay.addEventListener('click', closeNav);
+    nav.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', closeNav); });
+  })();
 </script>
 </body>
 </html>

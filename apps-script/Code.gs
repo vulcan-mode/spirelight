@@ -299,6 +299,7 @@ function findLeadByPhone_(rawPhone) {
   var emailCol = map[META_EMAIL_HEADER];
   var idQuestionCol = map[ID_QUESTION_HEADER];
   var accentQuestionCol = map[ACCENT_QUESTION_HEADER];
+  var ageQuestionCol = map[AGE_QUESTION_HEADER];
   if (!phoneCol || !countryCol) return { found: false };
 
   var lastRow = sheet.getLastRow();
@@ -311,6 +312,7 @@ function findLeadByPhone_(rawPhone) {
   var emailValues = emailCol ? sheet.getRange(2, emailCol, numRows, 1).getValues() : null;
   var idAnswerValues = idQuestionCol ? sheet.getRange(2, idQuestionCol, numRows, 1).getValues() : null;
   var accentAnswerValues = accentQuestionCol ? sheet.getRange(2, accentQuestionCol, numRows, 1).getValues() : null;
+  var ageAnswerValues = ageQuestionCol ? sheet.getRange(2, ageQuestionCol, numRows, 1).getValues() : null;
 
   for (var i = 0; i < numRows; i++) {
     // Compare on a suffix match too (last 10 digits) so a stored
@@ -325,7 +327,8 @@ function findLeadByPhone_(rawPhone) {
         name: nameValues ? String(nameValues[i][0] || '').trim() : '',
         email: emailValues ? String(emailValues[i][0] || '').trim() : '',
         idAnswer: idAnswerValues ? String(idAnswerValues[i][0] || '').trim() : '',
-        accentAnswer: accentAnswerValues ? String(accentAnswerValues[i][0] || '').trim() : ''
+        accentAnswer: accentAnswerValues ? String(accentAnswerValues[i][0] || '').trim() : '',
+        ageAnswer: ageAnswerValues ? String(ageAnswerValues[i][0] || '').trim() : ''
       };
     }
   }
@@ -486,13 +489,14 @@ function handleUpdateDetailsSubmission_(p) {
   var emailCol = ensureColumn_(leadsSheet, map, META_EMAIL_HEADER);
   var idQuestionCol = ensureColumn_(leadsSheet, map, ID_QUESTION_HEADER);
   var accentQuestionCol = ensureColumn_(leadsSheet, map, ACCENT_QUESTION_HEADER);
+  var ageQuestionCol = ensureColumn_(leadsSheet, map, AGE_QUESTION_HEADER);
 
   leadsSheet.getRange(lead.rowNum, nameCol).setValue(String(p.name || '').trim());
   leadsSheet.getRange(lead.rowNum, emailCol).setValue(email);
 
-  // País/acento/identificación lock the moment they're first set --
+  // País/acento/identificación/edad lock the moment they're first set --
   // enforced here server-side, not just by disabling the fields on the
-  // confirmar-datos/ form. Once any of the three has a real value on
+  // confirmar-datos/ form. Once any of the four has a real value on
   // file, whatever the client submits for it is ignored outright; this
   // is also what makes a locked <select>/<radio> (excluded from
   // FormData by the browser) safe to submit alongside them without
@@ -500,6 +504,7 @@ function handleUpdateDetailsSubmission_(p) {
   if (!lead.country) leadsSheet.getRange(lead.rowNum, countryCol).setValue(String(p.country || '').trim());
   if (!lead.idAnswer) leadsSheet.getRange(lead.rowNum, idQuestionCol).setValue(String(p.idAnswer || '').trim());
   if (!lead.accentAnswer) leadsSheet.getRange(lead.rowNum, accentQuestionCol).setValue(String(p.accentAnswer || '').trim());
+  if (!lead.ageAnswer) leadsSheet.getRange(lead.rowNum, ageQuestionCol).setValue(String(p.ageAnswer || '').trim());
 
   return ContentService
     .createTextOutput(JSON.stringify({ result: 'success' }))
@@ -797,6 +802,11 @@ var ID_QUESTION_HEADER = '¿tienes_una_identificación_oficial_válida_de_ese_pa
 // the two sources to line up in the same column instead of splitting
 // into two.
 var ACCENT_QUESTION_HEADER = '¿tu_acento_es_de_ese_país?';
+// Same convention -- a fourth permanent eligibility question, same
+// tier as country/accent/ID. Being added to the Facebook ad as
+// "¿Tiene por lo menos 18 años?" (final wording, confirmed for the ad) so this header matches Meta's own
+// slugification of that exact text.
+var AGE_QUESTION_HEADER = '¿tiene_por_lo_menos_18_años?';
 // Conforms to Meta's own Lead Ads column (fb/ig, lowercase) instead of
 // a separate custom header -- a website lead just gets "sitioweb" in
 // the same column, so there's one source-of-truth column, not two.
@@ -811,6 +821,7 @@ function handleLeadSubmission_(p) {
   var email = String(p.email || '').trim().toLowerCase();
   var idAnswer = String(p.idAnswer || '').trim();
   var accentAnswer = String(p.accentAnswer || '').trim();
+  var ageAnswer = String(p.ageAnswer || '').trim();
 
   if (!phone) {
     return ContentService
@@ -855,6 +866,7 @@ function handleLeadSubmission_(p) {
   var emailCol = ensureColumn_(leadsSheet, map, META_EMAIL_HEADER);
   var idQuestionCol = ensureColumn_(leadsSheet, map, ID_QUESTION_HEADER);
   var accentQuestionCol = ensureColumn_(leadsSheet, map, ACCENT_QUESTION_HEADER);
+  var ageQuestionCol = ensureColumn_(leadsSheet, map, AGE_QUESTION_HEADER);
   var platformCol = ensureColumn_(leadsSheet, map, PLATFORM_HEADER);
   var estadoCol = ensureColumn_(leadsSheet, map, STATUS_HEADER);
   var sentCol = ensureColumn_(leadsSheet, map, EMAIL_SENT_HEADER);
@@ -874,6 +886,7 @@ function handleLeadSubmission_(p) {
   leadsSheet.getRange(rowNum, emailCol).setValue(email);
   leadsSheet.getRange(rowNum, idQuestionCol).setValue(idAnswer);
   leadsSheet.getRange(rowNum, accentQuestionCol).setValue(accentAnswer);
+  leadsSheet.getRange(rowNum, ageQuestionCol).setValue(ageAnswer);
   leadsSheet.getRange(rowNum, platformCol).setValue('sitioweb');
   leadsSheet.getRange(rowNum, createdTimeCol).setValue(
     Utilities.formatDate(new Date(), 'America/Lima', "yyyy-MM-dd'T'HH:mm:ssXXX")

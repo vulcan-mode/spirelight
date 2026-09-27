@@ -32,6 +32,74 @@
     align-items: center;
     padding: 40px 16px;
   }
+  .site-header {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 4px 4px 28px;
+    position: relative;
+  }
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+  .nav-link {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--navy);
+    text-decoration: none;
+    padding-bottom: 3px;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+  .nav-link:hover, .nav-link.active { color: var(--blue-deep); border-bottom-color: var(--blue); }
+  .nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 26px;
+    line-height: 1;
+    color: var(--navy);
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  .nav-overlay { display: none; }
+  @media (max-width: 800px) {
+    .nav-toggle { display: block; }
+    .site-nav {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: 250px;
+      max-width: 78vw;
+      background: #ffffff;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 22px;
+      padding: 84px 28px 28px;
+      box-shadow: -12px 0 32px rgba(13, 58, 102, 0.18);
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+      z-index: 50;
+    }
+    .site-nav.open { transform: translateX(0); }
+    .nav-overlay {
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 58, 102, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 40;
+    }
+    .nav-overlay.open { opacity: 1; pointer-events: auto; }
+  }
   .card {
     width: 100%;
     max-width: 560px;
@@ -147,6 +215,21 @@
 </head>
 <body>
   <script src="../assets/announcement-banner.js"></script>
+  <script src="../assets/toast.js"></script>
+  <header class="site-header">
+    <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
+    <nav class="site-nav" id="siteNav">
+      <a class="nav-link" href="../">Inicio</a>
+      <a class="nav-link" href="../registro/" id="navRegistroLink">Regístrate</a>
+      <a class="nav-link" href="../referral-form/">Formulario de referidos</a>
+      <a class="nav-link" href="../mis-referidos/">Mis referidos</a>
+      <a class="nav-link" href="../como-funciona/">Cómo funciona</a>
+      <a class="nav-link" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">Empezar</a>
+      <a class="nav-link" href="../privacidad/">Privacidad</a>
+    </nav>
+  </header>
+  <div class="nav-overlay" id="navOverlay"></div>
+  <script src="../assets/nav-identity.js"></script>
 
   <div class="card">
     <img class="logo" src="../assets/logo-monologos.png?v=2" alt="Monólogos en Español">
@@ -160,12 +243,6 @@
       <p class="intro">Escribe tu correo. Por seguridad, nadie puede ver ni cambiar tu método de pago sin hacer clic en un enlace que solo llega a tu propio correo -- nunca con solo tu número.</p>
       <input type="email" id="emailInput" placeholder="tu@correo.com" autocomplete="email">
       <button type="button" id="emailContinueBtn">Enviarme el enlace de confirmación →</button>
-    </div>
-
-    <div id="checkEmailView" hidden>
-      <h1>Revisa tu correo 📩</h1>
-      <p class="intro">Si ese correo está en nuestro sistema, te enviamos un enlace de confirmación -- válido por 15 minutos. Haz clic ahí para registrar tu método de pago.</p>
-      <button class="change-number-btn" id="checkEmailTryAnotherBtn" type="button">Usar otro correo</button>
     </div>
 
     <div id="expiredView" hidden>
@@ -202,11 +279,6 @@
       </form>
     </div>
 
-    <div id="successView" class="success" hidden>
-      <h2>¡Listo! ✅</h2>
-      <p>Guardamos tu método de pago. Puedes volver a esta página cuando quieras para actualizarlo.</p>
-    </div>
-
     <div id="unknownView" hidden>
       <h1>Algo salió mal</h1>
       <p class="intro">Intenta de nuevo en un momento, o escríbeme directamente por WhatsApp.</p>
@@ -233,7 +305,7 @@
   }
 
   function show(viewId) {
-    ['loadingView', 'pickView', 'checkEmailView', 'expiredView', 'formView', 'successView', 'unknownView'].forEach(function (id) {
+    ['loadingView', 'pickView', 'expiredView', 'formView', 'unknownView'].forEach(function (id) {
       document.getElementById(id).hidden = (id !== viewId);
     });
   }
@@ -341,8 +413,11 @@
   // Keyed by email, not phone -- same reasoning as confirmar-datos/:
   // nobody's email ever gets typed by another user anywhere in this
   // system, unlike phone numbers.
-  function requestToken(email) {
-    show('loadingView');
+  function requestToken(email, button) {
+    button.disabled = true;
+    var originalText = button.textContent;
+    button.textContent = 'Enviando...';
+
     var data = new FormData();
     data.append('formType', 'request_payment_token');
     data.append('email', email);
@@ -350,26 +425,26 @@
     // Same reply either way (see handleRequestPaymentToken_ in Code.gs)
     // -- this page can't tell you whether that email was actually
     // found, on purpose, so it can't be used to enumerate real accounts.
-    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: data })
-      .then(function () { show('checkEmailView'); })
-      .catch(function () { show('checkEmailView'); });
+    // Toast instead of a whole separate screen: nothing about "we sent
+    // an email" needs to replace the page you were just looking at.
+    var done = function () {
+      showToast('📩 Revisa tu correo -- te enviamos un enlace de confirmación.');
+      button.disabled = false;
+      button.textContent = originalText;
+    };
+    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: data }).then(done).catch(done);
   }
 
   document.getElementById('emailContinueBtn').addEventListener('click', function () {
     var value = document.getElementById('emailInput').value.trim();
     if (!value) return;
-    requestToken(value);
-  });
-
-  document.getElementById('checkEmailTryAnotherBtn').addEventListener('click', function () {
-    document.getElementById('emailInput').value = '';
-    show('pickView');
+    requestToken(value, this);
   });
 
   document.getElementById('requestNewLinkBtn').addEventListener('click', function () {
     var value = document.getElementById('expiredEmailInput').value.trim();
     if (!value) return;
-    requestToken(value);
+    requestToken(value, this);
   });
 
   document.getElementById('tryAgainBtn').addEventListener('click', function () {
@@ -406,7 +481,13 @@
     // (expired mid-submit, tampered, etc), Code.gs still refuses the
     // write; this just can't show that specific failure here.
     fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: data })
-      .then(function () { show('successView'); })
+      .then(function () {
+        // No dead-end success screen -- land back on "Tus datos" (same
+        // still-valid token, no second email check) with a toast, so
+        // there's actually somewhere to go from here.
+        window.location.href = '../confirmar-datos/?phone=' + encodeURIComponent(currentPhone)
+          + '&token=' + encodeURIComponent(currentToken) + '&toast=' + encodeURIComponent('✅ Guardamos tu método de pago.');
+      })
       .catch(function () {
         formErrorMsg.style.display = 'block';
         submitBtn.disabled = false;
@@ -431,6 +512,20 @@
     // confirmar-datos/, the only way in is a link mailed to a real inbox.
     show('pickView');
   }
+</script>
+<script>
+  (function () {
+    var toggle = document.getElementById('navToggle');
+    var nav = document.getElementById('siteNav');
+    var overlay = document.getElementById('navOverlay');
+    function closeNav() { nav.classList.remove('open'); overlay.classList.remove('open'); }
+    toggle.addEventListener('click', function () {
+      nav.classList.toggle('open');
+      overlay.classList.toggle('open');
+    });
+    overlay.addEventListener('click', closeNav);
+    nav.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', closeNav); });
+  })();
 </script>
 </body>
 </html>
