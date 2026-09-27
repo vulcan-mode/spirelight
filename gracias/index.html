@@ -483,19 +483,6 @@
   .edit-row select { cursor: pointer; }
   .edit-row input:focus, .edit-row select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(30,136,229,0.15); }
   .edit-row select:disabled { opacity: 0.55; cursor: default; }
-  .edit-mode-banner {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: -4px 0 16px;
-    padding: 10px 14px;
-    border-radius: 12px;
-    background: var(--amber-bg);
-    color: var(--amber-text);
-    font-weight: 700;
-    font-size: 13.5px;
-    text-align: left;
-  }
   .secondary-btn {
     background: none;
     color: var(--blue-deep);
@@ -579,7 +566,6 @@
          different lock state and button label -- not two pages. -->
     <div id="formView" hidden>
       <h1 id="formHeading">¡Empecemos! 🎙️</h1>
-      <div class="edit-mode-banner" id="editModeBanner" hidden><span>✏️</span><span>Estás editando tu información -- toca cualquier campo para cambiarlo.</span></div>
       <form id="detailsForm">
         <div class="edit-row">
           <span class="info-label">Nombre</span>
@@ -1045,7 +1031,6 @@
 
         if (isFirstTime) {
           document.getElementById('formHeading').textContent = '¡Empecemos! 🎙️';
-          document.getElementById('editModeBanner').hidden = true;
           document.getElementById('bothRequiredNote').hidden = false;
           document.getElementById('cancelEditBtn').hidden = true;
           document.getElementById('submitBtn').textContent = 'Se ve bien →';
@@ -1055,7 +1040,6 @@
           // NOW, even though formView isn't shown yet, so it's already
           // correct by the time "Editar mis datos" reveals it later.
           document.getElementById('formHeading').textContent = 'Mis datos ✏️';
-          document.getElementById('editModeBanner').hidden = true;
           document.getElementById('bothRequiredNote').hidden = true;
           document.getElementById('submitBtn').textContent = 'Guardar cambios';
           renderStatus(data);
@@ -1095,7 +1079,6 @@
   document.getElementById('editMyDataBtn').addEventListener('click', function () {
     document.getElementById('submitBtn').textContent = 'Guardar cambios';
     document.getElementById('cancelEditBtn').hidden = false;
-    document.getElementById('editModeBanner').hidden = false;
     show('formView');
   });
 
