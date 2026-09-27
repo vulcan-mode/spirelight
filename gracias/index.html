@@ -619,7 +619,7 @@
             <label class="radio-option" for="accentNo"><input type="radio" id="accentNo" name="accentAnswer" value="no" required> No</label>
           </div>
         </div>
-        <div class="info-row" id="accentReadRow" hidden><span class="info-label">Acento</span><span class="info-value" id="accentReadValue"></span></div>
+        <div class="info-row" id="accentReadRow" hidden><span class="info-label" id="accentReadLabel">Acento</span><span class="info-value" id="accentReadValue"></span></div>
 
         <div id="idEditRow">
           <label>¿Identificación <span id="idCountryName" class="country-fill">de ese país</span> válida<span id="idPRClause" hidden> (o pasaporte estadounidense)</span>?</label>
@@ -628,7 +628,7 @@
             <label class="radio-option" for="idNo"><input type="radio" id="idNo" name="idAnswer" value="no" required> No</label>
           </div>
         </div>
-        <div class="info-row" id="idReadRow" hidden><span class="info-label">Identificación</span><span class="info-value" id="idReadValue"></span></div>
+        <div class="info-row" id="idReadRow" hidden><span class="info-label" id="idReadLabel">Identificación</span><span class="info-value" id="idReadValue"></span></div>
 
         <div id="ageEditRow">
           <label>¿Tiene por lo menos 18 años?</label>
@@ -896,6 +896,12 @@
       [accentEl, idEl].forEach(function (el) { void el.offsetWidth; el.classList.add('filled'); });
     }
     prClause.hidden = (value !== 'puerto_rico');
+
+    // Same touch once these lock into read-only rows -- "Acento
+    // argentino" reads better than the generic "Acento" once the
+    // question itself is gone.
+    document.getElementById('accentReadLabel').textContent = demonym ? ('Acento ' + demonym.m) : 'Acento';
+    document.getElementById('idReadLabel').textContent = demonym ? ('Identificación ' + demonym.f) : 'Identificación';
   }
   document.getElementById('country').addEventListener('change', updateCountryDependentText);
 
