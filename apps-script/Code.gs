@@ -684,8 +684,8 @@ function handleRequestPaymentToken_(p) {
         + encodeURIComponent(lead.phone) + '&token=' + encodeURIComponent(token);
       var greeting = lead.name ? ('¡Hola ' + lead.name + '!') : '¡Hola!';
       var body = greeting + '\n\n'
-        + 'Alguien (probablemente tú) pidió actualizar el método de pago para el programa de referidos de Monólogos en Español. '
-        + 'Por seguridad, solo se puede hacer desde este enlace, válido por 15 minutos:\n\n'
+        + 'Pediste actualizar tu método de pago para el programa de referidos de Monólogos en Español. '
+        + 'Este enlace confirma que eres tú -- es válido por 15 minutos:\n\n'
         + link + '\n\n'
         + 'Si tú no pediste esto, ignora este correo -- nadie puede cambiar nada sin hacer clic aquí.\n\n'
         + '-- Domingo';
@@ -716,8 +716,8 @@ function handleRequestConfirmLink_(p) {
         + encodeURIComponent(lead.phone) + '&token=' + encodeURIComponent(token);
       var greeting = lead.name ? ('¡Hola ' + lead.name + '!') : '¡Hola!';
       var body = greeting + '\n\n'
-        + 'Alguien (probablemente tú) pidió ver o editar tus datos del programa de referidos. '
-        + 'Por seguridad, solo se puede hacer desde este enlace, válido por 15 minutos:\n\n'
+        + 'Pediste ver o editar tus datos del programa de referidos. '
+        + 'Este enlace confirma que eres tú -- es válido por 15 minutos:\n\n'
         + link + '\n\n'
         + 'Si tú no pediste esto, ignora este correo -- nadie puede cambiar nada sin hacer clic aquí.\n\n'
         + '-- Domingo';
