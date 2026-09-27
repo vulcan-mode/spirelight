@@ -5,8 +5,12 @@
 // the cached phone so they never have to type it again just to look at
 // or fix their own info.
 (function () {
-  var link = document.getElementById('navRegistroLink');
-  if (!link) return;
+  // Two copies of this link can exist now -- one always-inline at
+  // medium+ widths, one inside the hamburger drawer -- so every match
+  // needs the swap, not just the first (getElementById would silently
+  // miss the second one and leave it saying the wrong thing).
+  var links = document.querySelectorAll('.nav-registro-link');
+  if (!links.length) return;
 
   var identity;
   try {
@@ -17,7 +21,9 @@
   }
 
   if (identity && identity.phone) {
-    link.textContent = 'Mis datos';
-    link.href = '../gracias/?phone=' + encodeURIComponent(identity.phone);
+    links.forEach(function (link) {
+      link.textContent = 'Mis datos';
+      link.href = '../gracias/?phone=' + encodeURIComponent(identity.phone);
+    });
   }
 })();

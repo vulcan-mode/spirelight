@@ -30,21 +30,62 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 40px 16px;
+    padding: 0 16px 40px;
   }
   .site-header {
-    width: 100%;
-    max-width: 560px;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    margin-bottom: 40px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 2px 14px rgba(13, 58, 102, 0.06);
+    box-sizing: border-box;
+  }
+  .site-header-inner {
+    max-width: 1040px;
+    margin: 0 auto;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    padding: 4px 4px 28px;
+    gap: 16px;
+    padding: 11px 20px;
+    box-sizing: border-box;
     position: relative;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    margin-right: auto;
+    min-width: 0;
+  }
+  .brand-logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    display: block;
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(13, 58, 102, 0.18);
+  }
+  .brand-name {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--navy);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .nav-main-inline {
+    display: none;
+    align-items: center;
+    gap: 20px;
   }
   .site-nav {
     display: flex;
     align-items: center;
-    gap: 28px;
+    gap: 24px;
   }
   .nav-link {
     font-family: 'Manrope', system-ui, sans-serif;
@@ -58,25 +99,27 @@
   }
   .nav-link:hover, .nav-link.active { color: var(--blue-deep); border-bottom-color: var(--blue); }
   .nav-toggle {
-    display: none;
+    display: block;
+    width: auto;
     background: none;
     border: none;
-    font-size: 26px;
+    font-size: 30px;
     line-height: 1;
     color: var(--navy);
     cursor: pointer;
-    padding: 4px 8px;
+    padding: 4px 6px;
+    flex-shrink: 0;
   }
   .nav-overlay { display: none; }
-  @media (max-width: 800px) {
-    .nav-toggle { display: block; }
+  /* Mobile & medium: #siteNav is a slide-out drawer, not an inline row. */
+  @media (max-width: 899px) {
     .site-nav {
       position: fixed;
       top: 0;
       right: 0;
       height: 100vh;
-      width: 250px;
-      max-width: 78vw;
+      width: 260px;
+      max-width: 80vw;
       background: #ffffff;
       flex-direction: column;
       align-items: flex-start;
@@ -100,6 +143,21 @@
     }
     .nav-overlay.open { opacity: 1; pointer-events: auto; }
   }
+  /* Mobile only: hide the brand name and the medium tier's inline main
+     links to keep the bar compact -- everything lives in the drawer. */
+  @media (max-width: 600px) {
+    .brand-name { display: none; }
+  }
+  /* Medium: the main items escape the drawer and sit inline; the drawer
+     (opened via the hamburger) still holds everything, including a
+     harmless second copy of those same main items. */
+  @media (min-width: 601px) and (max-width: 899px) {
+    .nav-main-inline { display: flex; }
+  }
+  /* Desktop: room for everything inline, no hamburger, no drawer. */
+  @media (min-width: 900px) {
+    .nav-toggle { display: none; }
+  }
   .card {
     width: 100%;
     max-width: 560px;
@@ -108,14 +166,6 @@
     border-radius: 24px;
     padding: 36px 32px;
     box-shadow: 0 20px 50px rgba(13, 58, 102, 0.12);
-  }
-  .logo {
-    display: block;
-    width: 132px;
-    height: 132px;
-    border-radius: 28px;
-    margin: 0 auto 20px;
-    box-shadow: 0 14px 32px rgba(13, 58, 102, 0.22);
   }
   h1 {
     font-family: 'Sora', system-ui, sans-serif;
@@ -217,22 +267,31 @@
   <script src="../assets/announcement-banner.js"></script>
   <script src="../assets/toast.js"></script>
   <header class="site-header">
-    <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
-    <nav class="site-nav" id="siteNav">
-      <a class="nav-link" href="../">Inicio</a>
-      <a class="nav-link" href="../registro/" id="navRegistroLink">Regístrate</a>
-      <a class="nav-link" href="../referral-form/">Formulario de referidos</a>
-      <a class="nav-link" href="../mis-referidos/">Mis referidos</a>
-      <a class="nav-link" href="../como-funciona/">Cómo funciona</a>
-      <a class="nav-link" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">Empezar</a>
-      <a class="nav-link" href="../privacidad/">Privacidad</a>
-    </nav>
+    <div class="site-header-inner">
+      <a class="brand" href="../">
+        <img class="brand-logo" src="../assets/logo-monologos.png?v=2" alt="Monólogos en Español">
+        <span class="brand-name">Monólogos en Español</span>
+      </a>
+      <nav class="nav-main-inline">
+        <a class="nav-link" href="../">Inicio</a>
+        <a class="nav-link nav-registro-link" href="../registro/">Regístrate</a>
+      </nav>
+      <nav class="site-nav" id="siteNav">
+        <a class="nav-link" href="../">Inicio</a>
+        <a class="nav-link nav-registro-link" href="../registro/" id="navRegistroLink">Regístrate</a>
+        <a class="nav-link" href="../referral-form/">Formulario de referidos</a>
+        <a class="nav-link" href="../mis-referidos/">Mis referidos</a>
+        <a class="nav-link" href="../como-funciona/">Cómo funciona</a>
+        <a class="nav-link" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">Empezar</a>
+        <a class="nav-link" href="../privacidad/">Privacidad</a>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
+    </div>
   </header>
   <div class="nav-overlay" id="navOverlay"></div>
   <script src="../assets/nav-identity.js"></script>
 
   <div class="card">
-    <img class="logo" src="../assets/logo-monologos.png?v=2" alt="Monólogos en Español">
 
     <div id="loadingView">
       <p class="loading">Un momento…</p>
