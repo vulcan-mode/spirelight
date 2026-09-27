@@ -482,7 +482,7 @@
     // write; this just can't show that specific failure here.
     fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: data })
       .then(function () {
-        // No dead-end success screen -- land back on "Tus datos" (same
+        // No dead-end success screen -- land back on "Mis datos" (same
         // still-valid token, no second email check) with a toast, so
         // there's actually somewhere to go from here.
         window.location.href = '../gracias/?phone=' + encodeURIComponent(currentPhone)
