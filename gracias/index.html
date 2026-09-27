@@ -376,6 +376,21 @@
     box-sizing: border-box;
   }
   input:focus, select:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+  /* Reserved-space fade-in hint under pickView's email field --
+     min-height keeps the button below it from ever shifting; opacity
+     is the only thing that changes once the confirmation email
+     actually goes out. */
+  .pick-hint {
+    min-height: 18px;
+    margin: 10px 0 0;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--amber-text);
+    text-align: left;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .pick-hint.visible { opacity: 1; }
   .radio-row {
     display: flex;
     gap: 14px;
@@ -536,9 +551,10 @@
 
     <div id="pickView" hidden>
       <h1>Bienvenido 👋</h1>
-      <p class="intro">Escribe tu correo. Por seguridad, nadie puede ver tus datos sin hacer clic en un enlace que solo llega a tu propio correo.</p>
+      <p class="intro">Por favor, escribe tu correo.</p>
       <input type="email" id="emailInput" placeholder="tu@correo.com" autocomplete="email">
-      <button type="button" id="emailContinueBtn">Enviarme el enlace de confirmación →</button>
+      <p class="pick-hint" id="pickHint">📩 Te enviamos un correo -- haz clic en el enlace para continuar.</p>
+      <button type="button" id="emailContinueBtn">Empezar →</button>
     </div>
 
     <div id="expiredView" hidden>
@@ -1153,6 +1169,7 @@
     var value = document.getElementById('emailInput').value.trim();
     if (!value) return;
     requestConfirmLink(value, this);
+    document.getElementById('pickHint').classList.add('visible');
   });
 
   document.getElementById('requestNewLinkBtn').addEventListener('click', function () {
