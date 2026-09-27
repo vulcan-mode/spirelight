@@ -759,6 +759,85 @@
     }
   }
 
+  // ---------------------------------------------------------------------
+  // Stay logged in on this device -- a long-lived 'session' token cached
+  // in localStorage, separate from the 15-minute reactive 'confirm'
+  // token a fresh email link carries. Minted server-side via doGet's
+  // JSONP branch (mint_session=1) right after a confirm token verifies,
+  // since only Apps Script holds the signing secret and a <script> tag
+  // is the one transport here that isn't fire-and-forget no-cors.
+  // Per-device by design (localStorage, not synced anywhere) -- dies
+  // when the user clears site data, same as any other "stay logged in".
+  // ---------------------------------------------------------------------
+  var SESSION_KEY = 'spirelight_gracias_session';
+  var jsonpCounter = 0;
+
+  function mintSessionToken(phone, presentedToken) {
+    jsonpCounter++;
+    var cbName = 'spirelightSessionCb' + jsonpCounter + '_' + Date.now();
+    var script = document.createElement('script');
+    var cleanup = function () {
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    };
+    window[cbName] = function (data) {
+      if (data && data.ok && data.token) {
+        currentToken = data.token; // supersede the short-lived token already in memory
+        try { localStorage.setItem(SESSION_KEY, JSON.stringify({ phone: phone, token: data.token })); } catch (e) { /* ignore */ }
+      }
+      cleanup();
+    };
+    script.onerror = cleanup;
+    script.src = SCRIPT_URL + '?mint_session=1&phone=' + encodeURIComponent(phone)
+      + '&token=' + encodeURIComponent(presentedToken) + '&callback=' + cbName;
+    document.body.appendChild(script);
+  }
+
+  // Only called when nothing came in via the URL -- returns true if a
+  // still-valid cached session took over, so the caller knows not to
+  // fall back to pickView.
+  function trySessionFromCache() {
+    try {
+      var raw = localStorage.getItem(SESSION_KEY);
+      if (!raw) return false;
+      var session = JSON.parse(raw);
+      if (!session || !session.phone || !session.token || tokenLooksExpired(session.token)) {
+        localStorage.removeItem(SESSION_KEY);
+        return false;
+      }
+      loadForToken(session.phone, session.token);
+      // Sliding window -- every real visit re-mints a fresh 90-day
+      // token, so "stay logged in until the cache is cleared" is
+      // actually true for anyone who opens this at least once every
+      // few months, not just once ever.
+      mintSessionToken(session.phone, session.token);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Any OTHER tab still sitting on pickView/expiredView jumps forward
+  // the instant a session token shows up in localStorage -- e.g. the
+  // email link got clicked in a new tab, and this is the original tab
+  // left behind on "revisa tu correo". Deliberately scoped to only the
+  // "not signed in yet" views -- never yanks someone out of a form
+  // they're actively editing in this tab just because another tab
+  // signed in.
+  window.addEventListener('storage', function (e) {
+    if (e.key !== SESSION_KEY || !e.newValue) return;
+    var stillWaiting = ['pickView', 'expiredView'].some(function (id) {
+      return !document.getElementById(id).hidden;
+    });
+    if (!stillWaiting) return;
+    try {
+      var session = JSON.parse(e.newValue);
+      if (session && session.phone && session.token && !tokenLooksExpired(session.token)) {
+        loadForToken(session.phone, session.token);
+      }
+    } catch (err) { /* ignore */ }
+  });
+
   // Shared with referral-form/mis-referidos/metodo-pago/nav-identity.js.
   var SHARED_IDENTITY_KEY = 'spirelight_referrer';
 
@@ -1140,7 +1219,10 @@
           // no-cors response can't hand back a fresh one. Simplest
           // correct move: same "email me a link" flow they already
           // used to get here, which will now find the record under
-          // the new number.
+          // the new number. The cached session was signed for the OLD
+          // number too -- drop it so a later visit doesn't silently
+          // resurrect it instead of the new one.
+          try { localStorage.removeItem(SESSION_KEY); } catch (e) { /* ignore */ }
           show('pickView');
           requestConfirmLink(savedEmail, submitBtn, '📩 Actualizamos tu número. Te enviamos un nuevo enlace a tu correo para seguir.');
         } else {
@@ -1173,8 +1255,16 @@
       show('expiredView');
     } else {
       loadForToken(phoneFromUrl, tokenFromUrl);
+      mintSessionToken(phoneFromUrl, tokenFromUrl); // arriving via a fresh link IS the login moment
+      // Scrub phone/token from the address bar/history now that they're
+      // cached -- same reasoning as the toast cleanup above, just for a
+      // credential instead of a message.
+      var cleanUrl2 = new URL(window.location.href);
+      cleanUrl2.searchParams.delete('phone');
+      cleanUrl2.searchParams.delete('token');
+      window.history.replaceState({}, '', cleanUrl2);
     }
-  } else {
+  } else if (!trySessionFromCache()) {
     show('pickView');
   }
 

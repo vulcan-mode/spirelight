@@ -387,6 +387,30 @@ function doGet(e) {
   var phone = (e.parameter && e.parameter.phone) || '';
   var payload;
 
+  // JSONP, not fetch -- every POST to this script is fire-and-forget
+  // (mode: 'no-cors') because the response isn't reliably readable
+  // cross-origin, but this one has to hand a real token back to the
+  // page synchronously. doGet's callback-wrapped JSONP output (below)
+  // already sidesteps CORS entirely via a <script> tag, so it's reused
+  // here instead of standing up a new transport.
+  //
+  // Requires the SAME still-valid token (confirm or session) that got
+  // this page here in the first place -- this mints a fresh long-lived
+  // 'session' token, it doesn't grant new access.
+  if (e.parameter && e.parameter.mint_session === '1') {
+    var mintPhone = phone;
+    var verifiedKind = verifyPaymentToken_(mintPhone, e.parameter.token);
+    var mintPayload;
+    if (!verifiedKind) {
+      mintPayload = { ok: false };
+    } else {
+      var sessionToken = signPaymentToken_(mintPhone, Date.now() + SESSION_TOKEN_TTL_MS_, 'session');
+      mintPayload = sessionToken ? { ok: true, token: sessionToken } : { ok: false };
+    }
+    var mintBody = callback + '(' + JSON.stringify(mintPayload) + ');';
+    return ContentService.createTextOutput(mintBody).setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+
   if (phone) {
     var lead = findLeadByPhone_(phone);
     if (!lead.found) {
@@ -646,6 +670,7 @@ function handleReferralSubmission_(p) {
 var PAYMENT_TOKEN_PROP_ = 'PAYMENT_TOKEN_SECRET';
 var PAYMENT_TOKEN_TTL_MS_ = 15 * 60 * 1000; // 15 minutes -- reactive "confirm right now" links
 var WELCOME_TOKEN_TTL_MS_ = 7 * 24 * 60 * 60 * 1000; // 7 days -- a welcome email might sit unread a while
+var SESSION_TOKEN_TTL_MS_ = 90 * 24 * 60 * 60 * 1000; // 90 days -- "stay logged in on this device"
 
 function getPaymentTokenSecret_() {
   return PropertiesService.getScriptProperties().getProperty(PAYMENT_TOKEN_PROP_);
@@ -659,14 +684,26 @@ function handleBootstrapPaymentSecret_(p) {
   return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
 }
 
-function signPaymentToken_(phone, expiresAt) {
+// kind is baked into the signed payload, not just a label the caller
+// attaches after the fact -- so a 'session' token can never be passed
+// off as a 'confirm' token (or vice versa) without the signature
+// breaking. Omitted entirely for old-style 2-field tokens (every
+// confirm/welcome/payment-request link minted before this existed),
+// which is what keeps them verifying unchanged below.
+function signPaymentToken_(phone, expiresAt, kind) {
   var secret = getPaymentTokenSecret_();
   if (!secret) return null;
-  var payload = normalizePhone_(phone) + '|' + expiresAt;
+  var payload = normalizePhone_(phone) + '|' + expiresAt + (kind ? ('|' + kind) : '');
   var sig = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(payload, secret));
   return Utilities.base64EncodeWebSafe(payload) + '.' + sig;
 }
 
+// Returns the verified kind ('confirm' for every pre-existing 2-field
+// token, or 'session') on success, false otherwise. Callers that must
+// not accept a long-lived session token in place of a fresh reactive
+// confirm (handlePaymentMethodSubmission_) check the returned kind;
+// callers happy with either (handleUpdateDetailsSubmission_) just
+// check truthiness, same as before this returned a kind at all.
 function verifyPaymentToken_(phone, token) {
   if (!token || String(token).indexOf('.') === -1) return false;
   var parts = String(token).split('.');
@@ -677,10 +714,11 @@ function verifyPaymentToken_(phone, token) {
     return false;
   }
   var bits = payloadStr.split('|');
-  if (bits.length !== 2 || bits[0] !== normalizePhone_(phone)) return false;
+  if (bits.length < 2 || bits.length > 3 || bits[0] !== normalizePhone_(phone)) return false;
   var expiresAt = Number(bits[1]);
   if (!expiresAt || Date.now() > expiresAt) return false;
-  return signPaymentToken_(phone, expiresAt) === String(token);
+  if (signPaymentToken_(phone, expiresAt, bits[2]) !== String(token)) return false;
+  return bits[2] || 'confirm';
 }
 
 // Sends the actual verification link -- never confirms whether a
@@ -755,7 +793,13 @@ function handleRequestConfirmLink_(p) {
 var OTRO_ELIGIBLE_COUNTRIES_ = ['cuba', 'venezuela'];
 
 function handlePaymentMethodSubmission_(p) {
-  if (!verifyPaymentToken_(String(p.referrerWhatsapp || '').trim(), p.token)) {
+  // Deliberately NOT accepting a 'session' token here -- gracias/'s
+  // long-lived stay-logged-in token is for viewing/editing your own
+  // profile, never for redirecting where someone's payout goes. That
+  // always requires a token just freshly emailed for this specific
+  // request, same as before session tokens existed.
+  var tokenKind = verifyPaymentToken_(String(p.referrerWhatsapp || '').trim(), p.token);
+  if (!tokenKind || tokenKind === 'session') {
     return ContentService
       .createTextOutput(JSON.stringify({ result: 'error', message: 'invalid_or_expired_token' }))
       .setMimeType(ContentService.MimeType.JSON);
