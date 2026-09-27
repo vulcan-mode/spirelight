@@ -195,7 +195,7 @@
         <p class="hint" id="detalleHint"></p>
 
         <label for="comentario">Comentario (opcional)</label>
-        <textarea id="comentario" name="comentario" placeholder="Ej: si es un método distinto (Cuba, Venezuela, etc.), describe aquí cómo prefieres recibir el pago."></textarea>
+        <textarea id="comentario" name="comentario" placeholder="Algo más que deba saber sobre tu método de pago (opcional)."></textarea>
 
         <button type="submit" id="submitBtn">Guardar método de pago</button>
         <p class="error" id="formErrorMsg">Algo salió mal. Por favor intenta de nuevo.</p>
@@ -257,8 +257,11 @@
 
   var DETALLE_HINTS = {
     'PayPal': { label: 'Correo de tu cuenta PayPal', hint: 'El correo con el que iniciaste sesión en PayPal.' },
-    'Wise': { label: 'Correo de tu cuenta Wise', hint: 'El correo con el que iniciaste sesión en Wise.' },
-    'Payoneer': { label: 'Correo de tu cuenta Payoneer', hint: 'El correo con el que iniciaste sesión en Payoneer.' },
+    'Wise': {
+      label: 'Tu Wisetag',
+      hint: 'Wise usa un Wisetag, no tu correo -- empieza con @ (por ejemplo, @dom2). Lo encuentras en Wise, en Pagos → Herramientas de pago.'
+    },
+    'Payoneer': { label: 'Correo de tu cuenta Payoneer', hint: 'El correo con el que iniciaste sesión en Payoneer -- los pagos entre cuentas Payoneer se hacen con el correo, no con otro identificador.' },
     'Otro': {
       label: 'Detalle de tu método de pago',
       hint: 'Incluye toda la información posible: si es una billetera cripto, la dirección completa; si es depósito directo a tu banco, los datos de la cuenta; o cualquier otro método conveniente que se pueda hacer desde una cuenta bancaria peruana hacia tu cuenta.'
@@ -281,6 +284,12 @@
   function applyOtroEligibility(country) {
     var eligible = OTRO_ELIGIBLE_COUNTRIES.indexOf(normalizeCountryKey(country)) !== -1;
     document.getElementById('otroOption').hidden = !eligible;
+    // The Cuba/Venezuela-specific placeholder has no business showing
+    // up for someone from any other country -- that's not a method
+    // they're eligible for, so mentioning it there is just confusing.
+    document.getElementById('comentario').placeholder = eligible
+      ? 'Ej: si prefieres un método distinto (billetera cripto, depósito bancario, etc.), descríbelo aquí.'
+      : 'Algo más que deba saber sobre tu método de pago (opcional).';
   }
 
   document.getElementById('metodo').addEventListener('change', function () {
