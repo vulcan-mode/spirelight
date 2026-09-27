@@ -564,6 +564,17 @@
       <button type="button" id="requestNewLinkBtn">Pedir un nuevo enlace →</button>
     </div>
 
+    <!-- Reached only via the storage listener below -- this tab was left
+         sitting on pickView/expiredView while the email link got clicked
+         in a different tab (or a different device on the same login).
+         That other tab is now the live one; this one has nothing left to
+         do, so it says so instead of quietly re-running the whole app. -->
+    <div id="closeTabView" hidden>
+      <div class="status-pill active"><span>✅</span><span>Confirmado</span></div>
+      <h1>Ya puedes cerrar esta pestaña</h1>
+      <p class="intro">Confirmaste tu correo en otra pestaña. Ya no necesitas esta.</p>
+    </div>
+
     <!-- Under-18 is a harder stop than accent/ID -- not eligible for
          Spirelight OR the referral program, so there's nothing left
          for them here. Reached either by answering "No" live, or by
@@ -756,7 +767,7 @@
 
   function show(viewId) {
     ['loadingView', 'pickView', 'expiredView', 'underageView', 'formView',
-     'activeView', 'waitingView', 'otroView', 'noIdView', 'unknownView'].forEach(function (id) {
+     'activeView', 'waitingView', 'otroView', 'noIdView', 'unknownView', 'closeTabView'].forEach(function (id) {
       document.getElementById(id).hidden = (id !== viewId);
     });
     var isResult = RESULT_VIEWS.indexOf(viewId) !== -1;
@@ -833,13 +844,16 @@
     }
   }
 
-  // Any OTHER tab still sitting on pickView/expiredView jumps forward
-  // the instant a session token shows up in localStorage -- e.g. the
-  // email link got clicked in a new tab, and this is the original tab
-  // left behind on "revisa tu correo". Deliberately scoped to only the
-  // "not signed in yet" views -- never yanks someone out of a form
-  // they're actively editing in this tab just because another tab
-  // signed in.
+  // A page can't refocus or close some OTHER tab it doesn't hold a
+  // handle to -- there's no such thing for a plain link clicked from
+  // an email client. Closest real fix: any tab still sitting on
+  // pickView/expiredView notices the instant a session token shows up
+  // in localStorage (confirmed in a different tab, or a different
+  // device on the same login) and says there's nothing left to do here
+  // instead of quietly re-running the whole app in a tab nobody's
+  // looking at anymore. Deliberately scoped to only the "not signed in
+  // yet" views -- never yanks someone out of a form they're actively
+  // editing in THIS tab just because another tab signed in.
   window.addEventListener('storage', function (e) {
     if (e.key !== SESSION_KEY || !e.newValue) return;
     var stillWaiting = ['pickView', 'expiredView'].some(function (id) {
@@ -849,7 +863,7 @@
     try {
       var session = JSON.parse(e.newValue);
       if (session && session.phone && session.token && !tokenLooksExpired(session.token)) {
-        loadForToken(session.phone, session.token);
+        show('closeTabView');
       }
     } catch (err) { /* ignore */ }
   });
