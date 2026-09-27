@@ -43,10 +43,10 @@
     align-items: center;
     padding: 40px 16px;
   }
-  /* Shown only once a result view (active/waiting/otro) is displayed --
-     see RESULT_VIEWS below. Someone who doesn't know their status yet
-     has nowhere to navigate to; once they do, they deserve the same
-     real menu every other page has. */
+  /* Shown for every resolved state (active/waiting/otro/noId) -- not
+     for pickView/expiredView/formView(first-time)/underageView, which
+     are all "we don't know who you are yet" or "you're not staying"
+     states with nowhere useful to navigate to. */
   .site-header {
     width: 100%;
     max-width: 640px;
@@ -174,11 +174,6 @@
     line-height: 1.5;
     text-align: center;
   }
-  .stop-sign {
-    font-size: 52px;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
   .whatsapp-btn {
     display: flex;
     align-items: center;
@@ -227,10 +222,11 @@
     margin-top: 2px;
     accent-color: var(--blue);
   }
-  .apply-btn {
+  button, .apply-btn {
     display: block;
     width: 100%;
     padding: 15px;
+    margin-top: 26px;
     border: none;
     border-radius: 999px;
     background: linear-gradient(135deg, var(--blue), var(--blue-deep));
@@ -242,16 +238,18 @@
     text-align: center;
     cursor: pointer;
     transition: opacity 0.15s;
+    box-sizing: border-box;
   }
+  button:disabled { opacity: 0.6; cursor: default; }
   .apply-btn[aria-disabled="true"] {
     opacity: 0.45;
     pointer-events: none;
   }
-  /* Bottom of every result view (active/waiting/otro): 1-3 buttons
-     depending on what they've done so far (see renderResultActions).
-     Exactly one -> a single big pill, matching the other primary CTAs
-     on this page. Two or three -> small text links instead, so it
-     doesn't turn into a wall of big blue buttons. */
+  /* Bottom of every resolved view: 1-3 buttons depending on what
+     they've actually done so far (see renderResultActions). Exactly
+     one -> a single big pill, matching the other primary CTAs on this
+     page. Two or three -> small text links instead, so it doesn't
+     turn into a wall of big blue buttons. */
   .result-actions {
     margin-top: 20px;
     padding-top: 18px;
@@ -277,14 +275,19 @@
     justify-content: center;
     gap: 18px;
   }
-  .action-links a {
+  .action-links a, .action-links button {
     font-family: 'Manrope', system-ui, sans-serif;
     font-size: 13px;
     font-weight: 700;
     color: var(--blue-deep);
     text-decoration: none;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
   }
-  .action-links a:hover { text-decoration: underline; }
+  .action-links a:hover, .action-links button:hover { text-decoration: underline; }
   .referral-note {
     margin-top: 20px;
     padding-top: 18px;
@@ -353,7 +356,15 @@
     color: var(--blue-deep);
     margin: 0 0 10px;
   }
-  select, input[type="tel"] {
+  label {
+    display: block;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--navy);
+    margin: 18px 0 6px;
+    text-align: left;
+  }
+  input, select {
     width: 100%;
     font-family: 'Manrope', system-ui, sans-serif;
     font-size: 15px;
@@ -362,15 +373,139 @@
     border-radius: 12px;
     background: #fbfdff;
     color: var(--ink);
-    margin-bottom: 16px;
     box-sizing: border-box;
   }
-  select:focus, input[type="tel"]:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+  input:focus, select:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+  .radio-row {
+    display: flex;
+    gap: 14px;
+    margin-top: 8px;
+  }
+  .radio-option {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14.5px;
+    cursor: pointer;
+  }
+  .radio-option input { width: auto; accent-color: var(--blue); }
+  .radio-option:has(input:disabled) { opacity: 0.55; cursor: default; }
+  .both-required-note {
+    margin: 18px 0 0;
+    font-size: 13px;
+    color: #7793ad;
+    text-align: left;
+  }
+  .country-fill { color: var(--ink); }
+  .country-fill.filled {
+    font-weight: 800;
+    color: var(--blue-deep);
+    animation: id-country-pop 0.28s ease;
+  }
+  @keyframes id-country-pop {
+    0% { opacity: 0; transform: translateY(3px) scale(0.97); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .stop-banner {
+    margin-top: 14px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: #fdeceb;
+    border: 2px solid #b3261e;
+    text-align: left;
+  }
+  .stop-banner-title {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    color: #b3261e;
+    margin: 0 0 6px;
+  }
+  .stop-banner p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #7a2119;
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  .info-row:first-of-type { border-top: 1px solid var(--border); margin-top: 8px; }
+  .info-label {
+    font-weight: 700;
+    font-size: 13px;
+    color: #7793ad;
+    white-space: nowrap;
+  }
+  .info-value {
+    font-size: 15px;
+    color: var(--ink);
+    font-weight: 700;
+    text-align: right;
+  }
+  .edit-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .edit-row:first-of-type { border-top: 1px solid var(--border); margin-top: 8px; }
+  .edit-row input, .edit-row select {
+    flex: 0 1 auto;
+    width: auto;
+    max-width: 60%;
+    text-align: right;
+    border: none;
+    border-bottom: 1.5px solid var(--border);
+    border-radius: 0;
+    padding: 4px 0 4px 8px;
+    background: transparent;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .edit-row input:focus, .edit-row select:focus { outline: none; border-bottom-color: var(--blue); }
+  .edit-row select:disabled { opacity: 0.55; cursor: default; }
+  .secondary-btn {
+    background: none;
+    color: var(--blue-deep);
+    box-shadow: none;
+  }
+  .change-number-btn {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 12px 0 0;
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #7793ad;
+    text-decoration: underline;
+    cursor: pointer;
+    text-align: center;
+  }
+  @keyframes view-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  #formView:not([hidden]), #activeView:not([hidden]), #waitingView:not([hidden]),
+  #otroView:not([hidden]), #noIdView:not([hidden]) { animation: view-fade-in 0.18s ease; }
   [hidden] { display: none !important; }
 </style>
 </head>
 <body>
   <script src="../assets/announcement-banner.js"></script>
+  <script src="../assets/toast.js"></script>
 
   <header class="site-header" id="siteHeader" hidden>
     <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
@@ -391,7 +526,118 @@
     <img class="logo" src="../assets/logo-monologos.png?v=2" alt="Monólogos en Español">
 
     <div id="loadingView">
-      <p class="loading">Un momento, estamos revisando tu país…</p>
+      <p class="loading">Un momento…</p>
+    </div>
+
+    <div id="pickView" hidden>
+      <h1>Ver tu estado 📬</h1>
+      <p class="intro">Escribe tu correo. Por seguridad, nadie puede ver tus datos sin hacer clic en un enlace que solo llega a tu propio correo.</p>
+      <input type="email" id="emailInput" placeholder="tu@correo.com" autocomplete="email">
+      <button type="button" id="emailContinueBtn">Enviarme el enlace de confirmación →</button>
+    </div>
+
+    <div id="expiredView" hidden>
+      <h1>Ese enlace ya no es válido</h1>
+      <p class="intro">Los enlaces de confirmación duran 15 minutos. Pide uno nuevo.</p>
+      <input type="email" id="expiredEmailInput" placeholder="tu@correo.com" autocomplete="email">
+      <button type="button" id="requestNewLinkBtn">Pedir un nuevo enlace →</button>
+    </div>
+
+    <!-- Under-18 is a harder stop than accent/ID -- not eligible for
+         Spirelight OR the referral program, so there's nothing left
+         for them here. Reached either by answering "No" live, or by
+         an existing lead (e.g. from Facebook) already having "No" on
+         file. -->
+    <div id="underageView" hidden>
+      <h1>No puedes participar 🔒</h1>
+      <p class="intro">Este programa requiere tener 18 años o más, sin excepciones — esto incluye el programa de referidos. Gracias por tu interés.</p>
+      <a class="apply-btn" href="../">Ir a la página principal →</a>
+    </div>
+
+    <!-- Same form serves two purposes: first landing (país/acento/
+         identificación/edad still blank -> wide open, "Se ve bien")
+         and a later edit (those four locked -> only name/correo,
+         "Guardar cambios"). One form, one set of fields, just a
+         different lock state and button label -- not two pages. -->
+    <div id="formView" hidden>
+      <h1 id="formHeading">¡Empecemos! 🎙️</h1>
+      <form id="detailsForm">
+        <div class="edit-row">
+          <span class="info-label">Nombre</span>
+          <input id="fullName" name="name" type="text" required>
+        </div>
+        <div class="edit-row">
+          <span class="info-label">Correo</span>
+          <input id="email" name="email" type="email" required>
+        </div>
+        <div class="edit-row">
+          <span class="info-label">WhatsApp</span>
+          <input id="phoneField" type="tel" required>
+        </div>
+
+        <p class="both-required-note" id="bothRequiredNote">Tu país, acento, identificación y edad no se pueden cambiar después de guardarlos.</p>
+
+        <!-- Each of these four has two mutually-exclusive renderings:
+             an editable control (first time it's answered) or a plain
+             read-only line (once it's locked). A disabled-but-visible
+             radio button still looks like a choice you could make --
+             showing the plain answer instead is what actually makes
+             "this can't change" true at a glance, not just in theory. -->
+        <div class="edit-row" id="countryEditRow">
+          <span class="info-label">País</span>
+          <select id="country" name="country" required>
+            <option value="panama">Panamá</option>
+            <option value="puerto_rico">Puerto Rico</option>
+            <option value="argentina">Argentina</option>
+            <option value="republica_dominicana">República Dominicana</option>
+            <option value="cuba">Cuba</option>
+            <option value="honduras">Honduras</option>
+            <option value="paraguay">Paraguay</option>
+            <option value="nicaragua">Nicaragua</option>
+            <option value="el_salvador">El Salvador</option>
+            <option value="costa_rica">Costa Rica</option>
+            <option value="uruguay">Uruguay</option>
+            <option value="ecuador">Ecuador</option>
+            <option value="peru">Perú</option>
+            <option value="venezuela">Venezuela</option>
+            <option value="chile">Chile</option>
+            <option value="guatemala">Guatemala</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="info-row" id="countryReadRow" hidden><span class="info-label">País</span><span class="info-value" id="countryReadValue"></span></div>
+
+        <div id="accentEditRow">
+          <label>¿Acento <span id="accentCountryName" class="country-fill">de ese país</span>?</label>
+          <div class="radio-row">
+            <label class="radio-option" for="accentSi"><input type="radio" id="accentSi" name="accentAnswer" value="sí" required> Sí</label>
+            <label class="radio-option" for="accentNo"><input type="radio" id="accentNo" name="accentAnswer" value="no" required> No</label>
+          </div>
+        </div>
+        <div class="info-row" id="accentReadRow" hidden><span class="info-label">Acento</span><span class="info-value" id="accentReadValue"></span></div>
+
+        <div id="idEditRow">
+          <label>¿Identificación <span id="idCountryName" class="country-fill">de ese país</span> válida<span id="idPRClause" hidden> (o pasaporte estadounidense)</span>?</label>
+          <div class="radio-row">
+            <label class="radio-option" for="idSi"><input type="radio" id="idSi" name="idAnswer" value="sí" required> Sí</label>
+            <label class="radio-option" for="idNo"><input type="radio" id="idNo" name="idAnswer" value="no" required> No</label>
+          </div>
+        </div>
+        <div class="info-row" id="idReadRow" hidden><span class="info-label">Identificación</span><span class="info-value" id="idReadValue"></span></div>
+
+        <div id="ageEditRow">
+          <label>¿Tiene por lo menos 18 años?</label>
+          <div class="radio-row">
+            <label class="radio-option" for="ageSi"><input type="radio" id="ageSi" name="ageAnswer" value="sí" required> Sí</label>
+            <label class="radio-option" for="ageNo"><input type="radio" id="ageNo" name="ageAnswer" value="no" required> No</label>
+          </div>
+        </div>
+        <div class="info-row" id="ageReadRow" hidden><span class="info-label">Edad</span><span class="info-value" id="ageReadValue"></span></div>
+
+        <button type="submit" id="submitBtn">Se ve bien →</button>
+        <p class="error" id="formErrorMsg" style="display:none; color:#b3261e; font-size:14px; text-align:center;">Algo salió mal. Por favor intenta de nuevo.</p>
+      </form>
+      <button class="change-number-btn" id="cancelEditBtn" type="button" hidden>Cancelar</button>
     </div>
 
     <div id="activeView" hidden>
@@ -451,27 +697,8 @@
       <h1>Dijiste que no tienes identificación</h1>
       <p class="intro">Puedes seguir registrado y participar en el programa de referidos sin ningún problema.</p>
       <p class="warning-strict">Pero para grabar con Spire Light necesitas tener 18 años o más y una identificación oficial válida del país de tu acento (o pasaporte estadounidense si eres de Puerto Rico) — sin excepciones.</p>
-      <button class="apply-btn" id="confirmIdBtn" type="button">
-        Sí tengo mi identificación — la marqué por error
-      </button>
-      <p class="error" id="confirmIdError">Algo salió mal. Por favor intenta de nuevo.</p>
-      <p class="referral-note">
-        💰 Aunque tú no puedas grabar, puedes seguir ganando: si conoces a alguien con identificación válida de Panamá, Puerto Rico, Argentina o República Dominicana, <a href="../referral-form/">refiérelo aquí</a> y gana un bono cuando complete su grabación.
-      </p>
-    </div>
-
-    <div id="pickView" hidden>
-      <h1>Confirma tu número 📱</h1>
-      <p class="intro">Escribe el mismo número de teléfono que usaste en el formulario para ver tu estado.</p>
-      <input type="tel" id="phoneInput" placeholder="+507 6000 0000" autocomplete="tel">
-      <button class="apply-btn" id="pickContinueBtn" type="button">Continuar →</button>
-    </div>
-
-    <div id="notFoundView" hidden>
-      <h1>No encontramos tu registro</h1>
-      <p class="intro">Ese número no está en nuestro sistema todavía. Si nunca te has registrado, hazlo aquí — toma un minuto:</p>
-      <a class="apply-btn" id="registerLink" href="../registro/">Regístrate aquí →</a>
-      <button class="apply-btn" id="tryAgainBtn" type="button" style="background: none; color: var(--blue-deep); box-shadow: none; margin-top: 10px;">Ya me registré, intentar de nuevo</button>
+      <button type="button" id="confirmIdBtn">¿Te equivocaste? Sí tengo mi identificación →</button>
+      <p class="error" id="confirmIdError" style="display:none; color:#b3261e; font-size:14px; text-align:center;">Algo salió mal. Por favor intenta de nuevo.</p>
     </div>
 
     <div id="unknownView" hidden>
@@ -482,41 +709,54 @@
       </a>
     </div>
 
-    <div class="result-actions" id="resultActions" hidden>
-      <a class="action-pill" id="actionPill" href="../referral-form/">🎁 Referir a alguien</a>
-      <div class="action-links" id="actionLinks" hidden>
-        <a href="../referral-form/">🎁 Referir a alguien</a>
-        <a href="../mis-referidos/" id="actionMisReferidos" hidden>📊 Mis referidos</a>
-        <a href="../metodo-pago/" id="actionMetodoPago" hidden>💳 Método de pago</a>
+    <div id="resultExtras" hidden>
+      <button type="button" class="secondary-btn" id="editMyDataBtn">✏️ Editar mis datos</button>
+      <div class="result-actions" id="resultActions">
+        <a class="action-pill" id="actionPill" href="../referral-form/">🎁 Referir a alguien</a>
+        <div class="action-links" id="actionLinks" hidden>
+          <a href="../referral-form/">🎁 Referir a alguien</a>
+          <a href="../mis-referidos/" id="actionMisReferidos" hidden>📊 Mis referidos</a>
+          <a href="../metodo-pago/" id="actionMetodoPago" hidden>💳 Método de pago</a>
+        </div>
       </div>
     </div>
   </div>
 
 <script>
-  // Cloudflare Worker, not Apps Script's exec URL -- that redirect hop
-  // was the actual source of the 1-to-60-second inconsistent latency
-  // (confirmed via Apps Script's own Executions log: the script logic
-  // itself always finished in ~1-2s). The Worker calls the real Sheets
-  // API directly via a service account, with normal REST latency and
-  // real CORS headers, so this is a plain fetch(), no JSONP needed.
   var WORKER_URL = "https://spirelight-leads.domlebo1.workers.dev";
+  var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWxLdQ70YBFIkZWu5xfobhYUA5s-bcrf081pDL6W9-9-s0rXwGWkRDxNoOz83GswRD/exec";
 
-  var params = new URLSearchParams(window.location.search);
-  var countryFromUrl = (params.get('country') || '').trim();
-  var currentCountry = '';
   var currentPhone = '';
+  var currentToken = '';
+  var currentCountry = '';
+  var isFirstTime = false;
 
-  // Reduces friction on a return visit: once a phone number resolves
-  // successfully, remember it on THIS device so they never have to
-  // retype it. A different device has no local flag, so it falls back
-  // to typing the phone once -- which is also enough to serve them the
-  // right thing, since "unlocked" (see below) lives on the server, not
-  // just in this cache.
-  var PHONE_CACHE_KEY = 'spirelight_gracias_phone';
+  // Resolved states only -- pickView/expiredView/underageView/formView
+  // (first-time) have nowhere useful to navigate to yet.
+  var RESULT_VIEWS = ['activeView', 'waitingView', 'otroView', 'noIdView'];
 
-  // Shared with referral-form/mis-referidos/metodo-pago: once someone's
-  // confirmed their phone here, referring someone shouldn't ask them to
-  // type it a second time on the same device.
+  function show(viewId) {
+    ['loadingView', 'pickView', 'expiredView', 'underageView', 'formView',
+     'activeView', 'waitingView', 'otroView', 'noIdView', 'unknownView'].forEach(function (id) {
+      document.getElementById(id).hidden = (id !== viewId);
+    });
+    var isResult = RESULT_VIEWS.indexOf(viewId) !== -1;
+    document.getElementById('siteHeader').hidden = !isResult;
+    document.getElementById('resultExtras').hidden = !isResult;
+    if (isResult) loadResultActions();
+  }
+
+  function tokenLooksExpired(token) {
+    try {
+      var payload = atob(token.split('.')[0].replace(/-/g, '+').replace(/_/g, '/'));
+      var expiresAt = Number(payload.split('|')[1]);
+      return !expiresAt || Date.now() > expiresAt;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  // Shared with referral-form/mis-referidos/metodo-pago/nav-identity.js.
   var SHARED_IDENTITY_KEY = 'spirelight_referrer';
 
   function updateSharedIdentity(phone, name, country) {
@@ -530,13 +770,10 @@
     } catch (e) { /* ignore */ }
   }
 
-  // Persists checklist progress (not just the phone), keyed to the
-  // phone it applies to -- so a page RELOAD (e.g. Facebook's or
-  // WhatsApp's in-app browser hijacking the video link's target="_blank"
-  // into an in-place navigation, then "back" reloading this page fresh)
-  // restores where they left off instead of resetting to fully locked,
-  // which otherwise looks exactly like "stuck on the video, can't
-  // move on."
+  // Checklist progress for the 2-step apply flow -- unrelated to the
+  // access/auth story, just survives an in-app-browser reload (Facebook's
+  // or WhatsApp's browser hijacking a step link's target="_blank" into
+  // an in-place navigation, so "back" reloads this page from scratch).
   var PROGRESS_CACHE_KEY = 'spirelight_gracias_progress';
 
   function getCachedProgress(phone) {
@@ -555,42 +792,10 @@
     } catch (e) { /* ignore */ }
   }
 
-  function cachePhone(phone) {
-    try { localStorage.setItem(PHONE_CACHE_KEY, phone); } catch (e) { /* private mode, etc -- fine to skip */ }
-  }
-
-  function getCachedPhone() {
-    try { return localStorage.getItem(PHONE_CACHE_KEY) || ''; } catch (e) { return ''; }
-  }
-
-  function clearCachedPhone() {
-    try { localStorage.removeItem(PHONE_CACHE_KEY); } catch (e) { /* ignore */ }
-  }
-
-  // Only once we actually know their country status is there anywhere
-  // meaningful to navigate to -- loadingView/pickView/notFoundView/
-  // unknownView/noIdView get no menu and no action buttons.
-  var RESULT_VIEWS = ['activeView', 'waitingView', 'otroView'];
-
-  function show(viewId) {
-    ['loadingView', 'activeView', 'waitingView', 'unknownView', 'pickView', 'notFoundView', 'otroView', 'noIdView'].forEach(function (id) {
-      document.getElementById(id).hidden = (id !== viewId);
-    });
-    var isResult = RESULT_VIEWS.indexOf(viewId) !== -1;
-    document.getElementById('siteHeader').hidden = !isResult;
-    document.getElementById('resultActions').hidden = !isResult;
-    if (isResult) loadResultActions();
-  }
-
-  // 1-3 buttons depending on what they've actually done: referring is
-  // always offered; "Mis referidos" only once they've referred someone;
-  // "Método de pago" only on top of that, and only if they haven't
-  // given us one yet (no point nudging them twice).
   function renderResultActions(hasReferrals, hasPaymentMethodOnFile) {
     var count = 1 + (hasReferrals ? 1 : 0) + (hasReferrals && !hasPaymentMethodOnFile ? 1 : 0);
     var pill = document.getElementById('actionPill');
     var links = document.getElementById('actionLinks');
-
     if (count === 1) {
       pill.hidden = false;
       links.hidden = true;
@@ -613,10 +818,6 @@
       .catch(function () { renderResultActions(false, false); });
   }
 
-  // Raw stored country values are lowercase_with_underscores (Meta's
-  // own convention for Facebook leads, and now what /registro/ submits
-  // too, to keep the data consistent regardless of source). This maps
-  // back to a proper display name for anything shown to a person.
   var COUNTRY_DISPLAY_NAMES = {
     panama: 'Panamá', puerto_rico: 'Puerto Rico', argentina: 'Argentina',
     republica_dominicana: 'República Dominicana', cuba: 'Cuba', honduras: 'Honduras',
@@ -627,11 +828,8 @@
 
   function formatCountryDisplay(raw) {
     var key = String(raw || '').trim().toLowerCase();
+    if (!key) return '—';
     if (COUNTRY_DISPLAY_NAMES[key]) return COUNTRY_DISPLAY_NAMES[key];
-    // Fallback for anything unexpected: underscores -> spaces, capitalize
-    // words. Split on spaces rather than a \b\w regex -- \w doesn't match
-    // accented letters, so "república" would regex-match a boundary right
-    // after the "ú" and capitalize mid-word instead of at the start.
     return key.replace(/_/g, ' ').split(' ').map(function (word) {
       return word.charAt(0).toUpperCase() + word.slice(1);
     }).join(' ');
@@ -644,85 +842,123 @@
 
   function setGreeting(name) {
     document.querySelectorAll('.greeting').forEach(function (el) {
-      if (name) {
-        el.textContent = '¡Hola, ' + name + '! 👋';
-        el.hidden = false;
-      } else {
-        el.hidden = true;
-      }
+      if (name) { el.textContent = '¡Hola, ' + name + '! 👋'; el.hidden = false; }
+      else { el.hidden = true; }
     });
   }
 
-  function handleCountryCheckImpl(data) {
-    if (!data || data.found === false) {
-      clearCachedPhone(); // don't keep re-trying a number that isn't on file
-      // Carry the phone they already typed over to /registro/ so they
-      // don't have to type it a third time (there, then here again).
-      var registerLink = document.getElementById('registerLink');
-      registerLink.href = currentPhone ? ('../registro/?phone=' + encodeURIComponent(currentPhone)) : '../registro/';
-      show('notFoundView');
-      return;
-    }
+  function isYesAnswer(raw) {
+    var v = String(raw || '').trim().toLowerCase();
+    return v === 'sí' || v === 'si';
+  }
+  function isNoAnswer(raw) {
+    return String(raw || '').trim().toLowerCase() === 'no';
+  }
+  function formatYesNo(raw) {
+    if (isYesAnswer(raw)) return '✅ Sí';
+    if (isNoAnswer(raw)) return '❌ No';
+    return '—';
+  }
 
-    // A successful lookup means this phone is real -- safe to remember
-    // on this device from here on, regardless of which view it lands in.
-    if (currentPhone) {
-      cachePhone(currentPhone);
-      updateSharedIdentity(currentPhone, data.name, data.country);
-    }
+  var DEMONYMS = {
+    panama: { m: 'panameño', f: 'panameña' },
+    puerto_rico: { m: 'puertorriqueño', f: 'puertorriqueña' },
+    argentina: { m: 'argentino', f: 'argentina' },
+    republica_dominicana: { m: 'dominicano', f: 'dominicana' },
+    cuba: { m: 'cubano', f: 'cubana' },
+    honduras: { m: 'hondureño', f: 'hondureña' },
+    paraguay: { m: 'paraguayo', f: 'paraguaya' },
+    nicaragua: { m: 'nicaragüense', f: 'nicaragüense' },
+    el_salvador: { m: 'salvadoreño', f: 'salvadoreña' },
+    costa_rica: { m: 'costarricense', f: 'costarricense' },
+    uruguay: { m: 'uruguayo', f: 'uruguaya' },
+    ecuador: { m: 'ecuatoriano', f: 'ecuatoriana' },
+    peru: { m: 'peruano', f: 'peruana' },
+    venezuela: { m: 'venezolano', f: 'venezolana' },
+    chile: { m: 'chileno', f: 'chilena' },
+    guatemala: { m: 'guatemalteco', f: 'guatemalteca' }
+  };
 
+  function updateCountryDependentText() {
+    var select = document.getElementById('country');
+    var prClause = document.getElementById('idPRClause');
+    var value = select.value;
+    var demonym = DEMONYMS[value];
+    var accentEl = document.getElementById('accentCountryName');
+    var idEl = document.getElementById('idCountryName');
+    [accentEl, idEl].forEach(function (el) { el.classList.remove('filled'); });
+    accentEl.textContent = demonym ? demonym.m : 'de ese país';
+    idEl.textContent = demonym ? demonym.f : 'de ese país';
+    if (demonym) {
+      [accentEl, idEl].forEach(function (el) { void el.offsetWidth; el.classList.add('filled'); });
+    }
+    prClause.hidden = (value !== 'puerto_rico');
+  }
+  document.getElementById('country').addEventListener('change', updateCountryDependentText);
+
+  // No "ALTO" warnings on accent/ID -- eligibility was already
+  // communicated in the ad; re-alarming them here is just redundant.
+  // Their real consequence (can't record, but referrals still fine)
+  // shows up later on noIdView anyway. Under-18 is the one deliberate
+  // exception: a genuine hard stop, not a warning, straight to
+  // underageView.
+  document.getElementById('ageNo').addEventListener('change', function () { show('underageView'); });
+
+  // Each of the four locked fields renders as EITHER its editable
+  // control OR a plain read-only line, never both -- a disabled radio
+  // still looks like a choice you could make, which is exactly the
+  // "why can I still see Sí/No buttons for something that's locked"
+  // confusion to avoid. Called per-field, not all-or-nothing: a lead
+  // from before the age question existed can have país/acento/
+  // identificación already set but ageAnswer still blank.
+  function renderLockField(kind, answered, displayValue) {
+    document.getElementById(kind + 'EditRow').hidden = answered;
+    var readRow = document.getElementById(kind + 'ReadRow');
+    readRow.hidden = !answered;
+    if (answered) document.getElementById(kind + 'ReadValue').textContent = displayValue;
+  }
+
+  function renderLockedFields(data) {
+    renderLockField('country', !!data.country, formatCountryDisplay(data.country));
+    renderLockField('accent', !!data.accentAnswer, formatYesNo(data.accentAnswer));
+    renderLockField('id', !!data.idAnswer, formatYesNo(data.idAnswer));
+    renderLockField('age', !!data.ageAnswer, formatYesNo(data.ageAnswer));
+  }
+
+  // ---------------------------------------------------------------------
+  // Resolved-status rendering (active/waiting/otro/noId) -- unchanged
+  // from before the merge, just no longer reached via a bare phone typed
+  // into this page.
+  // ---------------------------------------------------------------------
+
+  function renderStatus(data) {
     setGreeting(data.name);
 
-    // Takes priority over country/active checks entirely -- lacking
-    // valid ID disqualifies regardless of country.
-    if (data.noValidId) {
-      show('noIdView');
-      return;
-    }
+    if (data.noValidId) { show('noIdView'); return; }
 
     currentCountry = data.country || currentCountry;
     setCountryLabels(currentCountry);
 
-    if (data.otro) {
-      show('otroView');
-      return;
-    }
+    if (data.otro) { show('otroView'); return; }
 
-    if (data && data.active) {
+    if (data.active) {
       show('activeView');
       var applyBtn = document.getElementById('applyBtn');
       applyBtn.href = data.link;
 
-      // Chain: the checkbox is a pure visual indicator now (always
-      // disabled, never user-clickable) -- the real gate is an actual
-      // click on that step's own link/button. Checking a box without
-      // clicking through is no longer possible.
       var chain = [
         { key: 'video', link: document.getElementById('linkVideo'), checkbox: document.getElementById('checkVideo'), unlocks: document.getElementById('stepInfo') },
         { key: 'info', link: document.getElementById('linkInfo'), checkbox: document.getElementById('checkInfo'), unlocks: applyBtn }
       ];
-
       chain.forEach(function (step) {
         step.link.addEventListener('click', function () {
           step.checkbox.checked = true;
-          if (currentPhone) {
-            var update = {}; update[step.key] = true;
-            setCachedProgress(currentPhone, update);
-          }
-          if (step.unlocks === applyBtn) {
-            applyBtn.removeAttribute('aria-disabled');
-          } else {
-            step.unlocks.removeAttribute('data-locked');
-          }
+          if (currentPhone) { var u = {}; u[step.key] = true; setCachedProgress(currentPhone, u); }
+          if (step.unlocks === applyBtn) applyBtn.removeAttribute('aria-disabled');
+          else step.unlocks.removeAttribute('data-locked');
         });
       });
 
-      // Restores checklist progress after a page reload that wasn't a
-      // real new visit -- most commonly Facebook's or WhatsApp's in-app
-      // browser hijacking a step link's target="_blank" into an in-place
-      // navigation, so hitting "back" reloads this page from scratch.
-      // Without this, that looks exactly like "stuck on the video, can't
-      // move on," even though they genuinely watched it.
       var progress = currentPhone ? getCachedProgress(currentPhone) : null;
       if (progress) {
         chain.forEach(function (step) {
@@ -734,20 +970,12 @@
         });
       }
 
-      // Server-side memory: once someone has actually clicked through to
-      // Spire Light before (any device), "Desbloqueado" is set on their
-      // lead row. On any later visit -- even a brand new browser -- skip
-      // the checklist entirely instead of making them repeat it.
       if (data.unlocked) {
         chain.forEach(function (step) { step.checkbox.checked = true; });
         document.getElementById('stepInfo').removeAttribute('data-locked');
         applyBtn.removeAttribute('aria-disabled');
       }
 
-      // Fire-and-forget: mark this lead unlocked the moment they actually
-      // click through, so a future visit (any device) can skip the
-      // checklist. applyBtn opens in a new tab, so this never blocks
-      // navigation.
       applyBtn.addEventListener('click', function () {
         if (!currentPhone) return;
         fetch(WORKER_URL + '?unlock=1&phone=' + encodeURIComponent(currentPhone)).catch(function () {});
@@ -757,76 +985,17 @@
     }
   }
 
-  // requestToken guards against a stale response from an abandoned
-  // attempt landing after we've already moved on (e.g. retried).
-  var requestToken = 0;
-
-  function runLookup(queryString, attempt) {
-    attempt = attempt || 1;
-    show('loadingView');
-
-    var myToken = ++requestToken;
-    var controller = new AbortController();
-    var timeoutId = setTimeout(function () { controller.abort(); }, 6000);
-
-    fetch(WORKER_URL + '?' + queryString, { signal: controller.signal })
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        if (myToken !== requestToken) return;
-        clearTimeout(timeoutId);
-        handleCountryCheckImpl(data);
-      })
-      .catch(function () {
-        if (myToken !== requestToken) return;
-        clearTimeout(timeoutId);
-        if (attempt < 2) {
-          runLookup(queryString, attempt + 1);
-        } else {
-          show('unknownView');
-        }
-      });
-  }
-
-  // Primary path: cross-reference the phone number they type against
-  // what they actually submitted on the real form (Leads Sitio) --
-  // this is the real anti-abuse gate, not a free self-select.
-  function checkPhone(phone) {
-    currentPhone = phone;
-    runLookup('phone=' + encodeURIComponent(phone));
-  }
-
-  // Legacy/shortcut path: still supported for any link that can pass a
-  // country directly (kept working, but no longer the primary flow).
-  function checkCountry(country) {
-    currentCountry = country;
-    runLookup('country=' + encodeURIComponent(country));
-  }
-
-  document.getElementById('pickContinueBtn').addEventListener('click', function () {
-    var value = document.getElementById('phoneInput').value.trim();
-    if (!value) return;
-    checkPhone(value);
-  });
-
-  document.getElementById('tryAgainBtn').addEventListener('click', function () {
-    show('pickView');
-  });
-
-  // Self-service correction: fixes the same column Meta/registro both
-  // write into, then re-runs the lookup so they land straight in
-  // their real active/waiting view -- no message to anyone.
   document.getElementById('confirmIdBtn').addEventListener('click', function () {
     var btn = this;
     var errorEl = document.getElementById('confirmIdError');
     errorEl.style.display = 'none';
     btn.disabled = true;
-    btn.textContent = 'Confirmando...';
-
+    btn.textContent = 'Un momento...';
     fetch(WORKER_URL + '?confirm_id_valid=1&phone=' + encodeURIComponent(currentPhone))
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (data && data.ok) {
-          checkPhone(currentPhone);
+          loadForToken(currentPhone, currentToken);
         } else {
           throw new Error('not ok');
         }
@@ -834,25 +1003,190 @@
       .catch(function () {
         errorEl.style.display = 'block';
         btn.disabled = false;
-        btn.textContent = 'Sí tengo mi identificación — la marqué por error';
+        btn.textContent = '¿Te equivocaste? Sí tengo mi identificación →';
       });
   });
 
-  // Facebook's Instant Form "Thank You" screen link can't insert a
-  // dynamic answer into the URL in the simplified form builder, so most
-  // Facebook-sourced visitors land here with no params at all — they
-  // confirm their phone number themselves via pickView. ?country=
-  // still works as a legacy shortcut for anything that CAN pass it
-  // reliably. ?phone= is for links WE generate ourselves (the welcome
-  // email, a referral invite) where we already know the number.
-  var phoneFromUrl = (params.get('phone') || '').trim();
-  var cachedPhone = getCachedPhone();
-  if (countryFromUrl) {
-    checkCountry(countryFromUrl);
-  } else if (phoneFromUrl) {
-    checkPhone(phoneFromUrl);
-  } else if (cachedPhone) {
-    checkPhone(cachedPhone); // this device has been here before -- skip pickView entirely
+  // ---------------------------------------------------------------------
+  // Email-gated access -- same signed-token mechanism as confirmar-datos/
+  // and metodo-pago/ (same secret, same verify function server-side), so
+  // one verified link carries across all three without checking email
+  // again. Landed here from the welcome email, a status-check request,
+  // or a redirect from metodo-pago/ after saving a payment method.
+  // ---------------------------------------------------------------------
+
+  function loadForToken(phone, token) {
+    show('loadingView');
+    currentPhone = phone;
+    currentToken = token;
+
+    fetch(WORKER_URL + '?phone=' + encodeURIComponent(phone))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || !data.found) { show('expiredView'); return; }
+
+        if (isNoAnswer(data.ageAnswer)) { show('underageView'); return; }
+
+        updateSharedIdentity(phone, data.name, data.country);
+
+        document.getElementById('fullName').value = data.name || '';
+        document.getElementById('email').value = data.email || '';
+        if (data.country) {
+          var select = document.getElementById('country');
+          if (Array.from(select.options).some(function (o) { return o.value === data.country; })) {
+            select.value = data.country;
+          }
+        }
+        updateCountryDependentText();
+        if (isYesAnswer(data.accentAnswer)) document.getElementById('accentSi').checked = true;
+        if (isNoAnswer(data.accentAnswer)) document.getElementById('accentNo').checked = true;
+        if (isYesAnswer(data.idAnswer)) document.getElementById('idSi').checked = true;
+        if (isNoAnswer(data.idAnswer)) document.getElementById('idNo').checked = true;
+        if (isYesAnswer(data.ageAnswer)) document.getElementById('ageSi').checked = true;
+        document.getElementById('phoneField').value = phone;
+        renderLockedFields(data);
+
+        isFirstTime = !(data.country && data.accentAnswer && data.idAnswer && data.ageAnswer);
+
+        if (isFirstTime) {
+          document.getElementById('formHeading').textContent = '¡Empecemos! 🎙️';
+          document.getElementById('bothRequiredNote').hidden = false;
+          document.getElementById('cancelEditBtn').hidden = true;
+          document.getElementById('submitBtn').textContent = 'Se ve bien →';
+          show('formView');
+        } else {
+          // Already confirmed -- hide the "no se pueden cambiar" note
+          // NOW, even though formView isn't shown yet, so it's already
+          // correct by the time "Editar mis datos" reveals it later.
+          document.getElementById('formHeading').textContent = 'Tus datos ✏️';
+          document.getElementById('bothRequiredNote').hidden = true;
+          document.getElementById('submitBtn').textContent = 'Guardar cambios';
+          renderStatus(data);
+        }
+      })
+      .catch(function () { show('expiredView'); });
+  }
+
+  function requestConfirmLink(email, button, toastMessage) {
+    button.disabled = true;
+    var originalText = button.textContent;
+    button.textContent = 'Enviando...';
+    var data = new FormData();
+    data.append('formType', 'request_confirm_link');
+    data.append('email', email);
+
+    var done = function () {
+      showToast(toastMessage || '📩 Revisa tu correo -- te enviamos un enlace de confirmación.');
+      button.disabled = false;
+      button.textContent = originalText;
+    };
+    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: data }).then(done).catch(done);
+  }
+
+  document.getElementById('emailContinueBtn').addEventListener('click', function () {
+    var value = document.getElementById('emailInput').value.trim();
+    if (!value) return;
+    requestConfirmLink(value, this);
+  });
+
+  document.getElementById('requestNewLinkBtn').addEventListener('click', function () {
+    var value = document.getElementById('expiredEmailInput').value.trim();
+    if (!value) return;
+    requestConfirmLink(value, this);
+  });
+
+  document.getElementById('editMyDataBtn').addEventListener('click', function () {
+    document.getElementById('submitBtn').textContent = 'Guardar cambios';
+    document.getElementById('cancelEditBtn').hidden = false;
+    show('formView');
+  });
+
+  document.getElementById('cancelEditBtn').addEventListener('click', function () {
+    // Simplest correct behavior: just re-run the real lookup rather than
+    // reconstruct status client-side from form fields.
+    loadForToken(currentPhone, currentToken);
+  });
+
+  var form = document.getElementById('detailsForm');
+  var submitBtn = document.getElementById('submitBtn');
+  var formErrorMsg = document.getElementById('formErrorMsg');
+
+  // At least two words, at least 5 characters total -- rules out a
+  // single name or initials typed just to get past the field.
+  function isValidFullName(raw) {
+    var name = String(raw || '').trim();
+    if (name.length < 5) return false;
+    return name.split(/\s+/).filter(Boolean).length >= 2;
+  }
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    formErrorMsg.style.display = 'none';
+
+    if (!isValidFullName(document.getElementById('fullName').value)) {
+      formErrorMsg.textContent = 'Escribe tu nombre completo (nombre y apellido).';
+      formErrorMsg.style.display = 'block';
+      return;
+    }
+
+    if (tokenLooksExpired(currentToken)) { show('expiredView'); return; }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Guardando...';
+
+    var newPhoneValue = document.getElementById('phoneField').value.trim();
+    var phoneChanged = newPhoneValue && newPhoneValue !== currentPhone;
+    var savedEmail = document.getElementById('email').value.trim();
+
+    var data = new FormData(form);
+    data.append('formType', 'update_details');
+    data.append('whatsapp', currentPhone); // token-verified identity -- unchanged, always the OLD number
+    data.append('token', currentToken);
+    if (phoneChanged) data.append('newPhone', newPhoneValue);
+
+    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: data })
+      .then(function () {
+        submitBtn.disabled = false;
+        if (phoneChanged) {
+          // The token this page is holding was signed for the OLD
+          // number -- it can't be reused for the new one, and the
+          // no-cors response can't hand back a fresh one. Simplest
+          // correct move: same "email me a link" flow they already
+          // used to get here, which will now find the record under
+          // the new number.
+          show('pickView');
+          requestConfirmLink(savedEmail, submitBtn, '📩 Actualizamos tu número. Te enviamos un nuevo enlace a tu correo para seguir.');
+        } else {
+          loadForToken(currentPhone, currentToken); // re-fetch: simplest way to get the real resolved status
+        }
+      })
+      .catch(function () {
+        formErrorMsg.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = isFirstTime ? 'Se ve bien →' : 'Guardar cambios';
+      });
+  });
+
+  var urlParams = new URLSearchParams(window.location.search);
+  var phoneFromUrl = urlParams.get('phone');
+  var tokenFromUrl = urlParams.get('token');
+  var toastFromUrl = urlParams.get('toast');
+
+  if (toastFromUrl) {
+    showToast(toastFromUrl);
+    var cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete('toast');
+    window.history.replaceState({}, '', cleanUrl);
+  }
+
+  if (phoneFromUrl && tokenFromUrl) {
+    if (tokenLooksExpired(tokenFromUrl)) {
+      currentPhone = phoneFromUrl;
+      currentToken = tokenFromUrl;
+      show('expiredView');
+    } else {
+      loadForToken(phoneFromUrl, tokenFromUrl);
+    }
   } else {
     show('pickView');
   }

@@ -296,13 +296,14 @@
       <h1 id="formHeading">Casi listo 🎙️</h1>
 
       <form id="intakeForm">
-        <div id="phoneConfirmGroup" hidden>
-          <label for="phoneConfirm">Tu número de WhatsApp</label>
-          <input id="phoneConfirm" type="tel" autocomplete="tel" required>
-        </div>
-
         <label for="fullName">Tu nombre completo</label>
         <input id="fullName" name="name" type="text" required autocomplete="name">
+
+        <label for="email">Correo electrónico</label>
+        <input id="email" name="email" type="email" autocomplete="email" required>
+
+        <label for="phoneConfirm">Tu número de WhatsApp</label>
+        <input id="phoneConfirm" type="tel" autocomplete="tel" disabled>
 
         <p class="both-required-note">Tu país, acento, identificación y edad no se pueden cambiar después de enviarlos.</p>
 
@@ -367,8 +368,6 @@
             <input type="radio" id="ageNo" name="ageAnswer" value="no" required> No
           </label>
         </div>
-        <label for="email">Correo electrónico</label>
-        <input id="email" name="email" type="email" autocomplete="email" required>
 
         <button type="submit" id="submitBtn">Continuar →</button>
         <p class="error" id="formErrorMsg">Algo salió mal. Por favor intenta de nuevo.</p>
@@ -513,12 +512,17 @@
   // Reveals the phone field in formView, pre-filled with the (possibly
   // wrong) number the referrer typed, so the referred person can fix it
   // before it becomes their permanent identifier in the sheet.
-  function maybeShowPhoneConfirm() {
-    if (!phoneFromReferralLink) return;
+  // Always shown now (logical field order: name, email, WhatsApp,
+  // then the four permanent questions) -- editable only when the
+  // phone came from a referral link the referrer typed, since that's
+  // the one case it could actually be wrong.
+  function showPhoneField() {
     var input = document.getElementById('phoneConfirm');
     input.value = currentPhone;
-    document.getElementById('phoneConfirmGroup').hidden = false;
-    input.oninput = function () { currentPhone = input.value.trim(); };
+    input.disabled = !phoneFromReferralLink;
+    if (phoneFromReferralLink) {
+      input.oninput = function () { currentPhone = input.value.trim(); };
+    }
   }
 
   function checkExistingPhone(phone) {
@@ -534,7 +538,7 @@
           goToGracias();
         } else {
           prefillFormFromUrl();
-          maybeShowPhoneConfirm();
+          showPhoneField();
           show('formView');
         }
       })
@@ -543,7 +547,7 @@
         // on a spinner; the server-side phone dedup in doPost is the
         // real backstop against duplicates either way.
         prefillFormFromUrl();
-        maybeShowPhoneConfirm();
+        showPhoneField();
         show('formView');
       });
   }
@@ -578,9 +582,24 @@
   // them here at all. Straight out, nothing submitted.
   document.getElementById('ageNo').addEventListener('change', function () { show('underageView'); });
 
+  // At least two words, at least 5 characters total -- rules out a
+  // single name or initials typed just to get past the field.
+  function isValidFullName(raw) {
+    var name = String(raw || '').trim();
+    if (name.length < 5) return false;
+    return name.split(/\s+/).filter(Boolean).length >= 2;
+  }
+
   form.addEventListener('submit', function (event) {
     event.preventDefault();
     formErrorMsg.style.display = 'none';
+
+    if (!isValidFullName(document.getElementById('fullName').value)) {
+      formErrorMsg.textContent = 'Escribe tu nombre completo (nombre y apellido).';
+      formErrorMsg.style.display = 'block';
+      return;
+    }
+
     submitBtn.disabled = true;
     submitBtn.textContent = 'Enviando...';
 
@@ -613,7 +632,7 @@
   // number a third time. Also how a referral link's ?phone= arrives
   // here (relayed through the homepage's register button) -- in that
   // case the number came from the referrer, not this person, so it
-  // gets shown back to them for confirmation (see maybeShowPhoneConfirm).
+  // gets shown back to them for confirmation (see showPhoneField).
   var phoneFromUrl = new URLSearchParams(window.location.search).get('phone');
   var storedIdentity = getStoredIdentity();
 

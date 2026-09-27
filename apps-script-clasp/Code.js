@@ -336,7 +336,7 @@ function findLeadByPhone_(rawPhone) {
 }
 
 // Same shape as findLeadByPhone_, keyed by email instead -- used only
-// by confirmar-datos' "send me a link" step, since unlike phone numbers,
+// by gracias'/metodo-pago's "send me a link" step, since unlike phone numbers,
 // nobody's email ever gets typed by another user anywhere in this
 // system (referral-form/ only ever collects the referred person's
 // phone, never their email), making it a meaningfully more private
@@ -450,7 +450,7 @@ function doPost(e) {
 }
 
 // Updates an EXISTING Leads Sitio row in place (found by phone) --
-// never appends. Used by /confirmar-datos/, where someone reviews and
+// never appends. Used by /gracias/'s confirm/edit form, where someone reviews and
 // corrects their own name/country/email. Same token requirement as
 // handlePaymentMethodSubmission_ -- reachable only via a link mailed
 // to the real email on file, whether this is someone's very first
@@ -487,6 +487,7 @@ function handleUpdateDetailsSubmission_(p) {
   var nameCol = ensureColumn_(leadsSheet, map, META_NAME_HEADER);
   var countryCol = ensureColumn_(leadsSheet, map, META_COUNTRY_HEADER);
   var emailCol = ensureColumn_(leadsSheet, map, META_EMAIL_HEADER);
+  var phoneCol = ensureColumn_(leadsSheet, map, META_PHONE_HEADER);
   var idQuestionCol = ensureColumn_(leadsSheet, map, ID_QUESTION_HEADER);
   var accentQuestionCol = ensureColumn_(leadsSheet, map, ACCENT_QUESTION_HEADER);
   var ageQuestionCol = ensureColumn_(leadsSheet, map, AGE_QUESTION_HEADER);
@@ -494,9 +495,20 @@ function handleUpdateDetailsSubmission_(p) {
   leadsSheet.getRange(lead.rowNum, nameCol).setValue(String(p.name || '').trim());
   leadsSheet.getRange(lead.rowNum, emailCol).setValue(email);
 
+  // Phone is the token-verified identifier itself (p.whatsapp, checked
+  // above) -- p.newPhone is a DIFFERENT, optional field for someone
+  // actually changing their number. Only takes effect if it's really
+  // different; the response can't carry a fresh token back (no-cors),
+  // so the frontend's job after this is to notice the change and
+  // request a brand new confirmation link for the new number.
+  var newPhone = String(p.newPhone || '').trim();
+  if (newPhone && normalizePhone_(newPhone) !== normalizePhone_(phone)) {
+    leadsSheet.getRange(lead.rowNum, phoneCol).setValue(newPhone);
+  }
+
   // País/acento/identificación/edad lock the moment they're first set --
   // enforced here server-side, not just by disabling the fields on the
-  // confirmar-datos/ form. Once any of the four has a real value on
+  // gracias/ form. Once any of the four has a real value on
   // file, whatever the client submits for it is ignored outright; this
   // is also what makes a locked <select>/<radio> (excluded from
   // FormData by the browser) safe to submit alongside them without
@@ -677,7 +689,7 @@ function verifyPaymentToken_(phone, token) {
 // Keyed by EMAIL, not phone -- same reasoning as handleRequestConfirmLink_:
 // nobody's email ever gets typed by another user anywhere in this
 // system, unlike phone numbers, which flow through referral-form/ and
-// invite links in plain sight. Consistent with confirmar-datos/ now.
+// invite links in plain sight. Consistent with gracias/ now.
 function handleRequestPaymentToken_(p) {
   var email = String(p.email || '').trim().toLowerCase();
   var lead = findLeadByEmail_(email);
@@ -705,7 +717,7 @@ function handleRequestPaymentToken_(p) {
 // issued from either page works on both. Someone who's just verified
 // their email to edit their info shouldn't have to check their inbox
 // again a minute later just to add a payment method; the emailed link
-// carries them into confirmar-datos/, and confirmar-datos/ passes the
+// carries them into gracias/, and gracias/ passes the
 // same still-valid token along into metodo-pago/'s link.
 //
 // Looked up by EMAIL, not phone -- see findLeadByEmail_ for why that's
@@ -717,16 +729,16 @@ function handleRequestConfirmLink_(p) {
     var expiresAt = Date.now() + PAYMENT_TOKEN_TTL_MS_;
     var token = signPaymentToken_(lead.phone, expiresAt);
     if (token) {
-      var link = 'https://vulcan-mode.github.io/spirelight/confirmar-datos/?phone='
+      var link = 'https://vulcan-mode.github.io/spirelight/gracias/?phone='
         + encodeURIComponent(lead.phone) + '&token=' + encodeURIComponent(token);
       var greeting = lead.name ? ('¡Hola ' + lead.name + '!') : '¡Hola!';
       var body = greeting + '\n\n'
-        + 'Pediste ver o editar tus datos del programa de referidos. '
+        + 'Pediste ver tu estado y tus datos del programa de referidos. '
         + 'Este enlace confirma que eres tú -- es válido por 15 minutos:\n\n'
         + link + '\n\n'
         + 'Si tú no pediste esto, contáctame de inmediato respondiendo este correo.\n\n'
         + '-- Domingo';
-      GmailApp.sendEmail(email, 'Confirma que eres tú -- tus datos', body);
+      GmailApp.sendEmail(email, 'Confirma que eres tú -- tu estado', body);
     }
   }
   return ContentService.createTextOutput(JSON.stringify({ result: 'sent' })).setMimeType(ContentService.MimeType.JSON);
@@ -1162,7 +1174,7 @@ function sendWelcomeEmail_(name, email, phone, country) {
   var greeting = name ? ('¡Hola ' + name + '!') : '¡Hola!';
   var normalizedPhone = normalizePhone_(phone);
   var confirmToken = signPaymentToken_(normalizedPhone, Date.now() + WELCOME_TOKEN_TTL_MS_);
-  var confirmLink = 'https://vulcan-mode.github.io/spirelight/confirmar-datos/?phone=' + encodeURIComponent(normalizedPhone)
+  var confirmLink = 'https://vulcan-mode.github.io/spirelight/gracias/?phone=' + encodeURIComponent(normalizedPhone)
     + (confirmToken ? ('&token=' + encodeURIComponent(confirmToken)) : '');
   var isActive = isCountryActive_(country);
   var subject = '¡Gracias por registrarte en Spire Light!'; // no emoji, see the note on sendActivationEmail_'s subject

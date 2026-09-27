@@ -410,7 +410,7 @@
       });
   }
 
-  // Keyed by email, not phone -- same reasoning as confirmar-datos/:
+  // Keyed by email, not phone -- same reasoning as gracias/:
   // nobody's email ever gets typed by another user anywhere in this
   // system, unlike phone numbers.
   function requestToken(email, button) {
@@ -485,7 +485,7 @@
         // No dead-end success screen -- land back on "Tus datos" (same
         // still-valid token, no second email check) with a toast, so
         // there's actually somewhere to go from here.
-        window.location.href = '../confirmar-datos/?phone=' + encodeURIComponent(currentPhone)
+        window.location.href = '../gracias/?phone=' + encodeURIComponent(currentPhone)
           + '&token=' + encodeURIComponent(currentToken) + '&toast=' + encodeURIComponent('✅ Guardamos tu método de pago.');
       })
       .catch(function () {
@@ -509,7 +509,7 @@
     }
   } else {
     // No manual phone/email lookup here either -- same as
-    // confirmar-datos/, the only way in is a link mailed to a real inbox.
+    // gracias/, the only way in is a link mailed to a real inbox.
     show('pickView');
   }
 </script>
