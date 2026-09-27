@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e88e5"/>
+      <stop offset="100%" stop-color="#0d5aa7"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="100" fill="url(#bg)"/>
+
+  <!-- circuit lines + dots, lower-left -->
+  <g fill="none" stroke="#0d3a66" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M36,108 L36,124 L52,140 L52,158"/>
+    <path d="M36,124 L22,124 L22,148"/>
+  </g>
+  <g fill="#0d3a66">
+    <circle cx="36" cy="108" r="4.2"/>
+    <circle cx="22" cy="124" r="3.4"/>
+    <circle cx="52" cy="140" r="3"/>
+  </g>
+  <g fill="#bfe4fb">
+    <circle cx="22" cy="148" r="3"/>
+    <circle cx="52" cy="158" r="2.6"/>
+  </g>
+
+  <!-- mic stand (U bracket) + stem + base -->
+  <g fill="none" stroke="#0d3a66" stroke-width="6.5" stroke-linecap="round">
+    <path d="M56,96 L56,124 A34,34 0 0 0 124,124 L124,96"/>
+    <line x1="90" y1="158" x2="90" y2="176"/>
+    <line x1="74" y1="176" x2="106" y2="176"/>
+  </g>
+
+  <!-- mic capsule -->
+  <rect x="64" y="36" width="52" height="76" rx="26" fill="#eaf7ff" stroke="#0d3a66" stroke-width="6.5"/>
+  <g stroke="#0d3a66" stroke-width="4" stroke-linecap="round">
+    <line x1="70" y1="58" x2="110" y2="58"/>
+    <line x1="70" y1="70" x2="110" y2="70"/>
+    <line x1="70" y1="82" x2="110" y2="82"/>
+    <line x1="70" y1="94" x2="110" y2="94"/>
+  </g>
+
+  <!-- ñ -->
+  <text x="156" y="152" font-family="'Sora', system-ui, sans-serif" font-weight="800"
+        font-size="82" fill="#0d3a66" text-anchor="middle">ñ</text>
+</svg>
