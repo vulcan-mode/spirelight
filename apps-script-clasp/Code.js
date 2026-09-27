@@ -669,15 +669,19 @@ function verifyPaymentToken_(phone, token) {
 // Sends the actual verification link -- never confirms whether a
 // phone is or isn't a real lead in the response (same reply either
 // way), so this can't be used to enumerate real phone numbers either.
+// Keyed by EMAIL, not phone -- same reasoning as handleRequestConfirmLink_:
+// nobody's email ever gets typed by another user anywhere in this
+// system, unlike phone numbers, which flow through referral-form/ and
+// invite links in plain sight. Consistent with confirmar-datos/ now.
 function handleRequestPaymentToken_(p) {
-  var phone = String(p.phone || '').trim();
-  var lead = findLeadByPhone_(phone);
-  if (lead.found && lead.email) {
+  var email = String(p.email || '').trim().toLowerCase();
+  var lead = findLeadByEmail_(email);
+  if (lead.found && lead.phone) {
     var expiresAt = Date.now() + PAYMENT_TOKEN_TTL_MS_;
-    var token = signPaymentToken_(phone, expiresAt);
+    var token = signPaymentToken_(lead.phone, expiresAt);
     if (token) {
       var link = 'https://vulcan-mode.github.io/spirelight/metodo-pago/?phone='
-        + encodeURIComponent(phone) + '&token=' + encodeURIComponent(token);
+        + encodeURIComponent(lead.phone) + '&token=' + encodeURIComponent(token);
       var greeting = lead.name ? ('¡Hola ' + lead.name + '!') : '¡Hola!';
       var body = greeting + '\n\n'
         + 'Alguien (probablemente tú) pidió actualizar el método de pago para el programa de referidos de Monólogos en Español. '
@@ -685,7 +689,7 @@ function handleRequestPaymentToken_(p) {
         + link + '\n\n'
         + 'Si tú no pediste esto, ignora este correo -- nadie puede cambiar nada sin hacer clic aquí.\n\n'
         + '-- Domingo';
-      GmailApp.sendEmail(lead.email, 'Confirma que eres tú -- método de pago', body);
+      GmailApp.sendEmail(email, 'Confirma que eres tú -- método de pago', body);
     }
   }
   return ContentService.createTextOutput(JSON.stringify({ result: 'sent' })).setMimeType(ContentService.MimeType.JSON);

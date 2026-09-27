@@ -157,20 +157,21 @@
 
     <div id="pickView" hidden>
       <h1>Registra tu método de pago 💳</h1>
-      <p class="intro">Por seguridad, primero te enviamos un enlace de confirmación a tu correo -- así nadie más puede cambiar tu método de pago solo con tu número.</p>
-      <input type="tel" id="phoneInput" placeholder="+507 6000 0000" autocomplete="tel">
-      <button type="button" id="phoneContinueBtn">Enviarme el enlace →</button>
+      <p class="intro">Escribe tu correo. Por seguridad, nadie puede ver ni cambiar tu método de pago sin hacer clic en un enlace que solo llega a tu propio correo -- nunca con solo tu número.</p>
+      <input type="email" id="emailInput" placeholder="tu@correo.com" autocomplete="email">
+      <button type="button" id="emailContinueBtn">Enviarme el enlace →</button>
     </div>
 
     <div id="checkEmailView" hidden>
       <h1>Revisa tu correo 📩</h1>
-      <p class="intro">Si ese número está en nuestro sistema, te enviamos un enlace de confirmación -- es válido por 15 minutos. Haz clic ahí para registrar tu método de pago.</p>
-      <button class="change-number-btn" id="checkEmailTryAnotherBtn" type="button">Usar otro número</button>
+      <p class="intro">Si ese correo está en nuestro sistema, te enviamos un enlace de confirmación -- válido por 15 minutos. Haz clic ahí para registrar tu método de pago.</p>
+      <button class="change-number-btn" id="checkEmailTryAnotherBtn" type="button">Usar otro correo</button>
     </div>
 
     <div id="expiredView" hidden>
       <h1>Ese enlace ya no es válido</h1>
       <p class="intro">Los enlaces de confirmación duran 15 minutos. Pide uno nuevo.</p>
+      <input type="email" id="expiredEmailInput" placeholder="tu@correo.com" autocomplete="email">
       <button type="button" id="requestNewLinkBtn">Pedir un nuevo enlace →</button>
     </div>
 
@@ -199,8 +200,6 @@
         <button type="submit" id="submitBtn">Guardar método de pago</button>
         <p class="error" id="formErrorMsg">Algo salió mal. Por favor intenta de nuevo.</p>
       </form>
-
-      <button class="change-number-btn" id="changeNumberBtn" type="button">Usar otro número</button>
     </div>
 
     <div id="successView" class="success" hidden>
@@ -330,39 +329,38 @@
       });
   }
 
-  function requestToken(phone) {
+  // Keyed by email, not phone -- same reasoning as confirmar-datos/:
+  // nobody's email ever gets typed by another user anywhere in this
+  // system, unlike phone numbers.
+  function requestToken(email) {
     show('loadingView');
     var data = new FormData();
     data.append('formType', 'request_payment_token');
-    data.append('phone', phone);
+    data.append('email', email);
 
     // Same reply either way (see handleRequestPaymentToken_ in Code.gs)
-    // -- this page can't tell you whether that phone was actually
-    // found, on purpose, so it can't be used to enumerate real numbers.
+    // -- this page can't tell you whether that email was actually
+    // found, on purpose, so it can't be used to enumerate real accounts.
     fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: data })
       .then(function () { show('checkEmailView'); })
       .catch(function () { show('checkEmailView'); });
   }
 
-  document.getElementById('phoneContinueBtn').addEventListener('click', function () {
-    var value = document.getElementById('phoneInput').value.trim();
+  document.getElementById('emailContinueBtn').addEventListener('click', function () {
+    var value = document.getElementById('emailInput').value.trim();
     if (!value) return;
     requestToken(value);
   });
 
   document.getElementById('checkEmailTryAnotherBtn').addEventListener('click', function () {
-    document.getElementById('phoneInput').value = '';
+    document.getElementById('emailInput').value = '';
     show('pickView');
   });
 
   document.getElementById('requestNewLinkBtn').addEventListener('click', function () {
-    if (currentPhone) requestToken(currentPhone);
-  });
-
-  document.getElementById('changeNumberBtn').addEventListener('click', function () {
-    try { localStorage.removeItem(IDENTITY_KEY); } catch (e) { /* ignore */ }
-    document.getElementById('phoneInput').value = '';
-    show('pickView');
+    var value = document.getElementById('expiredEmailInput').value.trim();
+    if (!value) return;
+    requestToken(value);
   });
 
   document.getElementById('tryAgainBtn').addEventListener('click', function () {
@@ -420,13 +418,8 @@
       showFormForPhone(phoneFromUrl, tokenFromUrl);
     }
   } else {
-    // No more auto-showing the form from a cached identity -- that's
-    // exactly the shortcut this fix closes. Just prefill the number
-    // typed/cached before, so requesting a fresh link is one tap.
-    var stored = getStoredIdentity();
-    if (stored && stored.phone) {
-      document.getElementById('phoneInput').value = stored.phone;
-    }
+    // No manual phone/email lookup here either -- same as
+    // confirmar-datos/, the only way in is a link mailed to a real inbox.
     show('pickView');
   }
 </script>
