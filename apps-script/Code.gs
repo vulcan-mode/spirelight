@@ -687,7 +687,7 @@ function handleRequestPaymentToken_(p) {
         + 'Pediste actualizar tu método de pago para el programa de referidos de Monólogos en Español. '
         + 'Este enlace confirma que eres tú -- es válido por 15 minutos:\n\n'
         + link + '\n\n'
-        + 'Si tú no pediste esto, ignora este correo -- nadie puede cambiar nada sin hacer clic aquí.\n\n'
+        + 'Si tú no pediste esto, contáctame de inmediato respondiendo este correo.\n\n'
         + '-- Domingo';
       GmailApp.sendEmail(email, 'Confirma que eres tú -- método de pago', body);
     }
@@ -719,7 +719,7 @@ function handleRequestConfirmLink_(p) {
         + 'Pediste ver o editar tus datos del programa de referidos. '
         + 'Este enlace confirma que eres tú -- es válido por 15 minutos:\n\n'
         + link + '\n\n'
-        + 'Si tú no pediste esto, ignora este correo -- nadie puede cambiar nada sin hacer clic aquí.\n\n'
+        + 'Si tú no pediste esto, contáctame de inmediato respondiendo este correo.\n\n'
         + '-- Domingo';
       GmailApp.sendEmail(email, 'Confirma que eres tú -- tus datos', body);
     }
