@@ -85,7 +85,6 @@
     box-shadow: 0 10px 24px rgba(13, 58, 102, 0.3);
     white-space: nowrap;
   }
-  .plus-icon { font-size: 21px; line-height: 1; font-weight: 800; }
   h1 {
     font-family: 'Sora', system-ui, sans-serif;
     font-weight: 800;
@@ -274,7 +273,7 @@
     </div>
 
     <div id="pickView" hidden>
-      <h1>Tus referidos 🎁</h1>
+      <h1>Tus referidos <img src="../assets/icon-referir.png" alt="" style="width:26px;height:26px;vertical-align:middle;"></h1>
       <p class="intro">Escribe el mismo número de WhatsApp que usaste al referir a alguien.</p>
       <input type="tel" id="phoneInput" placeholder="+507 6000 0000" autocomplete="tel">
       <button class="apply-btn" id="pickContinueBtn" type="button">Ver mis referidos →</button>
@@ -284,11 +283,11 @@
     <div id="listView" hidden>
       <div class="list-header">
         <img class="logo-small" src="../assets/logo-monologos.png?v=2" alt="Monólogos en Español">
-        <a class="new-referral-btn" href="../referral-form/"><span class="plus-icon">+</span> Nuevo referido</a>
+        <a class="new-referral-btn" href="../referral-form/"><img src="../assets/icon-referir.png" alt="" style="width:22px;height:22px;"> Nuevo referido</a>
       </div>
 
       <p class="greeting" id="referrerGreeting" hidden></p>
-      <h1>Tus referidos 🎁</h1>
+      <h1>Tus referidos <img src="../assets/icon-referir.png" alt="" style="width:26px;height:26px;vertical-align:middle;"></h1>
 
       <div class="invite-banner" id="inviteBanner" hidden>
         <p>¡Referido registrado! 🎉 Envíale la invitación para que se una:</p>
