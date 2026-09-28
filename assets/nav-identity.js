@@ -5,13 +5,6 @@
 // pointing at gracias/, prefilled with the cached phone so they never
 // have to type it again just to look at or fix their own info.
 (function () {
-  // Two copies of this link can exist now -- one always-inline at
-  // medium+ widths, one inside the hamburger drawer -- so every match
-  // needs the swap, not just the first (getElementById would silently
-  // miss the second one and leave it saying the wrong thing).
-  var links = document.querySelectorAll('.nav-registro-link');
-  if (!links.length) return;
-
   var identity;
   try {
     var raw = localStorage.getItem('spirelight_referrer');
@@ -19,8 +12,15 @@
   } catch (e) {
     identity = null;
   }
+  var known = !!(identity && identity.phone);
 
-  if (identity && identity.phone) {
+  if (known) {
+    // Two copies of this link can exist now -- one always-inline at
+    // medium+ widths, one inside the hamburger drawer -- so every
+    // match needs the swap, not just the first (getElementById would
+    // silently miss the second one and leave it saying the wrong
+    // thing).
+    var links = document.querySelectorAll('.nav-registro-link');
     // The homepage lives at the site root (one level up from every
     // other page this script runs on), so "gracias/" needs no "../"
     // there -- computed from actual path depth instead of assuming
@@ -33,4 +33,13 @@
       link.href = prefix + 'gracias/?phone=' + encodeURIComponent(identity.phone);
     });
   }
+
+  // #navGate exists on the homepage and registro/ -- pages someone
+  // reaches before ever registering. Hidden by default so an
+  // unregistered visitor's only real choice is to register instead of
+  // wandering the site via the nav; revealed once they're known.
+  // Distinct from gracias/'s #navControls, which has its own
+  // isResult-driven logic elsewhere and shouldn't be touched here.
+  var gate = document.getElementById('navGate');
+  if (gate) gate.hidden = !known;
 })();

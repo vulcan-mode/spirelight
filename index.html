@@ -83,6 +83,15 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  /* Hidden by default -- shown only once nav-identity.js confirms
+     this device is already registered (spirelight_referrer has a
+     phone). An unregistered visitor's only real choice here should
+     be to register, not wander off via the nav. */
+  .nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
   .nav-main-inline {
     display: none;
     align-items: center;
@@ -413,19 +422,21 @@
         <img class="brand-logo" src="assets/icon-mic-nye.svg" alt="Monólogos en Español">
         <span class="brand-name">Monólogos en Español</span>
       </a>
-      <nav class="nav-main-inline">
-        <a class="nav-link active" href="./">Inicio</a>
-        <a class="nav-link nav-registro-link" href="registro/">Regístrate</a>
-      </nav>
-      <nav class="site-nav" id="siteNav">
-        <a class="nav-link active" href="./">Inicio</a>
-        <a class="nav-link nav-registro-link" href="registro/" id="navRegistroLink">Regístrate</a>
-        <a class="nav-link" href="mis-referidos/">Mis referidos</a>
-        <a class="nav-link" href="como-funciona/">Cómo funciona</a>
-        <a class="nav-link" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">Soporte</a>
-        <a class="nav-link" href="privacidad/">Privacidad</a>
-      </nav>
-      <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
+      <div class="nav-controls" id="navGate" hidden>
+        <nav class="nav-main-inline">
+          <a class="nav-link active" href="./">Inicio</a>
+          <a class="nav-link nav-registro-link" href="registro/">Regístrate</a>
+        </nav>
+        <nav class="site-nav" id="siteNav">
+          <a class="nav-link active" href="./">Inicio</a>
+          <a class="nav-link nav-registro-link" href="registro/" id="navRegistroLink">Regístrate</a>
+          <a class="nav-link" href="mis-referidos/">Mis referidos</a>
+          <a class="nav-link" href="como-funciona/">Cómo funciona</a>
+          <a class="nav-link" href="https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG" target="_blank" rel="noopener">Soporte</a>
+          <a class="nav-link" href="privacidad/">Privacidad</a>
+        </nav>
+        <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
+      </div>
     </div>
   </header>
   <div class="nav-overlay" id="navOverlay"></div>
