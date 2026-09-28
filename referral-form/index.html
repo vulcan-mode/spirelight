@@ -187,6 +187,39 @@
     color: #4a6580;
     margin: -8px 0 20px;
   }
+  .referral-hero {
+    width: 100%;
+    max-width: 640px;
+    border-radius: 24px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    box-shadow: 0 20px 50px rgba(13, 58, 102, 0.2);
+    box-sizing: border-box;
+  }
+  .referral-hero-inner {
+    background:
+      linear-gradient(rgba(6, 12, 32, 0.6), rgba(6, 12, 32, 0.75)),
+      url('../assets/bg-referral.webp') center / cover;
+    padding: 42px 28px;
+    text-align: center;
+  }
+  .referral-hero-inner h2 {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 23px;
+    color: #ffffff;
+    margin: 0 0 8px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  }
+  .referral-hero-inner p {
+    margin: 0;
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: #eaf3ff;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+  }
   .status-card {
     width: 100%;
     max-width: 640px;
@@ -392,6 +425,13 @@
   <script src="../assets/nav-identity.js"></script>
   <p class="nav-caption">¿Aún no eres miembro? En el grupo de WhatsApp encontrarás el video explicativo, las preguntas frecuentes y el enlace para registrarte y empezar a grabar.</p>
 
+  <div class="referral-hero">
+    <div class="referral-hero-inner">
+      <h2>🎁 Gana $15 por cada persona que refieras</h2>
+      <p>($20 si es de Puerto Rico) — se paga en cuanto tu referido complete su grabación. Compártelo con alguien que tenga buena voz.</p>
+    </div>
+  </div>
+
   <div class="status-card">
     <div class="status-group">
       <div class="status-label live">✅ Activo ahora</div>
@@ -507,7 +547,7 @@
     </div>
   </div>
 
-  <a class="pill-link" style="margin-top: 4px; padding: 12px 20px;" href="../metodo-pago/">💳 Registra tu método de pago (para recibir tus bonos)</a>
+  <a class="pill-link" style="margin-top: 4px; padding: 12px 20px;" href="../metodo-pago/"><img src="../assets/icon-pago.png" alt="" style="width:18px;height:18px;">Registra tu método de pago (para recibir tus bonos)</a>
 
   <footer class="brand-footer">
     <img src="../assets/logo-spirelight.webp?v=1" alt="">
