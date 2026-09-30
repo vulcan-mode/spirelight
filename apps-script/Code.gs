@@ -14,6 +14,16 @@
  *     emails anyone whose country later goes active.
  *  3. syncReferralBonuses — hourly, fills in the referral bonus amount
  *     the moment a referral's "Resultado" is manually set to "Aprobado".
+ *  4. people_sync — a scheduled GitHub Action scrapes voice.spirelight.ai's
+ *     own "People you referred" dashboard (no public API for it exists)
+ *     and POSTs the rows here, overwriting the "People" tab each time.
+ *     See tools/sync-spirelight-people.mjs in this repo. One-time setup:
+ *     pick a random 32+ char secret, add it as this repo's
+ *     PEOPLE_SYNC_SECRET GitHub Actions secret, then POST it once to
+ *     this Web app with formType=bootstrap_people_sync_secret&secret=...
+ *     (e.g. via curl) to store it in Script Properties -- the endpoint
+ *     only accepts the secret the first time, so this is safe to leave
+ *     reachable afterward.
  *
  * Setup:
  * 1. In this Apps Script project (the one already bound to the Sheet),
@@ -60,6 +70,14 @@ var PAYMENT_METHODS_SHEET_NAME = 'MetodosPago';
 // Activo=Sí is shown; keep just one row set to Sí at a time to avoid
 // ambiguity about which one is "the" current banner.
 var ANNOUNCEMENTS_SHEET_NAME = 'Avisos';
+// Periodic snapshot of voice.spirelight.ai's own "People you referred"
+// dashboard (scraped by a scheduled GitHub Action, see
+// tools/sync-spirelight-people.mjs), since that data isn't available
+// through any public API. Full overwrite on every sync, not an
+// append/upsert -- there's no stable per-person id to key on, and the
+// upstream page itself is just a current-state snapshot, not a log.
+// Stopgap until the SvelteKit rebuild gives this its own real database.
+var PEOPLE_SHEET_NAME = 'People';
 
 // Opens the Sheet explicitly by ID rather than relying on
 // getActiveSpreadsheet() — works the same whether this project is
@@ -285,6 +303,24 @@ function normalizePhone_(raw) {
   return String(raw || '').replace(/\D/g, '');
 }
 
+// Writes every phone number into the sheet in the same shape Meta's own
+// native Lead Ads sync uses ("p:+<digits>"), so every row looks uniform
+// regardless of which of the three forms (registro/, referral-form/,
+// confirmar-datos/) produced it, instead of some rows reading
+// "+507 6000 0000" and others "p:+5076000000".
+function formatPhoneForSheet_(raw) {
+  var digits = normalizePhone_(raw);
+  return digits ? 'p:+' + digits : '';
+}
+
+// The shortest real phone numbers (country code + local number) run
+// about 8 digits -- this is a floor to reject obviously-broken input
+// (a couple of stray digits, a copy-paste that dropped most of the
+// number), not real validation of any particular country's format.
+function isPlausiblePhone_(raw) {
+  return normalizePhone_(raw).length >= 8;
+}
+
 function findLeadByPhone_(rawPhone) {
   var target = normalizePhone_(rawPhone);
   if (!target) return { found: false };
@@ -470,6 +506,14 @@ function doPost(e) {
     return handleRequestConfirmLink_(p);
   }
 
+  if (formType === 'people_sync') {
+    return handlePeopleSync_(p);
+  }
+
+  if (formType === 'bootstrap_people_sync_secret') {
+    return handleBootstrapPeopleSyncSecret_(p);
+  }
+
   return handleReferralSubmission_(p);
 }
 
@@ -526,8 +570,8 @@ function handleUpdateDetailsSubmission_(p) {
   // so the frontend's job after this is to notice the change and
   // request a brand new confirmation link for the new number.
   var newPhone = String(p.newPhone || '').trim();
-  if (newPhone && normalizePhone_(newPhone) !== normalizePhone_(phone)) {
-    leadsSheet.getRange(lead.rowNum, phoneCol).setValue(newPhone);
+  if (newPhone && isPlausiblePhone_(newPhone) && normalizePhone_(newPhone) !== normalizePhone_(phone)) {
+    leadsSheet.getRange(lead.rowNum, phoneCol).setValue(formatPhoneForSheet_(newPhone));
   }
 
   // País/acento/identificación/edad lock the moment they're first set --
@@ -537,10 +581,12 @@ function handleUpdateDetailsSubmission_(p) {
   // is also what makes a locked <select>/<radio> (excluded from
   // FormData by the browser) safe to submit alongside them without
   // accidentally blanking the stored answer.
+  // Sí/No answers lowercased on write, same as handleLeadSubmission_ --
+  // keeps casing uniform no matter which form set them first.
   if (!lead.country) leadsSheet.getRange(lead.rowNum, countryCol).setValue(String(p.country || '').trim());
-  if (!lead.idAnswer) leadsSheet.getRange(lead.rowNum, idQuestionCol).setValue(String(p.idAnswer || '').trim());
-  if (!lead.accentAnswer) leadsSheet.getRange(lead.rowNum, accentQuestionCol).setValue(String(p.accentAnswer || '').trim());
-  if (!lead.ageAnswer) leadsSheet.getRange(lead.rowNum, ageQuestionCol).setValue(String(p.ageAnswer || '').trim());
+  if (!lead.idAnswer) leadsSheet.getRange(lead.rowNum, idQuestionCol).setValue(String(p.idAnswer || '').trim().toLowerCase());
+  if (!lead.accentAnswer) leadsSheet.getRange(lead.rowNum, accentQuestionCol).setValue(String(p.accentAnswer || '').trim().toLowerCase());
+  if (!lead.ageAnswer) leadsSheet.getRange(lead.rowNum, ageQuestionCol).setValue(String(p.ageAnswer || '').trim().toLowerCase());
 
   return ContentService
     .createTextOutput(JSON.stringify({ result: 'success' }))
@@ -610,7 +656,17 @@ function handleReferralSubmission_(p) {
     sheet = ss.getSheetByName(REFERRALS_SHEET_NAME);
   }
 
-  var referredPhone = String(p.referredWhatsapp || '').trim();
+  // No-cors POST, so the caller can't read this response body -- the
+  // real user-facing validation is referral-form/'s own client-side
+  // check before it ever submits. This is the backstop for anything
+  // that reaches doPost some other way.
+  if (!isPlausiblePhone_(p.referrerWhatsapp) || !isPlausiblePhone_(p.referredWhatsapp)) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: 'error', message: 'invalid phone' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var referredPhone = formatPhoneForSheet_(p.referredWhatsapp);
 
   if (findLeadByPhone_(referredPhone).found) {
     return ContentService
@@ -628,10 +684,10 @@ function handleReferralSubmission_(p) {
     new Date(),
     p.referrerName || '',
     p.referrerCountry || '',
-    p.referrerWhatsapp || '',
+    formatPhoneForSheet_(p.referrerWhatsapp),
     p.referredName || '',
     p.referredCountry || '',
-    p.referredWhatsapp || '',
+    referredPhone,
     p.comments || '',
     'Pendiente', // Resultado
     '',          // Bono -- filled in automatically once Resultado -> Aprobado
@@ -872,18 +928,21 @@ function handleLeadSubmission_(p) {
   var leadsSheet = getSheet_().getSheetByName(LEADS_SHEET_NAME) || getSheet_().insertSheet(LEADS_SHEET_NAME);
 
   var name = String(p.name || '').trim();
-  var phone = String(p.whatsapp || '').trim();
   var country = String(p.country || '').trim();
   var email = String(p.email || '').trim().toLowerCase();
-  var idAnswer = String(p.idAnswer || '').trim();
-  var accentAnswer = String(p.accentAnswer || '').trim();
-  var ageAnswer = String(p.ageAnswer || '').trim();
+  // Lowercased on write regardless of source casing -- Sí/No answers
+  // should read the same whether they came from this form or (in
+  // principle) anywhere else, not vary by whoever typed them.
+  var idAnswer = String(p.idAnswer || '').trim().toLowerCase();
+  var accentAnswer = String(p.accentAnswer || '').trim().toLowerCase();
+  var ageAnswer = String(p.ageAnswer || '').trim().toLowerCase();
 
-  if (!phone) {
+  if (!isPlausiblePhone_(p.whatsapp)) {
     return ContentService
-      .createTextOutput(JSON.stringify({ result: 'error', message: 'missing phone' }))
+      .createTextOutput(JSON.stringify({ result: 'error', message: 'invalid phone' }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+  var phone = formatPhoneForSheet_(p.whatsapp);
 
   // Email is required now -- the welcome/activation/success-guide
   // emails are core to the funnel, not optional extras, so there's no
@@ -956,8 +1015,14 @@ function handleLeadSubmission_(p) {
   // If they arrived via a referral link and corrected the phone number
   // the referrer typed for them, keep the referrer's pending Referidos
   // row pointing at the right number.
+  // Compared on normalized digits, not raw string equality -- phone is
+  // always the freshly-formatted "p:+<digits>" now, while
+  // correctedFromPhone is whatever raw shape the referral link's
+  // ?phone= param carried, so a plain !== would always be true
+  // (triggering this on every referral-link submission, not just a
+  // genuine edit).
   var correctedFromPhone = String(p.correctedFromPhone || '').trim();
-  if (correctedFromPhone && correctedFromPhone !== phone) {
+  if (correctedFromPhone && normalizePhone_(correctedFromPhone) !== normalizePhone_(phone)) {
     updateReferralReferredPhone_(correctedFromPhone, phone);
   }
 
@@ -1297,4 +1362,82 @@ function syncReferralBonuses() {
       sheet.getRange(2 + i, BONO_COL).setValue(bono);
     }
   }
+}
+
+// ---------------------------------------------------------------------
+// People sync — scheduled GitHub Action scrapes voice.spirelight.ai's
+// own "People you referred" dashboard (no public API exists for it)
+// and POSTs the rows here. See tools/sync-spirelight-people.mjs and
+// .github/workflows/sync-people.yml.
+// ---------------------------------------------------------------------
+
+var PEOPLE_SYNC_SECRET_PROP_ = 'PEOPLE_SYNC_SECRET';
+var PEOPLE_SHEET_COLUMNS_ = [
+  'Name', 'Email', 'Gender, age', 'Country, region', 'Language, dialect',
+  'Progress', 'Attempts', 'Notes', 'Signed up', 'Last activity', 'Budget',
+  'Approved on'
+];
+
+function getPeopleSyncSecret_() {
+  return PropertiesService.getScriptProperties().getProperty(PEOPLE_SYNC_SECRET_PROP_);
+}
+
+// One-time bootstrap, same pattern as handleBootstrapPaymentSecret_ --
+// only ever sets the property if it's still empty, so this is safe to
+// leave reachable rather than needing editor access to set it by hand.
+function handleBootstrapPeopleSyncSecret_(p) {
+  var props = PropertiesService.getScriptProperties();
+  if (!props.getProperty(PEOPLE_SYNC_SECRET_PROP_) && p.secret && String(p.secret).length >= 32) {
+    props.setProperty(PEOPLE_SYNC_SECRET_PROP_, String(p.secret));
+  }
+  return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function ensurePeopleSheet_() {
+  var ss = getSheet_();
+  var sheet = ss.getSheetByName(PEOPLE_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(PEOPLE_SHEET_NAME);
+    sheet.appendRow(PEOPLE_SHEET_COLUMNS_);
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+// Full overwrite, not upsert -- see the PEOPLE_SHEET_NAME comment above
+// for why. Records arrive as a JSON array of objects keyed by the
+// PEOPLE_SHEET_COLUMNS_ names.
+function handlePeopleSync_(p) {
+  var expectedSecret = getPeopleSyncSecret_();
+  if (!expectedSecret || p.secret !== expectedSecret) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: 'error', message: 'invalid secret' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var records;
+  try {
+    records = JSON.parse(p.records || '[]');
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: 'error', message: 'invalid records JSON' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var sheet = ensurePeopleSheet_();
+  var lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    sheet.getRange(2, 1, lastRow - 1, PEOPLE_SHEET_COLUMNS_.length).clearContent();
+  }
+
+  if (records.length > 0) {
+    var rows = records.map(function (record) {
+      return PEOPLE_SHEET_COLUMNS_.map(function (col) { return record[col] || ''; });
+    });
+    sheet.getRange(2, 1, rows.length, PEOPLE_SHEET_COLUMNS_.length).setValues(rows);
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ result: 'success', count: records.length }))
+    .setMimeType(ContentService.MimeType.JSON);
 }

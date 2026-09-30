@@ -1,0 +1,8 @@
+{
+  "name": "spirelight-tools",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "playwright": "*"
+  }
+}

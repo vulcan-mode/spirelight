@@ -713,6 +713,19 @@
       return;
     }
 
+    // Neither of these fields has a country-code select like registro/ --
+    // they're free text (placeholder shows the expected "+507 ..."
+    // shape), so nothing stopped someone from typing 3 digits or leaving
+    // stray characters before this. 8 digits is a floor (country code +
+    // local number), not real per-country validation.
+    const referrerDigits = (document.getElementById('referrerWhatsapp').value || '').replace(/\D/g, '');
+    const referredDigits = (document.getElementById('referredWhatsapp').value || '').replace(/\D/g, '');
+    if (referrerDigits.length < 8 || referredDigits.length < 8) {
+      errorMsg.textContent = 'Escribe un número de WhatsApp válido, con código de país (ej: +507 6000 0000).';
+      errorMsg.style.display = 'block';
+      return;
+    }
+
     submitBtn.disabled = true;
     submitBtn.textContent = 'Verificando...';
 

@@ -1,0 +1,35 @@
+name: Sync Spirelight People
+
+on:
+  schedule:
+    - cron: '0 */4 * * *'  # Every 4 hours
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: tools
+        run: npm install
+
+      - name: Install Chromium
+        working-directory: tools
+        run: npx playwright install --with-deps chromium
+
+      - name: Run sync
+        working-directory: tools
+        env:
+          SPIRELIGHT_COOKIE: ${{ secrets.SPIRELIGHT_COOKIE }}
+          PEOPLE_SYNC_URL: ${{ secrets.PEOPLE_SYNC_URL }}
+          PEOPLE_SYNC_SECRET: ${{ secrets.PEOPLE_SYNC_SECRET }}
+        run: node sync-spirelight-people.mjs

@@ -629,7 +629,10 @@
     var code = document.getElementById('phoneCode').value;
     var numberDigits = document.getElementById('phoneInput').value.replace(/\D/g, '');
     var errorEl = document.getElementById('phoneErrorMsg');
-    if (!numberDigits) {
+    // 7 digits is a floor, not real per-country validation -- just
+    // enough to reject a couple of stray digits or an empty field
+    // padded by autofill, which used to sail straight through here.
+    if (numberDigits.length < 7) {
       errorEl.style.display = 'block';
       return;
     }
