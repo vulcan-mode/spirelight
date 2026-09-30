@@ -121,14 +121,24 @@ async function main() {
     await page.setExtraHTTPHeaders({ cookie });
     await page.goto(PEOPLE_URL, { waitUntil: 'domcontentloaded' });
 
-    const loggedIn = await page.locator('text=People you referred').first().isVisible().catch(() => false);
+    // Next.js RSC app -- domcontentloaded fires before client hydration paints
+    // anything, so this has to actually wait (isVisible() alone only checks
+    // the DOM's current state and returns instantly, which was the bug here:
+    // it always ran before hydration finished and always reported "not
+    // logged in" regardless of whether the cookie was actually valid).
+    const loggedIn = await page
+      .getByText('People you referred', { exact: false })
+      .first()
+      .waitFor({ state: 'visible', timeout: 20000 })
+      .then(() => true)
+      .catch(() => false);
     if (!loggedIn) {
       throw new Error(
-        `Not logged in (page did not show the expected heading) -- landed on ${page.url()}. SPIRELIGHT_COOKIE has likely expired and needs refreshing.`
+        `Not logged in (page did not show the expected heading within 20s) -- landed on ${page.url()}. SPIRELIGHT_COOKIE has likely expired and needs refreshing.`
       );
     }
 
-    await page.waitForSelector('table th');
+    await page.waitForSelector('table th', { timeout: 20000 });
     const scraped = await scrapePeopleTable(page);
     if (scraped.error) {
       throw new Error(`Scrape failed: ${scraped.error} (tableCount=${scraped.tableCount})`);
