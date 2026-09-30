@@ -54,7 +54,11 @@
 // "Referidos" tab inside the SAME sheet as everything else (SHEET_ID),
 // per the user's explicit request to have all data in one place.
 var REFERRAL_SHEET_ID_ARCHIVED = '1IN1iv6X-isl2grAIG3f_LXHk1KrgUleqGXWmd3fdAdI'; // historical only, do not write
-var SHEET_ID = '13z3HtJpO7TPl67JVUPyrRxqrLhsMqcsSYz3iccqbRM4'; // new leads sheet, after the original ad/form was deleted
+// 2026-09-30: account migrated off domlebo1@gmail.com to domingo@monovoz.com.
+// The OLD SHEET_ID ('13z3HtJpO7TPl67JVUPyrRxqrLhsMqcsSYz3iccqbRM4', titled
+// "Old Spirelight Leads Tracker" in Drive) is no longer the live tracker --
+// this is the new one, confirmed live by the user.
+var SHEET_ID = '1XKzfk0XVXc5yqRuig7cN8SOr3wl9L6zXY_RdSrj7i5s';
 var SIGNUP_LINK = 'https://voice.spirelight.ai/login?ref=QU2R4Y55';
 var WHATSAPP_GROUP_LINK = 'https://chat.whatsapp.com/LnMEOkmKOc3COzB5Y0vgqG';
 var CONFIG_SHEET_NAME = 'Config';
